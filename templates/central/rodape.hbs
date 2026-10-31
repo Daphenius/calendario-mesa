@@ -1,0 +1,6 @@
+<footer class="cm-cc-rodape cm-tema-{{tema}}">
+  <span class="cm-cc-estado {{#if pendentes}}pendente{{/if}}">{{#if pendentes}}<i class="fa-solid fa-feather-pointed"></i> {{textos.mudancas}}{{else}}<i class="fa-solid fa-check"></i> {{textos.semMudancas}}{{/if}}</span>
+  <span class="cm-cc-esp"></span>
+  <button type="button" data-action="cancelar" {{#if salvando}}disabled{{/if}}><i class="fa-solid fa-xmark"></i> {{textos.cancelar}}</button>
+  <button type="button" class="cm-cc-salvar" data-action="salvar" {{#unless pendentes}}disabled{{/unless}} {{#if salvando}}disabled{{/if}}><i class="fa-solid {{#if salvando}}fa-spinner fa-spin{{else}}fa-floppy-disk{{/if}}"></i> {{textos.salvar}}</button>
+</footer>

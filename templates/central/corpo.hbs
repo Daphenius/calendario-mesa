@@ -1,0 +1,53 @@
+<section class="cm-cc-corpo cm-tema-{{tema}}">
+  {{#if aba}}
+  <header class="cm-cc-cab">
+    <i class="fa-solid {{aba.icone}}"></i>
+    <div><h2>{{aba.rotulo}}</h2><p>{{aba.lema}}</p></div>
+  </header>
+  {{/if}}
+  {{#unless gm}}<p class="cm-cc-aviso"><i class="fa-solid fa-user"></i> {{textos.jogador}}</p>{{/unless}}
+  {{#each secoes}}
+  <fieldset class="cm-cc-secao">
+    <legend><i class="fa-solid {{icone}}"></i> {{titulo}}{{#if pendentes}} <small class="cm-cc-mudou">● {{pendentes}}</small>{{/if}}</legend>
+    {{#each campos}}
+    <div class="cm-cc-campo {{#if alterado}}alterado{{/if}} {{#if desligado}}desligado{{/if}}">
+      <div class="cm-cc-rotulo">
+        <label for="cm-cc-{{chave}}">{{nome}}</label>
+        <span class="cm-cc-marcas">
+          <span class="cm-cc-escopo {{escopo}}" data-tooltip="{{escopoDica}}"><i class="fa-solid {{#if (eq escopo "world")}}fa-globe{{else}}fa-user{{/if}}"></i> {{escopoRotulo}}</span>
+          {{#if integracao}}<span class="cm-cc-integ {{#if integracao.ok}}ok{{else}}falta{{/if}}"><i class="fa-solid {{#if integracao.ok}}fa-plug-circle-check{{else}}fa-plug-circle-xmark{{/if}}"></i> {{integracao.texto}}</span>{{/if}}
+          {{#if recarrega}}<span class="cm-cc-integ" data-tooltip="{{@root.textos.recarrega}}"><i class="fa-solid fa-rotate"></i></span>{{/if}}
+        </span>
+        {{#if dica}}<p class="cm-cc-dica">{{dica}}</p>{{/if}}
+        {{#if depende}}<p class="cm-cc-depende"><i class="fa-solid fa-link"></i> {{depende}}</p>{{/if}}
+      </div>
+      <div class="cm-cc-controle">
+        {{#if booleano}}
+          <label class="cm-cc-chave"><input type="checkbox" id="cm-cc-{{chave}}" data-chave="{{chave}}" {{#if valor}}checked{{/if}} {{#if desligado}}disabled{{/if}}><span class="cm-cc-trilho"></span></label>
+        {{else if lista}}
+          <select id="cm-cc-{{chave}}" data-chave="{{chave}}" {{#if desligado}}disabled{{/if}}>
+            {{#each opcoes}}<option value="{{valor}}" {{#if selecionado}}selected{{/if}}>{{rotulo}}</option>{{/each}}
+          </select>
+        {{else if faixa}}
+          <div class="cm-cc-faixa"><input type="range" id="cm-cc-{{chave}}" name="{{chave}}" data-chave="{{chave}}" min="{{min}}" max="{{max}}" step="{{passo}}" value="{{valor}}" {{#if desligado}}disabled{{/if}}><output data-saida="{{chave}}">{{valor}}</output></div>
+        {{else if numero}}
+          <input type="number" id="cm-cc-{{chave}}" data-chave="{{chave}}" value="{{valor}}" {{#if min includeZero=true}}min="{{min}}"{{/if}} step="any" {{#if desligado}}disabled{{/if}}>
+        {{else}}
+          <input type="text" id="cm-cc-{{chave}}" data-chave="{{chave}}" value="{{valor}}" {{#if desligado}}disabled{{/if}}>
+        {{/if}}
+      </div>
+    </div>
+    {{/each}}
+  </fieldset>
+  {{/each}}
+  {{#if botoes.length}}
+  <fieldset class="cm-cc-secao cm-cc-ferramentas">
+    <legend><i class="fa-solid fa-book-open-reader"></i> {{textos.ferramentas}}</legend>
+    <div class="cm-cc-botoes">
+      {{#each botoes}}
+      <button type="button" data-action="ferramenta" data-ferramenta="{{acao}}" {{#if desligado}}disabled{{/if}} {{#if dica}}data-tooltip="{{dica}}"{{/if}}><i class="fa-solid {{icone}}"></i> {{rotulo}}</button>
+      {{/each}}
+    </div>
+  </fieldset>
+  {{/if}}
+</section>

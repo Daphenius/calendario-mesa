@@ -1,0 +1,8 @@
+<nav class="cm-cc-abas cm-tema-{{tema}}">
+  <div class="cm-cc-selo"><i class="fa-solid fa-star-and-crescent"></i><span>Calendário<br><small>da Mesa</small></span></div>
+  {{#each abas}}
+  <button type="button" class="cm-cc-aba {{#if ativa}}ativa{{/if}}" data-action="aba" data-aba="{{id}}">
+    <i class="fa-solid {{icone}}"></i><span>{{rotulo}}</span>{{#if pendentes}}<b class="cm-cc-ponto" data-tooltip="{{pendentes}}">{{pendentes}}</b>{{/if}}
+  </button>
+  {{/each}}
+</nav>

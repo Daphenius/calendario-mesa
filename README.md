@@ -12,12 +12,13 @@ Se encontrar bugs ou tiver sugestões, abra uma [issue](https://github.com/Daphe
 
 **Versão 4.2.1** · Foundry VTT 14 · D&D 5e 6 · Português e English · Licença MIT · ✅ Testado e aprovado no Foundry
 
-![Calendário da Mesa no Foundry VTT](docs/screenshot.png)
+![Calendário da Mesa no Foundry VTT: janela do calendário](docs/screenshot.png)
 
 Calendário próprio do mundo para Foundry VTT, usando o **tempo nativo do Foundry** (o mesmo relógio que avança nas rodadas de combate). Traz HUD com relógio, luz do mapa por hora, estações, eras, luas com fases, clima por região (inclusive pelas Regiões nativas do mapa), contadores e prazos, viagem dia a dia com vigias, histórico da campanha, vários calendários e notas guardadas como Diários nativos. Funciona sozinho ou junto com o **Journal da Mesa**.
 
 > O Calendário da Mesa é um projeto independente. Alguns extras foram inspirados no estilo do Calendaria, mas o projeto não é afiliado a ele nem a seu autor. Simple Calendar, Seasons & Stars, Calendaria e Fantasy-Calendar.com aparecem neste README só porque o módulo importa calendários nesses formatos.
 
+- [Galeria](#galeria)
 - [Compatibilidade](#compatibilidade)
 - [Instalação e atualização](#instalação-e-atualização)
 - [Suporte e sugestões](#suporte-e-sugestões)
@@ -27,6 +28,18 @@ Calendário próprio do mundo para Foundry VTT, usando o **tempo nativo do Found
 - [Para macros e outros módulos](#para-macros-e-outros-módulos)
 - [Licença e créditos](#licença-e-créditos)
 - [English summary](#english-summary)
+
+## Galeria
+
+| HUD | Clima do dia | Luas |
+|---|---|---|
+| [![HUD com data, hora, estação e luas](docs/hud.png)](docs/hud.png) | [![Janela do clima com os tempos da estação](docs/clima.png)](docs/clima.png) | [![Luas com fases e ciclos de aparição](docs/luas.png)](docs/luas.png) |
+| **Integrado ao Journal da Mesa** | **Efeitos de clima** | **Regiões de clima** |
+| [![Nota do calendário aberta no Journal da Mesa](docs/journal-da-mesa.png)](docs/journal-da-mesa.png) | [![Efeitos de clima com prévia na cena](docs/clima-efeitos.png)](docs/clima-efeitos.png) | [![Configuração das regiões de clima](docs/clima-configuracoes.png)](docs/clima-configuracoes.png) |
+| **Luz por hora** | **Central de Configurações** | **Configurações** |
+| [![Luz do mapa por hora do dia](docs/luz-por-hora.png)](docs/luz-por-hora.png) | [![Central de Configurações em abas](docs/central-configuracoes.png)](docs/central-configuracoes.png) | [![Configurações do módulo](docs/configuracoes.png)](docs/configuracoes.png) |
+
+Clique numa imagem para ver em tamanho maior.
 
 ## Compatibilidade
 
@@ -428,7 +441,7 @@ Veja o `CHANGELOG.md`: gravações em fila (histórico, contadores, clima, viage
 | `lang/` | português e inglês |
 | `CHANGELOG.md` | histórico de versões |
 | `LICENSE` | licença MIT |
-| `docs/` | imagens deste README |
+| `docs/` | imagens deste README (topo e galeria) |
 | `.github/workflows/release.yml` | monta e anexa o ZIP e o `module.json` ao publicar uma release |
 
 ---

@@ -206,10 +206,10 @@ const {
 } = N;
 const { HandlebarsApplicationMixin } = foundry.applications.api;
 const TRAD = {
-  January: "Janeiro", February: "Fevereiro", March: "Março", April: "Abril", May: "Maio", June: "Junho",
-  July: "Julho", August: "Agosto", September: "Setembro", October: "Outubro", November: "Novembro", December: "Dezembro",
-  Monday: "Segunda-feira", Tuesday: "Terça-feira", Wednesday: "Quarta-feira", Thursday: "Quinta-feira",
-  Friday: "Sexta-feira", Saturday: "Sábado", Sunday: "Domingo"
+  January: T("Janeiro"), February: T("Fevereiro"), March: T("Março"), April: T("Abril"), May: T("Maio"), June: T("Junho"),
+  July: T("Julho"), August: T("Agosto"), September: T("Setembro"), October: T("Outubro"), November: T("Novembro"), December: T("Dezembro"),
+  Monday: T("Segunda-feira"), Tuesday: T("Terça-feira"), Wednesday: T("Quarta-feira"), Thursday: T("Quinta-feira"),
+  Friday: T("Sexta-feira"), Saturday: T("Sábado"), Sunday: T("Domingo")
 };
 const traduzir = (n) => {
   const loc = game.i18n?.localize?.(n) ?? n;
@@ -219,25 +219,25 @@ const traduzir = (n) => {
 function presetGregoriano() {
   const g = foundry.data?.SIMPLIFIED_GREGORIAN_CALENDAR_CONFIG;
   const base = {
-    nome: "Gregoriano", era: "", anoInicial: 0, primeiroDiaSemana: 0,
+    nome: T("Gregoriano"), era: "", anoInicial: 0, primeiroDiaSemana: 0,
     horasDia: 24, minutosHora: 60, segundosMinuto: 60,
-    semana: ["Domingo", "Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado"].map((nome) => ({ nome, abrev: nome.slice(0, 3) })),
-    meses: [["Janeiro", 31], ["Fevereiro", 28, 29], ["Março", 31], ["Abril", 30], ["Maio", 31], ["Junho", 30], ["Julho", 31], ["Agosto", 31], ["Setembro", 30], ["Outubro", 31], ["Novembro", 30], ["Dezembro", 31]]
+    semana: [T("Domingo"), T("Segunda-feira"), T("Terça-feira"), T("Quarta-feira"), T("Quinta-feira"), T("Sexta-feira"), T("Sábado")].map((nome) => ({ nome, abrev: nome.slice(0, 3) })),
+    meses: [[T("Janeiro"), 31], [T("Fevereiro"), 28, 29], [T("Março"), 31], [T("Abril"), 30], [T("Maio"), 31], [T("Junho"), 30], [T("Julho"), 31], [T("Agosto"), 31], [T("Setembro"), 30], [T("Outubro"), 31], [T("Novembro"), 30], [T("Dezembro"), 31]]
       .map(([nome, dias, b]) => ({ nome, abrev: nome.slice(0, 3), dias, diasBissexto: b ?? dias })),
     bissexto: { ativo: true, cada: 4, inicio: 0 },
     estacoes: [
-      { nome: "Inverno", mesInicio: 12, diaInicio: 21, nascer: 7.5, por: 17, icone: "fa-snowflake" },
-      { nome: "Primavera", mesInicio: 3, diaInicio: 20, nascer: 6, por: 19, icone: "fa-seedling" },
-      { nome: "Verão", mesInicio: 6, diaInicio: 21, nascer: 5, por: 21, icone: "fa-sun" },
-      { nome: "Outono", mesInicio: 9, diaInicio: 22, nascer: 6.5, por: 18.5, icone: "fa-leaf" }
+      { nome: T("Inverno"), mesInicio: 12, diaInicio: 21, nascer: 7.5, por: 17, icone: "fa-snowflake" },
+      { nome: T("Primavera"), mesInicio: 3, diaInicio: 20, nascer: 6, por: 19, icone: "fa-seedling" },
+      { nome: T("Verão"), mesInicio: 6, diaInicio: 21, nascer: 5, por: 21, icone: "fa-sun" },
+      { nome: T("Outono"), mesInicio: 9, diaInicio: 22, nascer: 6.5, por: 18.5, icone: "fa-leaf" }
     ],
-    luas: [{ nome: "Lua", ciclo: 29.53, deslocamento: 0, cor: "#e8e4d8" }]
+    luas: [{ nome: T("Lua"), ciclo: 29.53, deslocamento: 0, cor: "#e8e4d8" }]
   };
   if (!g?.months?.values?.length) return base;
   try {
     return {
       ...base,
-      nome: "Gregoriano (do Foundry)",
+      nome: T("Gregoriano (do Foundry)"),
       anoInicial: num(g.years?.yearZero, 0),
       primeiroDiaSemana: num(g.years?.firstWeekday, 0),
       horasDia: num(g.days?.hoursPerDay, 24), minutosHora: num(g.days?.minutesPerHour, 60), segundosMinuto: num(g.days?.secondsPerMinute, 60),
@@ -322,7 +322,7 @@ function converterCalendario(entrada) {
   let o = entrada;
   if (o?.config && !o.months && !o.meses) o = o.config;             // entradas do D&D 5e { label, config }
   const formato = detectarFormato(o);
-  if (!formato) throw new Error("Formato de calendário não reconhecido.");
+  if (!formato) throw new Error(T("Formato de calendário não reconhecido."));
   const avisos = [];
   let c;
 
@@ -330,49 +330,49 @@ function converterCalendario(entrada) {
 
   if (formato === "simplecalendar") {
     let sc = o.calendars ? o.calendars[0] : o;
-    if (o.calendars?.length > 1) avisos.push(`O arquivo tem ${o.calendars.length} calendários; importei o primeiro ("${sc.name ?? "sem nome"}").`);
+    if (o.calendars?.length > 1) avisos.push(`${T("O arquivo tem {0} calendários; importei o primeiro (\"{1}\").", [o.calendars.length, sc.name ?? T("sem nome")])}`);
     const ms = lista(sc.months ?? sc.monthSettings), ws = lista(sc.weekdays ?? sc.weekdaySettings);
     const ano = sc.year ?? sc.yearSettings ?? {}, tempo = sc.time ?? sc.timeSettings ?? {}, lp = sc.leapYear ?? sc.leapYearSettings ?? {};
     const regra = lp.rule ?? "none";
     c = {
-      nome: sc.name ?? "Importado do Simple Calendar",
+      nome: sc.name ?? T("Importado do Simple Calendar"),
       era: [ano.prefix, ano.postfix].filter(Boolean).join(" ").trim(),
       anoInicial: num(ano.yearZero, 0),
       primeiroDiaSemana: num(ano.firstWeekday, 0),
       horasDia: num(tempo.hoursInDay, 24), minutosHora: num(tempo.minutesInHour, 60), segundosMinuto: num(tempo.secondsInMinute, 60),
-      semana: ws.map((w, i) => { const nome = nomeDe(w, i, "Dia"); return { nome, abrev: abrevDe(w, nome) }; }),
-      meses: ms.map((m, i) => { const nome = nomeDe(m, i, "Mês"); const dias = num(m.numberOfDays ?? m.days, 30); return { nome, abrev: abrevDe(m, nome), dias, diasBissexto: num(m.numberOfLeapYearDays ?? m.leapDays, dias) }; }),
+      semana: ws.map((w, i) => { const nome = nomeDe(w, i, T("Dia")); return { nome, abrev: abrevDe(w, nome) }; }),
+      meses: ms.map((m, i) => { const nome = nomeDe(m, i, T("Mês")); const dias = num(m.numberOfDays ?? m.days, 30); return { nome, abrev: abrevDe(m, nome), dias, diasBissexto: num(m.numberOfLeapYearDays ?? m.leapDays, dias) }; }),
       bissexto: { cada: regra === "gregorian" ? 4 : regra === "custom" ? num(lp.customMod, 0) : 0, inicio: 0 },
       luas: []
     };
-    if (ms.some((m) => m.intercalary)) avisos.push("Meses intercalares viraram meses normais.");
-    if (regra === "gregorian") avisos.push("A regra gregoriana de bissexto virou \"a cada 4 anos\".");
+    if (ms.some((m) => m.intercalary)) avisos.push(T("Meses intercalares viraram meses normais."));
+    if (regra === "gregorian") avisos.push(T("A regra gregoriana de bissexto virou \"a cada 4 anos\"."));
     const nMeses = c.meses.length;
     c.estacoes = estacoesPorInicio(lista(sc.seasons ?? sc.seasonSettings).map((e, i) => ({
-      nome: nomeDe(e, i, "Estação"), mes: mod(num(e.startingMonth, 0), nMeses),
+      nome: nomeDe(e, i, T("Estação")), mes: mod(num(e.startingMonth, 0), nMeses),
       nascer: e.sunriseTime !== undefined ? num(e.sunriseTime) / 3600 : undefined,
       por: e.sunsetTime !== undefined ? num(e.sunsetTime) / 3600 : undefined
     })), nMeses);
     const base = normalizar(c);
     c.luas = lista(sc.moons ?? sc.moonSettings).map((l, i) => ({
-      nome: nomeDe(l, i, "Lua"), ciclo: num(l.cycleLength, 29.5), cor: l.color,
+      nome: nomeDe(l, i, T("Lua")), ciclo: num(l.cycleLength, 29.5), cor: l.color,
       deslocamento: deslocamentoDe(base, l.firstNewMoon, { anoExibido: true, base1: false }) + num(l.cycleDayAdjust, 0)
     }));
   }
 
   else if (formato === "seasonsstars") {
-    const lab = o.translations?.["pt-BR"]?.label ?? o.translations?.pt?.label ?? o.translations?.en?.label;
+    const lab = o.translations?.[game.i18n.lang]?.label ?? o.translations?.["pt-BR"]?.label ?? o.translations?.pt?.label ?? o.translations?.en?.label;
     const ano = o.year ?? {}, tempo = o.time ?? {}, lp = o.leapYear ?? {};
-    let ms = o.months.map((m, i) => { const nome = nomeDe(m, i, "Mês"); const dias = num(m.days ?? m.length, 30); return { nome, abrev: abrevDe(m, nome), dias, diasBissexto: dias }; });
+    let ms = o.months.map((m, i) => { const nome = nomeDe(m, i, T("Mês")); const dias = num(m.days ?? m.length, 30); return { nome, abrev: abrevDe(m, nome), dias, diasBissexto: dias }; });
     // dias intercalares (S&S) entram como meses curtos depois do mês indicado
     const inter = lista(o.intercalary);
     if (inter.length) {
       for (const it of [...inter].reverse()) {
         const pos = o.months.findIndex((m) => m.name === it.after);
-        const nome = nomeDe(it, 0, "Intercalar"), dias = num(it.days, 1);
+        const nome = nomeDe(it, 0, T("Intercalar")), dias = num(it.days, 1);
         ms.splice(pos >= 0 ? pos + 1 : ms.length, 0, { nome, abrev: abrevDe(it, nome), dias, diasBissexto: dias });
       }
-      avisos.push("Dias intercalares viraram meses curtos.");
+      avisos.push(T("Dias intercalares viraram meses curtos."));
     }
     const regra = lp.rule ?? "none";
     if (regra !== "none") {
@@ -380,26 +380,26 @@ function converterCalendario(entrada) {
       if (alvo) alvo.diasBissexto = alvo.dias + num(lp.extraDays, 1);
     }
     c = {
-      nome: loc(lab ?? o.name ?? o.id ?? "Importado do Seasons & Stars"),
+      nome: loc(lab ?? o.name ?? o.id ?? T("Importado do Seasons & Stars")),
       era: [ano.prefix, ano.suffix].filter(Boolean).join(" ").trim(),
       anoInicial: num(ano.epoch, 0),
       primeiroDiaSemana: num(ano.startDay, 0),
       horasDia: num(tempo.hoursInDay, 24), minutosHora: num(tempo.minutesInHour, 60), segundosMinuto: num(tempo.secondsInMinute, 60),
-      semana: lista(o.weekdays).map((w, i) => { const nome = nomeDe(w, i, "Dia"); return { nome, abrev: abrevDe(w, nome) }; }),
+      semana: lista(o.weekdays).map((w, i) => { const nome = nomeDe(w, i, T("Dia")); return { nome, abrev: abrevDe(w, nome) }; }),
       meses: ms,
       bissexto: { cada: regra === "gregorian" ? 4 : regra === "custom" ? num(lp.interval, 0) : 0, inicio: 0 },
       luas: []
     };
-    if (regra === "gregorian") avisos.push("A regra gregoriana de bissexto virou \"a cada 4 anos\".");
+    if (regra === "gregorian") avisos.push(T("A regra gregoriana de bissexto virou \"a cada 4 anos\"."));
     const nomes = c.meses.map((m) => m.nome);
     const idxMes = (v) => typeof v === "number" ? v : Math.max(0, nomes.indexOf(loc(v)) + 1);
     c.estacoes = lista(o.seasons).map((e, i) => ({
-      nome: nomeDe(e, i, "Estação"), mesInicio: idxMes(e.startMonth) || 1, mesFim: idxMes(e.endMonth ?? e.startMonth) || 1,
+      nome: nomeDe(e, i, T("Estação")), mesInicio: idxMes(e.startMonth) || 1, mesFim: idxMes(e.endMonth ?? e.startMonth) || 1,
       nascer: e.sunrise ?? 6, por: e.sunset ?? 18, icone: iconeEstacao(nomeDe(e, i, ""))
     }));
     const base = normalizar(c);
     c.luas = lista(o.moons).map((l, i) => ({
-      nome: nomeDe(l, i, "Lua"), ciclo: num(l.cycleLength, 29.5), cor: l.color,
+      nome: nomeDe(l, i, T("Lua")), ciclo: num(l.cycleLength, 29.5), cor: l.color,
       deslocamento: deslocamentoDe(base, l.firstNewMoon, { anoExibido: true, base1: true })
     }));
   }
@@ -407,36 +407,36 @@ function converterCalendario(entrada) {
   else if (formato === "fantasycalendar") {
     const sd = o.static_data, yd = sd.year_data;
     const spans = lista(yd.timespans);
-    const ms = spans.map((t, i) => { const nome = nomeDe(t, i, "Mês"); const dias = num(t.length, 30); return { nome, abrev: nome.slice(0, 3), dias, diasBissexto: dias }; });
-    if (spans.some((t) => t.type === "intercalary")) avisos.push("Meses intercalares viraram meses normais.");
-    if (spans.some((t) => num(t.interval, 1) > 1)) avisos.push("Meses que só existem em alguns anos foram importados como meses de todo ano.");
+    const ms = spans.map((t, i) => { const nome = nomeDe(t, i, T("Mês")); const dias = num(t.length, 30); return { nome, abrev: nome.slice(0, 3), dias, diasBissexto: dias }; });
+    if (spans.some((t) => t.type === "intercalary")) avisos.push(T("Meses intercalares viraram meses normais."));
+    if (spans.some((t) => num(t.interval, 1) > 1)) avisos.push(T("Meses que só existem em alguns anos foram importados como meses de todo ano."));
     let cada = 0;
     for (const ld of lista(yd.leap_days)) {
       const m = ms[num(ld.timespan, 0)];
       if (m) m.diasBissexto += 1;
       cada = cada || ultimoNumero(ld.interval);
     }
-    if (lista(yd.leap_days).some((ld) => /[,!]/.test(String(ld.interval)))) avisos.push("Regras de bissexto com exceções viraram só o intervalo principal.");
+    if (lista(yd.leap_days).some((ld) => /[,!]/.test(String(ld.interval)))) avisos.push(T("Regras de bissexto com exceções viraram só o intervalo principal."));
     const sem = lista(yd.global_week);
     const clock = sd.clock ?? {};
     c = {
-      nome: o.name ?? "Importado do Fantasy-Calendar",
+      nome: o.name ?? T("Importado do Fantasy-Calendar"),
       era: "",
       anoInicial: 0,
       primeiroDiaSemana: Math.max(0, num(yd.first_day, 1) - 1),
       horasDia: num(clock.hours, 24), minutosHora: num(clock.minutes, 60), segundosMinuto: 60,
-      semana: sem.map((w, i) => { const nome = nomeDe(w, i, "Dia"); return { nome, abrev: nome.slice(0, 3) }; }),
+      semana: sem.map((w, i) => { const nome = nomeDe(w, i, T("Dia")); return { nome, abrev: nome.slice(0, 3) }; }),
       meses: ms,
       bissexto: { cada, inicio: 0 },
-      luas: lista(sd.moons).map((l, i) => ({ nome: nomeDe(l, i, "Lua"), ciclo: num(l.cycle, 29.5), deslocamento: num(l.shift, 0), cor: l.color }))
+      luas: lista(sd.moons).map((l, i) => ({ nome: nomeDe(l, i, T("Lua")), ciclo: num(l.cycle, 29.5), deslocamento: num(l.shift, 0), cor: l.color }))
     };
     const nMeses = c.meses.length;
     c.estacoes = estacoesPorInicio(lista(sd.seasons?.data).map((e, i) => ({
-      nome: nomeDe(e, i, "Estação"), mes: mod(num(e.timespan, 0), nMeses),
+      nome: nomeDe(e, i, T("Estação")), mes: mod(num(e.timespan, 0), nMeses),
       nascer: e.time?.sunrise ? num(e.time.sunrise.hour, 6) + num(e.time.sunrise.minute, 0) / 60 : undefined,
       por: e.time?.sunset ? num(e.time.sunset.hour, 18) + num(e.time.sunset.minute, 0) / 60 : undefined
     })), nMeses);
-    if (o.dynamic_data?.year !== undefined) avisos.push(`O ano atual no Fantasy-Calendar era ${o.dynamic_data.year}. Ajuste "Primeiro ano" ou use "Tornar este o dia atual".`);
+    if (o.dynamic_data?.year !== undefined) avisos.push(`${T("O ano atual no Fantasy-Calendar era {0}. Ajuste \"Primeiro ano\" ou use \"Tornar este o dia atual\".", [o.dynamic_data.year])}`);
   }
 
   else { // formato do Foundry (CalendarConfig), usado pelo D&D 5e e por módulos como o Calendaria
@@ -444,19 +444,19 @@ function converterCalendario(entrada) {
     const ws = lista(o.days?.values ?? o.weekdays);
     const lp = o.years?.leapYear;
     c = {
-      nome: loc(o.name ?? "Calendário importado"),
+      nome: loc(o.name ?? T("Calendário importado")),
       era: "",
       anoInicial: num(o.years?.yearZero, 0),
       primeiroDiaSemana: num(o.years?.firstWeekday, 0),
       horasDia: num(o.days?.hoursPerDay, 24), minutosHora: num(o.days?.minutesPerHour, 60), segundosMinuto: num(o.days?.secondsPerMinute, 60),
-      semana: ws.map((w, i) => { const nome = nomeDe(w, i, "Dia"); return { nome, abrev: abrevDe(w, nome) }; }),
-      meses: ms.map((m, i) => { const nome = nomeDe(m, i, "Mês"); const dias = num(m.days, 30); return { nome, abrev: abrevDe(m, nome), dias, diasBissexto: num(m.leapDays, dias) }; }),
+      semana: ws.map((w, i) => { const nome = nomeDe(w, i, T("Dia")); return { nome, abrev: abrevDe(w, nome) }; }),
+      meses: ms.map((m, i) => { const nome = nomeDe(m, i, T("Mês")); const dias = num(m.days, 30); return { nome, abrev: abrevDe(m, nome), dias, diasBissexto: num(m.leapDays, dias) }; }),
       bissexto: { cada: num(lp?.leapInterval, 0), inicio: num(lp?.leapStart, 0) },
       luas: []
     };
-    if (ms.some((m) => m.intercalary)) avisos.push("Meses intercalares viraram meses normais.");
+    if (ms.some((m) => m.intercalary)) avisos.push(T("Meses intercalares viraram meses normais."));
     c.estacoes = lista(o.seasons).map((e, i) => {
-      const nome = nomeDe(e, i, "Estação");
+      const nome = nomeDe(e, i, T("Estação"));
       let ini = e.monthStart, fim = e.monthEnd;
       let diaIni = 1;
       if (ini == null && e.dayStart != null) { // estação por dia do ano → dia e mês exatos
@@ -468,13 +468,13 @@ function converterCalendario(entrada) {
     });
     const base = normalizar(c);
     c.luas = lista(o.moons).map((l, i) => ({
-      nome: nomeDe(l, i, "Lua"), ciclo: num(l.cycleLength ?? l.cycle, 29.5), cor: l.color,
+      nome: nomeDe(l, i, T("Lua")), ciclo: num(l.cycleLength ?? l.cycle, 29.5), cor: l.color,
       deslocamento: l.referenceDate ? deslocamentoDe(base, l.referenceDate, { anoExibido: true, base1: false }) + num(l.cycleDayAdjust, 0) : num(l.offset, 0)
     }));
-    if (!ws.length) avisos.push("O calendário não tinha dias da semana; usei os do exemplo.");
+    if (!ws.length) avisos.push(T("O calendário não tinha dias da semana; usei os do exemplo."));
   }
 
-  if (!c.meses?.length) throw new Error("O calendário importado não tem meses.");
+  if (!c.meses?.length) throw new Error(T("O calendário importado não tem meses."));
   if (!c.semana?.length) delete c.semana;
   return { dados: normalizar(c), formato, avisos };
 }
@@ -483,17 +483,17 @@ function converterCalendario(entrada) {
 function fontesDoMundo() {
   const f = [];
   const add = (rotulo, fn) => { try { const d = fn(); if (d) f.push({ rotulo, dados: d }); } catch (err) { console.warn(`${MOD} | ${rotulo}`, err); } };
-  if (N.CAL_ANTERIOR) add(`Calendário que estava ativo antes (${loc(N.CAL_ANTERIOR.name ?? "sistema")})`, () => N.CAL_ANTERIOR);
+  if (N.CAL_ANTERIOR) add(T("Calendário que estava ativo antes ({0})", [loc(N.CAL_ANTERIOR.name ?? T("sistema"))]), () => N.CAL_ANTERIOR);
   if (game.modules.get("foundryvtt-simple-calendar")?.active || game.modules.get("foundryvtt-simple-calendar-reborn")?.active)
-    add("Simple Calendar (calendário atual)", () => globalThis.SimpleCalendar?.api?.getCurrentCalendar?.());
+    add(T("Simple Calendar (calendário atual)"), () => globalThis.SimpleCalendar?.api?.getCurrentCalendar?.());
   if (game.modules.get("seasons-and-stars")?.active)
-    add("Seasons & Stars (calendário ativo)", () => game.seasonsStars?.manager?.getActiveCalendar?.());
+    add(T("Seasons & Stars (calendário ativo)"), () => game.seasonsStars?.manager?.getActiveCalendar?.());
   if (game.modules.get("calendaria")?.active) {
     const api = globalThis.CALENDARIA?.api;
-    add("Calendaria (calendário ativo)", () => api?.getActiveCalendar?.() ?? api?.getCalendar?.());
+    add(T("Calendaria (calendário ativo)"), () => api?.getActiveCalendar?.() ?? api?.getCalendar?.());
   }
   for (const k of lista(CONFIG.DND5E?.calendar?.calendars)) {
-    add(`D&D 5e: ${loc(k.label ?? k.config?.name ?? k.value ?? "calendário")}`, () => k.config ?? k);
+    add(`D&D 5e: ${loc(k.label ?? k.config?.name ?? k.value ?? T("calendário"))}`, () => k.config ?? k);
   }
   // remove repetidos e converte classes/modelos em objetos simples
   return f.map((x) => ({ ...x, dados: typeof x.dados?.toObject === "function" ? x.dados.toObject() : x.dados }))
@@ -509,57 +509,57 @@ async function dialogoNota(td, j = null) {
   const verAtual = j ? (j.ownership.default >= 2 ? "todos" : j.ownership.default >= 1 ? "titulo" : "mestre") : (gm ? "mestre" : "todos");
   const opts = (obj, sel) => Object.entries(obj).map(([k, v]) => `<option value="${k}" ${k === sel ? "selected" : ""}>${esc(v)}</option>`).join("");
   const ver = gm
-    ? { mestre: "Só o mestre", titulo: "Jogadores veem só o título", todos: "Jogadores veem tudo" }
-    : { mestre: "Só eu (e o mestre)", todos: "Todos os jogadores" };
+    ? { mestre: T("Só o mestre"), titulo: T("Jogadores veem só o título"), todos: T("Jogadores veem tudo") }
+    : { mestre: T("Só eu (e o mestre)"), todos: T("Todos os jogadores") };
 
   const padrao = j ? (j.folder?.id ?? "") : game.settings.get(MOD, "pastaNotas");
   const pastas = game.folders.filter((f) => f.type === "JournalEntry" && !f.getFlag(MOD, "pasta"))
-    .map((f) => ({ id: f.id, nome: caminhoPasta(f) })).sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
+    .map((f) => ({ id: f.id, nome: caminhoPasta(f) })).sort((a, b) => a.nome.localeCompare(b.nome, game.i18n.lang));
   const seletorPasta = gm ? `
       <div class="cm-form-2">
-        <label>Pasta no Diário/Journal<select name="pasta">
-          <option value="" ${!padrao || !game.folders.get(padrao) ? "selected" : ""}>Calendário (padrão)</option>
+        <label>${T("Pasta no Diário/Journal")}<select name="pasta">
+          <option value="" ${!padrao || !game.folders.get(padrao) ? "selected" : ""}>${T("Calendário (padrão)")}</option>
           ${pastas.map((f) => `<option value="${f.id}" ${f.id === padrao ? "selected" : ""}>${esc(f.nome)}</option>`).join("")}
-          <option value="__nova">+ Nova pasta…</option>
+          <option value="__nova">${T("+ Nova pasta…")}</option>
         </select></label>
-        <label>Nome da nova pasta<input type="text" name="novaPasta" placeholder="Só se escolher Nova pasta"></label>
+        <label>${T("Nome da nova pasta")}<input type="text" name="novaPasta" placeholder="${T("Só se escolher Nova pasta")}"></label>
       </div>` : "";
 
   const content = `
     <div class="cm-form">
       <p class="cm-form-data"><i class="fa-solid fa-calendar-day"></i> ${esc(textoData(infoDia(j ? n.td : td)))}</p>
-      <label>Título<input type="text" name="nome" value="${esc(j?.name ?? "")}" placeholder="Festival da Maré, Prazo da missão..." autofocus></label>
+      <label>${T("Título")}<input type="text" name="nome" value="${esc(j?.name ?? "")}" placeholder="${T("Festival da Maré, Prazo da missão...")}" autofocus></label>
       <div class="cm-form-2">
-        <label>Hora (opcional)<input type="text" name="hora" value="${esc(n.hora)}" placeholder="HH:MM"></label>
-        <label>Dura quantos dias<input type="number" name="duracao" min="1" value="${n.duracao}"></label>
+        <label>${T("Hora (opcional)")}<input type="text" name="hora" value="${esc(n.hora)}" placeholder="${T("HH:MM")}"></label>
+        <label>${T("Dura quantos dias")}<input type="number" name="duracao" min="1" value="${n.duracao}"></label>
       </div>
       <div class="cm-form-2">
-        <label>Ícone<select name="icone">${opts(ICONES, n.icone)}</select></label>
+        <label>${T("Ícone")}<select name="icone">${opts(ICONES, n.icone)}</select></label>
       </div>
       <div class="cm-form-2">
-        <label>Quem vê<select name="ver">${opts(ver, verAtual)}</select></label>
-        <label>Cor<input type="color" name="cor" value="${n.cor}"></label>
+        <label>${T("Quem vê")}<select name="ver">${opts(ver, verAtual)}</select></label>
+        <label>${T("Cor")}<input type="color" name="cor" value="${n.cor}"></label>
       </div>
-      ${gm ? `<label>Quando chegar o dia<select name="aviso">${opts(AVISOS, n.aviso)}</select></label>` : ""}
+      ${gm ? `<label>${T("Quando chegar o dia")}<select name="aviso">${opts(AVISOS, n.aviso)}</select></label>` : ""}
       ${seletorPasta}
-      ${n.repetir !== "nao" ? `<p class="cm-dica"><i class="fa-solid fa-repeat"></i> ${esc(descreverRepeticao(n))}. A repetição é editada no Journal da Mesa.</p>` : ""}
-      ${j ? `<p class="cm-dica">Para editar o texto, abra a nota. Para mudar o dia, arraste a nota para outro dia no calendário.</p>`
-          : `<label>Texto<textarea name="texto" rows="4" placeholder="Detalhes do evento (opcional)"></textarea></label>`}
+      ${n.repetir !== "nao" ? `<p class="cm-dica"><i class="fa-solid fa-repeat"></i> ${T("{0}. A repetição é editada no Journal da Mesa.", [esc(descreverRepeticao(n))])}</p>` : ""}
+      ${j ? `<p class="cm-dica">${T("Para editar o texto, abra a nota. Para mudar o dia, arraste a nota para outro dia no calendário.")}</p>`
+          : `<label>${T("Texto")}<textarea name="texto" rows="4" placeholder="${T("Detalhes do evento (opcional)")}"></textarea></label>`}
     </div>`;
 
   const dados = await Dialogo().wait({
-    window: { title: j ? "Editar nota" : "Nova nota", icon: "fa-solid fa-calendar-plus" },
+    window: { title: j ? T("Editar nota") : T("Nova nota"), icon: "fa-solid fa-calendar-plus" },
     position: { width: 500 },
     content,
     buttons: [
-      { action: "ok", label: "Salvar", icon: "fa-solid fa-check", default: true, callback: (ev, btn) => Object.fromEntries(new FormData(btn.form)) },
-      { action: "cancelar", label: "Cancelar", icon: "fa-solid fa-xmark" }
+      { action: "ok", label: T("Salvar"), icon: "fa-solid fa-check", default: true, callback: (ev, btn) => Object.fromEntries(new FormData(btn.form)) },
+      { action: "cancelar", label: T("Cancelar"), icon: "fa-solid fa-xmark" }
     ],
     rejectClose: false
   });
   if (!dados || typeof dados !== "object") return;
 
-  const nome = String(dados.nome ?? "").trim() || "Evento";
+  const nome = String(dados.nome ?? "").trim() || T("Evento");
   const inicio = j ? n.td : td;
   // só os campos que o calendário edita; a repetição (repetir, cada...) é do Journal e nunca é regravada aqui
   const campos = {
@@ -662,7 +662,7 @@ class EditorCalendario extends ApplicationV2 {
     id: "cm-editor",
     classes: ["cm-janela"],
     tag: "div",
-    window: { title: "Editar calendário", icon: "fa-solid fa-gear", resizable: true },
+    window: { title: T("Editar calendário"), icon: "fa-solid fa-gear", resizable: true },
     position: { width: 760, height: 720 },
     actions: {
       add(ev, t) { (this.dados[t.dataset.lista] ??= []).push(this.novo(t.dataset.lista)); this.render(); },
@@ -672,8 +672,7 @@ class EditorCalendario extends ApplicationV2 {
       subir(ev, t) { const l = this.dados[t.dataset.lista], i = num(t.dataset.i); if (i > 0) [l[i - 1], l[i]] = [l[i], l[i - 1]]; this.render(); },
       preset(ev, t) { this.dados = normalizar(t.dataset.p === "gregoriano" ? presetGregoriano() : PRESET_ELEMENTOS); this.render(); },
       exportar() {
-        const salvar = foundry.utils.saveDataToFile ?? globalThis.saveDataToFile;
-        salvar(JSON.stringify(this.dados, null, 2), "application/json", `calendario-${this.dados.nome.toLowerCase().replace(/[^a-z0-9]+/g, "-")}.json`);
+        foundry.utils.saveDataToFile(JSON.stringify(this.dados, null, 2), "application/json", `calendario-${this.dados.nome.toLowerCase().replace(/[^a-z0-9]+/g, "-")}.json`);
       },
       importar() { this.element.querySelector("input.cm-arquivo")?.click(); },
       salvar() { this.salvar(); },
@@ -695,18 +694,18 @@ class EditorCalendario extends ApplicationV2 {
         if (!m.aparicao.cada) m.aparicao.cada = 2;
         this.render();
       },
-      addFase(ev, t) { const l = this.dados.luas[num(t.dataset.i)]; l.fases.push({ nome: "Nova fase", peso: 1 }); this.fasesAbertas.add(num(t.dataset.i)); this.render(); },
+      addFase(ev, t) { const l = this.dados.luas[num(t.dataset.i)]; l.fases.push({ nome: T("Nova fase"), peso: 1 }); this.fasesAbertas.add(num(t.dataset.i)); this.render(); },
       remFase(ev, t) { const l = this.dados.luas[num(t.dataset.i)]; if (l.fases.length > 1) l.fases.splice(num(t.dataset.k), 1); this.render(); },
       fasesPadrao(ev, t) { this.dados.luas[num(t.dataset.i)].fases = foundry.utils.deepClone(FASES_PADRAO); this.render(); },
-      novoCal() { this.calId = foundry.utils.randomID(); this.dados = normalizar({ ...PRESET_ELEMENTOS, nome: "Nova civilização", luas: PRESET_ELEMENTOS.luas.slice(0, 1) }); this.render(); },
-      duplicarCal() { this.calId = foundry.utils.randomID(); this.dados = normalizar({ ...foundry.utils.deepClone(this.dados), nome: `${this.dados.nome} (cópia)` }); this.render(); },
+      novoCal() { this.calId = foundry.utils.randomID(); this.dados = normalizar({ ...PRESET_ELEMENTOS, nome: T("Nova civilização"), luas: PRESET_ELEMENTOS.luas.slice(0, 1) }); this.render(); },
+      duplicarCal() { this.calId = foundry.utils.randomID(); this.dados = normalizar({ ...foundry.utils.deepClone(this.dados), nome: `${T("{0} (cópia)", [this.dados.nome])}` }); this.render(); },
       async apagarCal() {
         const { principal, lista } = listaCalendarios();
         if (!lista[this.calId]) { this.calId = principal; this.dados = normalizar(lista[principal]); return this.render(); }
         if (Object.keys(lista).length < 2) return ui.notifications.warn("O mundo precisa de pelo menos um calendário.");
         const ok = await Dialogo().confirm({
-          window: { title: "Apagar calendário", icon: "fa-solid fa-trash" },
-          content: `<p>Apagar o calendário <b>${esc(this.dados.nome)}</b>?</p><p class="cm-dica">As notas dele não são apagadas: passam para o calendário principal. Cenas que usavam ele voltam para o principal.</p>`
+          window: { title: T("Apagar calendário"), icon: "fa-solid fa-trash" },
+          content: `<p>${T("Apagar o calendário")} <b>${esc(this.dados.nome)}</b>?</p><p class="cm-dica">${T("As notas dele não são apagadas: passam para o calendário principal. Cenas que usavam ele voltam para o principal.")}</p>`
         });
         if (!ok) return;
         const nova = { ...lista }; delete nova[this.calId];
@@ -721,7 +720,7 @@ class EditorCalendario extends ApplicationV2 {
         if (!lista[this.calId]) return ui.notifications.warn("Salve o calendário antes de torná-lo o principal.");
         await game.settings.set(MOD, "calendarios", { principal: this.calId, lista });
         await game.settings.set(MOD, "config", lista[this.calId]);
-        ui.notifications.info(`"${this.dados.nome}" agora é o calendário principal do mundo.`);
+        ui.notifications.info(`${T("\"{0}\" agora é o calendário principal do mundo.", [this.dados.nome])}`);
         this.render();
       }
     }
@@ -739,14 +738,14 @@ class EditorCalendario extends ApplicationV2 {
   novo(lista) {
     const base = normalizar({ ...this.dados, eras: [], estacoes: [], luas: [] });
     switch (lista) {
-      case "semana": return normalizar({ semana: [{ nome: "Novo dia", abrev: "Nov" }] }).semana[0];
-      case "meses": return normalizar({ meses: [{ nome: `Mês ${this.dados.meses.length + 1}`, abrev: `M${this.dados.meses.length + 1}`, dias: 30 }] }).meses[0];
-      case "estacoes": return normalizar({ ...base, estacoes: [{ nome: "Nova estação", mesInicio: 1, diaInicio: 1, nascer: 6, por: 18, icone: "fa-cloud-sun" }] }).estacoes[0];
-      case "luas": return normalizar({ luas: [{ nome: "Nova lua", ciclo: 28, deslocamento: 0, cor: "#e8e4d8" }] }).luas[0];
+      case "semana": return normalizar({ semana: [{ nome: T("Novo dia"), abrev: T("Nov") }] }).semana[0];
+      case "meses": return normalizar({ meses: [{ nome: `${T("Mês {0}", [this.dados.meses.length + 1])}`, abrev: `M${this.dados.meses.length + 1}`, dias: 30 }] }).meses[0];
+      case "estacoes": return normalizar({ ...base, estacoes: [{ nome: T("Nova estação"), mesInicio: 1, diaInicio: 1, nascer: 6, por: 18, icone: "fa-cloud-sun" }] }).estacoes[0];
+      case "luas": return normalizar({ luas: [{ nome: T("Nova lua"), ciclo: 28, deslocamento: 0, cor: "#e8e4d8" }] }).luas[0];
       case "eras": {
         const ult = this.dados.eras?.at(-1);
         const inicio = ult ? (ult.fim != null && ult.fim !== "" ? num(ult.fim) + 1 : agora().ano + num(this.dados.anoInicial, 0)) : num(this.dados.anoInicial, 0);
-        return { nome: "Nova era", sufixo: "", inicio, fim: null, contagem: "absoluta" };
+        return { nome: T("Nova era"), sufixo: "", inicio, fim: null, contagem: "absoluta" };
       }
     }
   }
@@ -762,7 +761,7 @@ class EditorCalendario extends ApplicationV2 {
     const r = comConfig(cfg, this.calId, () => {
       const ano = anoExibido - N.CFG.anoInicial;
       const max = diasNoMes(ano, mes);
-      if (!max) return { erro: `${N.CFG.meses[mes]?.nome ?? "Esse mês"} não existe no ano ${anoExibido}.` };
+      if (!max) return { erro: `${T("{0} não existe no ano {1}.", [N.CFG.meses[mes]?.nome ?? T("Esse mês"), anoExibido])}` };
       const m = hora.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?$/);
       const seg = m ? segundosDaHora(`${m[1]}:${m[2]}`) + Math.min(num(m[3], 0), segMinuto() - 1) : segundoDoDia(game.time.worldTime);
       const td = tdDe(ano, mes, Math.min(Math.max(1, dia), max) - 1);
@@ -770,7 +769,7 @@ class EditorCalendario extends ApplicationV2 {
     });
     if (r.erro) return ui.notifications.warn(r.erro);
     await game.time.set(r.t);
-    ui.notifications.info(`Data do jogo: ${r.texto}.`);
+    ui.notifications.info(`${T("Data do jogo: {0}.", [r.texto])}`);
     this.render();
   }
 
@@ -780,10 +779,10 @@ class EditorCalendario extends ApplicationV2 {
       `<input type="${tipo}" data-caminho="${caminho}" ${tipo === "number" ? `data-n="1"` : ""} value="${esc(valor)}" ${extra}>`;
     const linhaBtns = (lista, i) => `
       <span class="cm-linha-btns">
-        ${i > 0 ? `<a data-action="subir" data-lista="${lista}" data-i="${i}" data-tooltip="Subir"><i class="fa-solid fa-arrow-up"></i></a>` : `<span></span>`}
-        <a data-action="rem" data-lista="${lista}" data-i="${i}" data-tooltip="Remover"><i class="fa-solid fa-trash"></i></a>
+        ${i > 0 ? `<a data-action="subir" data-lista="${lista}" data-i="${i}" data-tooltip="${T("Subir")}"><i class="fa-solid fa-arrow-up"></i></a>` : `<span></span>`}
+        <a data-action="rem" data-lista="${lista}" data-i="${i}" data-tooltip="${T("Remover")}"><i class="fa-solid fa-trash"></i></a>
       </span>`;
-    const icones = { "fa-seedling": "Broto", "fa-sun": "Sol", "fa-leaf": "Folha", "fa-snowflake": "Neve", "fa-cloud-sun": "Nuvem e sol", "fa-cloud-rain": "Chuva", "fa-fire": "Fogo", "fa-droplet": "Água", "fa-wind": "Vento", "fa-mountain": "Montanha", "fa-star": "Estrela", "fa-moon": "Lua" };
+    const icones = { "fa-seedling": T("Broto"), "fa-sun": T("Sol"), "fa-leaf": T("Folha"), "fa-snowflake": T("Neve"), "fa-cloud-sun": T("Nuvem e sol"), "fa-cloud-rain": T("Chuva"), "fa-fire": T("Fogo"), "fa-droplet": T("Água"), "fa-wind": T("Vento"), "fa-mountain": T("Montanha"), "fa-star": T("Estrela"), "fa-moon": T("Lua") };
     const diasAno = c.meses.reduce((s, m) => s + num(m.dias), 0);
     const bis = !!c.bissexto?.ativo;
     const diasBis = c.meses.reduce((s, m) => s + num(m.diasBissexto ?? m.dias), 0);
@@ -799,174 +798,173 @@ class EditorCalendario extends ApplicationV2 {
           this._fontes = fontesDoMundo();
           return `<div class="cm-ed-cals">
             <div class="cm-ed-cals-linha">
-              <i class="fa-solid fa-landmark"></i> Calendário:
-              <select class="cm-ed-qual" data-tooltip="Escolha um calendário seu para editar, ou comece um novo a partir de um modelo ou de um calendário do Foundry">
-                <optgroup label="Seus calendários">
-                  ${ids.map((id) => `<option value="${id}" ${id === this.calId ? "selected" : ""}>${esc(normalizar(lista[id]).nome)}${id === principal ? " ★ principal" : ""}</option>`).join("")}
-                  ${novo ? `<option value="${this.calId}" selected>${esc(c.nome)} (novo, não salvo)</option>` : ""}
+              <i class="fa-solid fa-landmark"></i> ${T("Calendário:")}
+              <select class="cm-ed-qual" data-tooltip="${T("Escolha um calendário seu para editar, ou comece um novo a partir de um modelo ou de um calendário do Foundry")}">
+                <optgroup label="${T("Seus calendários")}">
+                  ${ids.map((id) => `<option value="${id}" ${id === this.calId ? "selected" : ""}>${esc(normalizar(lista[id]).nome)}${id === principal ? T(" ★ principal") : ""}</option>`).join("")}
+                  ${novo ? `<option value="${this.calId}" selected>${T("{0} (novo, não salvo)", [esc(c.nome)])}</option>` : ""}
                 </optgroup>
-                <optgroup label="Novo a partir de um modelo">
-                  <option value="modelo:elementos">Exemplo dos Elementos</option>
-                  <option value="modelo:gregoriano">Gregoriano</option>
+                <optgroup label="${T("Novo a partir de um modelo")}">
+                  <option value="modelo:elementos">${T("Exemplo dos Elementos")}</option>
+                  <option value="modelo:gregoriano">${T("Gregoriano")}</option>
                 </optgroup>
-                ${this._fontes.length ? `<optgroup label="Importar do mundo (Foundry, sistema e módulos)">
+                ${this._fontes.length ? `<optgroup label="${T("Importar do mundo (Foundry, sistema e módulos)")}">
                   ${this._fontes.map((f, i) => `<option value="mundo:${i}">${esc(f.rotulo)}</option>`).join("")}
                 </optgroup>` : ""}
               </select>
-              <button type="button" data-action="novoCal" data-tooltip="Outra civilização, com meses e eventos próprios"><i class="fa-solid fa-plus"></i> Novo</button>
-              <button type="button" data-action="duplicarCal"><i class="fa-solid fa-copy"></i> Duplicar</button>
-              ${!novo && this.calId !== principal ? `<button type="button" data-action="principalCal" data-tooltip="Calendário usado quando a cena não escolhe outro"><i class="fa-solid fa-star"></i> Tornar principal</button>` : ""}
-              ${ids.length > 1 || novo ? `<button type="button" data-action="apagarCal"><i class="fa-solid fa-trash"></i> ${novo ? "Descartar" : "Apagar"}</button>` : ""}
+              <button type="button" data-action="novoCal" data-tooltip="${T("Outra civilização, com meses e eventos próprios")}"><i class="fa-solid fa-plus"></i> ${T("Novo")}</button>
+              <button type="button" data-action="duplicarCal"><i class="fa-solid fa-copy"></i> ${T("Duplicar")}</button>
+              ${!novo && this.calId !== principal ? `<button type="button" data-action="principalCal" data-tooltip="${T("Calendário usado quando a cena não escolhe outro")}"><i class="fa-solid fa-star"></i> ${T("Tornar principal")}</button>` : ""}
+              ${ids.length > 1 || novo ? `<button type="button" data-action="apagarCal"><i class="fa-solid fa-trash"></i> ${novo ? T("Descartar") : T("Apagar")}</button>` : ""}
             </div>
             <div class="cm-ed-cals-linha">
-              <button type="button" data-action="importar" data-tooltip="JSON do Calendário da Mesa, Simple Calendar, Seasons &amp; Stars, Fantasy-Calendar.com ou Foundry/Calendaria"><i class="fa-solid fa-file-import"></i> Importar arquivo</button>
-              <button type="button" data-action="exportar" data-tooltip="Salvar este calendário num arquivo JSON"><i class="fa-solid fa-file-export"></i> Exportar</button>
-              <span class="cm-dica">Modelos e importações abrem como um calendário novo; nada é salvo até clicar em Salvar.</span>
+              <button type="button" data-action="importar" data-tooltip="${T("JSON do Calendário da Mesa, Simple Calendar, Seasons &amp; Stars, Fantasy-Calendar.com ou Foundry/Calendaria")}"><i class="fa-solid fa-file-import"></i> ${T("Importar arquivo")}</button>
+              <button type="button" data-action="exportar" data-tooltip="${T("Salvar este calendário num arquivo JSON")}"><i class="fa-solid fa-file-export"></i> ${T("Exportar")}</button>
+              <span class="cm-dica">${T("Modelos e importações abrem como um calendário novo; nada é salvo até clicar em Salvar.")}</span>
               <input type="file" class="cm-arquivo" accept=".json,application/json" hidden>
             </div>
           </div>`;
         })()}
 
-        <fieldset><legend>Geral</legend>
+        <fieldset><legend>${T("Geral")}</legend>
           <div class="cm-ed-grade cm-g4">
-            <label>Nome do calendário${campo("nome", c.nome)}</label>
-            <label>Horas por dia${campo("horasDia", c.horasDia, "number", `min="1"`)}</label>
-            <label>Minutos por hora${campo("minutosHora", c.minutosHora, "number", `min="1"`)}</label>
-            <label>Segundos por minuto${campo("segundosMinuto", c.segundosMinuto, "number", `min="1"`)}</label>
+            <label>${T("Nome do calendário{0}", [campo("nome", c.nome)])}</label>
+            <label>${T("Horas por dia{0}", [campo("horasDia", c.horasDia, "number", `min="1"`)])}</label>
+            <label>${T("Minutos por hora{0}", [campo("minutosHora", c.minutosHora, "number", `min="1"`)])}</label>
+            <label>${T("Segundos por minuto{0}", [campo("segundosMinuto", c.segundosMinuto, "number", `min="1"`)])}</label>
           </div>
         </fieldset>
 
-        <fieldset><legend>Anos e eras</legend>
+        <fieldset><legend>${T("Anos e eras")}</legend>
           <div class="cm-ed-grade cm-g3">
-            <label>Primeiro ano<small>ano mostrado no tempo 0 do mundo</small>${campo("anoInicial", c.anoInicial, "number")}</label>
-            <label>Sufixo padrão<small>anos fora de qualquer era (ex.: E.E.)</small>${campo("era", c.era)}</label>
-            <label class="cm-check"><input type="checkbox" data-caminho="bissexto.ativo" ${bis ? "checked" : ""}> Ano bissexto<small>${bis ? `${diasBis} dias no ano bissexto` : "desligado: todo ano tem " + diasAno + " dias"}</small></label>
+            <label>${T("Primeiro ano")}<small>${T("ano mostrado no tempo 0 do mundo")}</small>${campo("anoInicial", c.anoInicial, "number")}</label>
+            <label>${T("Sufixo padrão")}<small>${T("anos fora de qualquer era (ex.: E.E.)")}</small>${campo("era", c.era)}</label>
+            <label class="cm-check"><input type="checkbox" data-caminho="bissexto.ativo" ${bis ? "checked" : ""}> ${T("Ano bissexto")}<small>${bis ? T("{0} dias no ano bissexto", [diasBis]) : T("desligado: todo ano tem {0} dias", [diasAno])}</small></label>
           </div>
-          ${bis ? `<div class="cm-ed-rodape"><label class="cm-inline">Bissexto a cada${campo("bissexto.cada", c.bissexto.cada, "number", `min="1"`)} anos, começando no ano${campo("bissexto.inicio", num(c.bissexto.inicio) + num(c.anoInicial), "number", `data-desloca="1"`)}</label>
-            <span class="cm-dica">Os dias a mais de cada mês ficam na coluna "Dias no bissexto" dos meses.</span></div>` : ""}
+          ${bis ? `<div class="cm-ed-rodape"><label class="cm-inline">${T("Bissexto a cada{0} anos, começando no ano{1}", [campo("bissexto.cada", c.bissexto.cada, "number", `min="1"`), campo("bissexto.inicio", num(c.bissexto.inicio) + num(c.anoInicial), "number", `data-desloca="1"`)])}</label>
+            <span class="cm-dica">${T("Os dias a mais de cada mês ficam na coluna \"Dias no bissexto\" dos meses.")}</span></div>` : ""}
 
-          <h4 class="cm-ed-sub"><i class="fa-solid fa-landmark"></i> Eras</h4>
+          <h4 class="cm-ed-sub"><i class="fa-solid fa-landmark"></i> ${T("Eras")}</h4>
           <div class="cm-ed-lista">
-            ${c.eras?.length ? `<div class="cm-ed-cab cm-c-era"><span>Nome da era</span><span>Sufixo</span><span>Ano inicial</span><span>Ano final</span><span>Contagem dos anos</span><span></span></div>` : ""}
+            ${c.eras?.length ? `<div class="cm-ed-cab cm-c-era"><span>${T("Nome da era")}</span><span>${T("Sufixo")}</span><span>${T("Ano inicial")}</span><span>${T("Ano final")}</span><span>${T("Contagem dos anos")}</span><span></span></div>` : ""}
             ${(c.eras ?? []).map((e, i) => `<div class="cm-ed-item cm-c-era">${campo(`eras.${i}.nome`, e.nome)}${campo(`eras.${i}.sufixo`, e.sufixo, "text", `placeholder="ex.: D.R."`)}
               ${campo(`eras.${i}.inicio`, e.inicio, "number")}
-              <input type="number" data-caminho="eras.${i}.fim" value="${e.fim ?? ""}" placeholder="sem fim">
-              <select data-caminho="eras.${i}.contagem"><option value="absoluta" ${e.contagem !== "relativa" ? "selected" : ""}>Ano do mundo (${num(e.inicio)})</option><option value="relativa" ${e.contagem === "relativa" ? "selected" : ""}>Desde o início da era (ano 1)</option></select>
-              ${linhaBtns("eras", i)}</div>`).join("") || `<p class="cm-vazio">Sem eras: todos os anos usam o sufixo padrão.</p>`}
-            ${erasSobrepostas ? `<p class="cm-aviso"><i class="fa-solid fa-triangle-exclamation"></i> Há eras com anos em comum; vale a que começa primeiro.</p>` : ""}
+              <input type="number" data-caminho="eras.${i}.fim" value="${e.fim ?? ""}" placeholder="${T("sem fim")}">
+              <select data-caminho="eras.${i}.contagem"><option value="absoluta" ${e.contagem !== "relativa" ? "selected" : ""}>${T("Ano do mundo ({0})", [num(e.inicio)])}</option><option value="relativa" ${e.contagem === "relativa" ? "selected" : ""}>${T("Desde o início da era (ano 1)")}</option></select>
+              ${linhaBtns("eras", i)}</div>`).join("") || `<p class="cm-vazio">${T("Sem eras: todos os anos usam o sufixo padrão.")}</p>`}
+            ${erasSobrepostas ? `<p class="cm-aviso"><i class="fa-solid fa-triangle-exclamation"></i> ${T("Há eras com anos em comum; vale a que começa primeiro.")}</p>` : ""}
           </div>
-          <div class="cm-ed-rodape"><button type="button" data-action="add" data-lista="eras"><i class="fa-solid fa-plus"></i> Era</button>
-            <span class="cm-dica">Ex.: "Era do Fogo", sufixo "E.F.", de 1 a 999, e "Era dos Elementos", "E.E.", de 1000 sem fim. Na contagem "desde o início", o ano 1003 da era que começa em 1000 aparece como "4 E.E.".</span></div>
+          <div class="cm-ed-rodape"><button type="button" data-action="add" data-lista="eras"><i class="fa-solid fa-plus"></i> ${T("Era")}</button>
+            <span class="cm-dica">${T("Ex.: \"Era do Fogo\", sufixo \"E.F.\", de 1 a 999, e \"Era dos Elementos\", \"E.E.\", de 1000 sem fim. Na contagem \"desde o início\", o ano 1003 da era que começa em 1000 aparece como \"4 E.E.\".")}</span></div>
 
           ${game.user.isGM ? (() => {
             const cfgEd = normalizar(c);
             const hoje = comConfig(cfgEd, this.calId, () => { const a = agora(); return { dia: a.dia, mes: a.mes, ano: a.ano + N.CFG.anoInicial, texto: textoData(a), hora: textoRelogio(segundoDoDia(a.wt)).slice(0, 5) }; });
-            return `<h4 class="cm-ed-sub"><i class="fa-solid fa-calendar-check"></i> Data atual do jogo</h4>
-            <p class="cm-dica" style="margin-top:0">Hoje neste calendário: <b>${esc(hoje.texto)}</b>, ${hoje.hora}.</p>
+            return `<h4 class="cm-ed-sub"><i class="fa-solid fa-calendar-check"></i> ${T("Data atual do jogo")}</h4>
+            <p class="cm-dica" style="margin-top:0">${T("Hoje neste calendário:")} <b>${esc(hoje.texto)}</b>, ${hoje.hora}.</p>
             <div class="cm-ed-rodape cm-ir">
-              Dia <input type="number" class="cm-ir-dia cm-curto" min="1" value="${hoje.dia + 1}">
-              de <select class="cm-ir-mes">${cfgEd.meses.map((m, k) => `<option value="${k}" ${k === hoje.mes ? "selected" : ""}>${esc(m.nome)}</option>`).join("")}</select>
-              de <input type="number" class="cm-ir-ano cm-medio" value="${hoje.ano}">
-              às <input type="text" class="cm-ir-hora cm-curto" value="${hoje.hora}" placeholder="HH:MM">
-              <button type="button" data-action="irData"><i class="fa-solid fa-calendar-check"></i> Ir para esta data</button>
+              ${T("Dia")} <input type="number" class="cm-ir-dia cm-curto" min="1" value="${hoje.dia + 1}">
+              ${T("de")} <select class="cm-ir-mes">${cfgEd.meses.map((m, k) => `<option value="${k}" ${k === hoje.mes ? "selected" : ""}>${esc(m.nome)}</option>`).join("")}</select>
+              ${T("de")} <input type="number" class="cm-ir-ano cm-medio" value="${hoje.ano}">
+              ${T("às")} <input type="text" class="cm-ir-hora cm-curto" value="${hoje.hora}" placeholder="${T("HH:MM")}">
+              <button type="button" data-action="irData"><i class="fa-solid fa-calendar-check"></i> ${T("Ir para esta data")}</button>
             </div>
-            <p class="cm-dica">Muda o tempo do mundo para todos (as luas, a luz e os eventos acompanham). Usa os meses e anos que estão nesta tela, mesmo antes de salvar.</p>`;
+            <p class="cm-dica">${T("Muda o tempo do mundo para todos (as luas, a luz e os eventos acompanham). Usa os meses e anos que estão nesta tela, mesmo antes de salvar.")}</p>`;
           })() : ""}
         </fieldset>
 
-        <fieldset><legend>Dias da semana</legend>
+        <fieldset><legend>${T("Dias da semana")}</legend>
           <div class="cm-ed-lista">
-            <div class="cm-ed-cab cm-c-sem"><span>Nome</span><span>Abrev.</span><span></span></div>
+            <div class="cm-ed-cab cm-c-sem"><span>${T("Nome")}</span><span>${T("Abrev.")}</span><span></span></div>
             ${c.semana.map((d, i) => `<div class="cm-ed-item cm-c-sem">${campo(`semana.${i}.nome`, d.nome)}${campo(`semana.${i}.abrev`, d.abrev)}${linhaBtns("semana", i)}</div>`).join("")}
           </div>
           <div class="cm-ed-rodape">
-            <button type="button" data-action="add" data-lista="semana"><i class="fa-solid fa-plus"></i> Dia</button>
-            <label class="cm-inline">O tempo 0 cai em
+            <button type="button" data-action="add" data-lista="semana"><i class="fa-solid fa-plus"></i> ${T("Dia")}</button>
+            <label class="cm-inline">${T("O tempo 0 cai em")}
               <select data-caminho="primeiroDiaSemana" data-n="1">${c.semana.map((d, i) => `<option value="${i}" ${i === c.primeiroDiaSemana ? "selected" : ""}>${esc(d.nome)}</option>`).join("")}</select>
             </label>
           </div>
         </fieldset>
 
-        <fieldset><legend>Meses <small>(${c.meses.length} meses · ${diasAno} dias no ano${bis ? ` · ${diasBis} no bissexto` : ""})</small></legend>
+        <fieldset><legend>${T("Meses")} <small>${T("({0} meses · {1} dias no ano{2})", [c.meses.length, diasAno, bis ? ` ${T("· {0} no bissexto", [diasBis])}` : ""])}</small></legend>
           <div class="cm-ed-lista">
-            <div class="cm-ed-cab ${bis ? "cm-c-mes" : "cm-c-mes1"}"><span>Nome</span><span>Abrev.</span><span>Dias</span>${bis ? "<span>Dias no bissexto</span>" : ""}<span></span></div>
+            <div class="cm-ed-cab ${bis ? "cm-c-mes" : "cm-c-mes1"}"><span>${T("Nome")}</span><span>${T("Abrev.")}</span><span>${T("Dias")}</span>${bis ? `<span>${T("Dias no bissexto")}</span>` : ""}<span></span></div>
             ${c.meses.map((m, i) => `<div class="cm-ed-lua">
               <div class="cm-ed-item ${bis ? "cm-c-mes" : "cm-c-mes1"}">${campo(`meses.${i}.nome`, m.nome)}${campo(`meses.${i}.abrev`, m.abrev)}${campo(`meses.${i}.dias`, m.dias, "number", `min="1"`)}${bis ? campo(`meses.${i}.diasBissexto`, m.diasBissexto ?? m.dias, "number", `min="1"`) : ""}${linhaBtns("meses", i)}</div>
               <div class="cm-ed-ap">
-                <i class="fa-solid fa-eye"></i> Aparece a cada ${campo(`meses.${i}.aparicao.cada`, m.aparicao.cada, "number", `min="0"`)} anos
-                e fica ${campo(`meses.${i}.aparicao.duracao`, m.aparicao.duracao, "number", `min="1"`)} anos, a partir de ${campo(`meses.${i}.aparicao.inicio`, m.aparicao.inicio, "number")}
-                <a data-action="mesHoje" data-i="${i}" data-tooltip="Começar o ciclo neste ano (o mês existe agora)"><i class="fa-solid fa-location-crosshairs"></i></a>
+                <i class="fa-solid fa-eye"></i> ${T("Aparece a cada {0} anos\n                e fica {1} anos, a partir de {2}", [campo(`meses.${i}.aparicao.cada`, m.aparicao.cada, "number", `min="0"`), campo(`meses.${i}.aparicao.duracao`, m.aparicao.duracao, "number", `min="1"`), campo(`meses.${i}.aparicao.inicio`, m.aparicao.inicio, "number")])}
+                <a data-action="mesHoje" data-i="${i}" data-tooltip="${T("Começar o ciclo neste ano (o mês existe agora)")}"><i class="fa-solid fa-location-crosshairs"></i></a>
                 <span class="cm-ap-estado">${(() => {
                   const a = m.aparicao ?? {};
-                  if (!(a.cada > 0) || a.duracao >= a.cada) return "existe todo ano";
+                  if (!(a.cada > 0) || a.duracao >= a.cada) return T("existe todo ano");
                   const ano = agora().ano + num(c.anoInicial, 0);
                   const pos = mod(ano - a.inicio, a.cada);
-                  return pos < a.duracao ? `existe em ${ano}${a.duracao - pos > 1 ? ` (até ${ano + a.duracao - pos - 1})` : ""}` : `volta em ${ano + a.cada - pos}`;
+                  return pos < a.duracao ? `${T("existe em {0}", [ano])}${a.duracao - pos > 1 ? ` ${T("(até {0})", [ano + a.duracao - pos - 1])}` : ""}` : T("volta em {0}", [ano + a.cada - pos]);
                 })()}</span>
               </div>
             </div>`).join("")}
           </div>
           <div class="cm-ed-rodape">
-            <button type="button" data-action="add" data-lista="meses"><i class="fa-solid fa-plus"></i> Mês</button>
-            <span class="cm-dica">Meses: "Aparece a cada" 0 = existe todo ano. Ex.: a cada 7 anos, fica 1 ano, a partir de 1021 → o mês só existe em 1021, 1028, 1035... O início é o ano exibido.</span>
+            <button type="button" data-action="add" data-lista="meses"><i class="fa-solid fa-plus"></i> ${T("Mês")}</button>
+            <span class="cm-dica">${T("Meses: \"Aparece a cada\" 0 = existe todo ano. Ex.: a cada 7 anos, fica 1 ano, a partir de 1021 → o mês só existe em 1021, 1028, 1035... O início é o ano exibido.")}</span>
           </div>
         </fieldset>
 
-        <fieldset><legend>Estações <small>(nascer e pôr do sol em horas, ex.: 6.5 = 6:30)</small></legend>
+        <fieldset><legend>${T("Estações")} <small>${T("(nascer e pôr do sol em horas, ex.: 6.5 = 6:30)")}</small></legend>
           <div class="cm-ed-lista">
-            <div class="cm-ed-cab cm-c-est"><span>Nome</span><span>Começa no dia</span><span>do mês</span><span>Termina</span><span>Nascer</span><span>Pôr</span><span>Ícone</span><span></span></div>
+            <div class="cm-ed-cab cm-c-est"><span>${T("Nome")}</span><span>${T("Começa no dia")}</span><span>${T("do mês")}</span><span>${T("Termina")}</span><span>${T("Nascer")}</span><span>${T("Pôr")}</span><span>${T("Ícone")}</span><span></span></div>
             ${c.estacoes.map((e, i) => `<div class="cm-ed-item cm-c-est">${campo(`estacoes.${i}.nome`, e.nome)}
               ${campo(`estacoes.${i}.diaInicio`, e.diaInicio ?? 1, "number", `min="1" max="${c.meses[(num(e.mesInicio, 1) || 1) - 1]?.dias ?? 31}"`)}
               <select data-caminho="estacoes.${i}.mesInicio" data-n="1">${c.meses.map((m, k) => `<option value="${k + 1}" ${k + 1 === num(e.mesInicio) ? "selected" : ""}>${esc(m.nome)}</option>`).join("")}</select>
-              <span class="cm-est-fim" data-tooltip="O dia antes de a próxima estação começar">${(() => { const f = fimDaEstacao(cn, i); return f && cn.estacoes.length > 1 ? `${f.dia} de ${esc(cn.meses[f.mes - 1]?.nome ?? "")}` : "o ano todo"; })()}</span>
+              <span class="cm-est-fim" data-tooltip="${T("O dia antes de a próxima estação começar")}">${(() => { const f = fimDaEstacao(cn, i); return f && cn.estacoes.length > 1 ? T("{0} de {1}", [f.dia, esc(cn.meses[f.mes - 1]?.nome ?? "")]) : T("o ano todo"); })()}</span>
               ${campo(`estacoes.${i}.nascer`, e.nascer, "number", `step="0.25" min="0"`)}${campo(`estacoes.${i}.por`, e.por, "number", `step="0.25" min="0"`)}
               <select data-caminho="estacoes.${i}.icone">${Object.entries(icones).map(([k, v]) => `<option value="${k}" ${k === e.icone ? "selected" : ""}>${v}</option>`).join("")}</select>
-              ${linhaBtns("estacoes", i)}</div>`).join("") || `<p class="cm-vazio">Sem estações.</p>`}
+              ${linhaBtns("estacoes", i)}</div>`).join("") || `<p class="cm-vazio">${T("Sem estações.")}</p>`}
           </div>
-          <div class="cm-ed-rodape"><button type="button" data-action="add" data-lista="estacoes"><i class="fa-solid fa-plus"></i> Estação</button>
-            <span class="cm-dica">Cada estação vai do dia em que começa até o dia antes da próxima. Ex.: inverno em 5 de Geada e primavera em 21 de Renascer → o inverno termina em 20 de Renascer. Pode virar o ano.</span></div>
+          <div class="cm-ed-rodape"><button type="button" data-action="add" data-lista="estacoes"><i class="fa-solid fa-plus"></i> ${T("Estação")}</button>
+            <span class="cm-dica">${T("Cada estação vai do dia em que começa até o dia antes da próxima. Ex.: inverno em 5 de Geada e primavera em 21 de Renascer → o inverno termina em 20 de Renascer. Pode virar o ano.")}</span></div>
         </fieldset>
 
-        <fieldset><legend>Luas</legend>
+        <fieldset><legend>${T("Luas")}</legend>
           <div class="cm-ed-lista">
-            <div class="cm-ed-cab cm-c-lua"><span>Nome</span><span>Ciclo (dias)</span><span>Deslocamento</span><span>Cor</span><span></span></div>
+            <div class="cm-ed-cab cm-c-lua"><span>${T("Nome")}</span><span>${T("Ciclo (dias)")}</span><span>${T("Deslocamento")}</span><span>${T("Cor")}</span><span></span></div>
             ${c.luas.map((l, i) => `<div class="cm-ed-lua">
               <div class="cm-ed-item cm-c-lua">${campo(`luas.${i}.nome`, l.nome)}${campo(`luas.${i}.ciclo`, l.ciclo, "number", `step="0.01" min="1"`)}${campo(`luas.${i}.deslocamento`, l.deslocamento, "number", `step="0.5"`)}${campo(`luas.${i}.cor`, l.cor, "color")}${linhaBtns("luas", i)}</div>
               <div class="cm-ed-ap">
-                <i class="fa-solid fa-eye"></i> Aparece a cada ${campo(`luas.${i}.aparicao.cada`, l.aparicao.cada, "number", `min="0"`)}
+                <i class="fa-solid fa-eye"></i> ${T("Aparece a cada {0}", [campo(`luas.${i}.aparicao.cada`, l.aparicao.cada, "number", `min="0"`)])}
                 <select data-caminho="luas.${i}.aparicao.unidade">${Object.keys(UNIDADES).map((u) => `<option value="${u}" ${u === l.aparicao.unidade ? "selected" : ""}>${u}</option>`).join("")}</select>
-                e fica ${campo(`luas.${i}.aparicao.duracao`, l.aparicao.duracao, "number", `min="1"`)}
+                ${T("e fica {0}", [campo(`luas.${i}.aparicao.duracao`, l.aparicao.duracao, "number", `min="1"`)])}
                 <select data-caminho="luas.${i}.aparicao.unidadeDuracao">${Object.keys(UNIDADES).map((u) => `<option value="${u}" ${u === l.aparicao.unidadeDuracao ? "selected" : ""}>${u}</option>`).join("")}</select>
-                no céu, a partir de ${campo(`luas.${i}.aparicao.inicio`, l.aparicao.inicio, "number")}
-                <a data-action="apHoje" data-i="${i}" data-tooltip="Começar o ciclo hoje (a lua aparece agora)"><i class="fa-solid fa-location-crosshairs"></i></a>
-                ${l.aparicao.cada > 0 ? `<span class="cm-ap-estado">${(() => { const v = visibilidadeLua(l, agora().td); return v.visivel ? `no céu agora, some em ${textoFalta(v)}` : `volta em ${textoFalta(v)}`; })()}</span>` : `<span class="cm-ap-estado">sempre visível</span>`}
+                ${T("no céu, a partir de {0}", [campo(`luas.${i}.aparicao.inicio`, l.aparicao.inicio, "number")])}
+                <a data-action="apHoje" data-i="${i}" data-tooltip="${T("Começar o ciclo hoje (a lua aparece agora)")}"><i class="fa-solid fa-location-crosshairs"></i></a>
+                ${l.aparicao.cada > 0 ? `<span class="cm-ap-estado">${(() => { const v = visibilidadeLua(l, agora().td); return v.visivel ? `${T("no céu agora, some em {0}", [textoFalta(v)])}` : T("volta em {0}", [textoFalta(v)]); })()}</span>` : `<span class="cm-ap-estado">${T("sempre visível")}</span>`}
               </div>
               <details class="cm-ed-fases" data-lua="${i}" ${this.fasesAbertas.has(i) ? "open" : ""}>
-                <summary><i class="fa-solid fa-moon"></i> Fases (${l.fases.length}): ${esc(l.fases.map((f) => f.nome).join(" · "))}</summary>
-                <div class="cm-ed-cab cm-c-fase"><span></span><span>Nome da fase</span><span>Duração relativa</span><span>No céu</span><span></span></div>
+                <summary><i class="fa-solid fa-moon"></i> ${T("Fases ({0}): {1}", [l.fases.length, esc(l.fases.map((f) => f.nome).join(" · "))])}</summary>
+                <div class="cm-ed-cab cm-c-fase"><span></span><span>${T("Nome da fase")}</span><span>${T("Duração relativa")}</span><span>${T("No céu")}</span><span></span></div>
                 ${l.fases.map((f, k) => {
                   const tot = l.fases.reduce((s, x) => s + x.peso, 0);
                   const centro = (l.fases.slice(0, k).reduce((s, x) => s + x.peso, 0) + f.peso / 2) / tot - l.fases[0].peso / tot / 2;
                   const dias = (l.ciclo * f.peso) / tot;
                   return `<div class="cm-ed-item cm-c-fase">${luaSVG(mod(centro, 1), l.cor, 18)}${campo(`luas.${i}.fases.${k}.nome`, f.nome)}${campo(`luas.${i}.fases.${k}.peso`, f.peso, "number", `step="0.5" min="0.1"`)}
-                    <span class="cm-fase-dias" data-tooltip="Quanto tempo esta fase fica no céu a cada ciclo de ${l.ciclo} dias">≈ ${dias.toLocaleString("pt-BR", { maximumFractionDigits: 1 })} ${Math.abs(dias - 1) < 0.05 ? "dia" : "dias"}</span>
-                    <span class="cm-linha-btns"><a data-action="remFase" data-i="${i}" data-k="${k}" data-tooltip="Remover fase"><i class="fa-solid fa-trash"></i></a></span></div>`;
+                    <span class="cm-fase-dias" data-tooltip="${T("Quanto tempo esta fase fica no céu a cada ciclo de {0} dias", [l.ciclo])}">≈ ${dias.toLocaleString(game.i18n.lang, { maximumFractionDigits: 1 })} ${Math.abs(dias - 1) < 0.05 ? T("dia") : T("dias")}</span>
+                    <span class="cm-linha-btns"><a data-action="remFase" data-i="${i}" data-k="${k}" data-tooltip="${T("Remover fase")}"><i class="fa-solid fa-trash"></i></a></span></div>`;
                 }).join("")}
                 <div class="cm-ed-rodape">
-                  <button type="button" data-action="addFase" data-i="${i}"><i class="fa-solid fa-plus"></i> Fase</button>
-                  <button type="button" data-action="fasesPadrao" data-i="${i}"><i class="fa-solid fa-rotate-left"></i> 8 fases padrão</button>
-                  <span class="cm-dica">A 1ª fase é a lua nova. As fases dividem o ciclo na proporção da duração relativa (ex.: cheia com 2 dura o dobro).</span>
+                  <button type="button" data-action="addFase" data-i="${i}"><i class="fa-solid fa-plus"></i> ${T("Fase")}</button>
+                  <button type="button" data-action="fasesPadrao" data-i="${i}"><i class="fa-solid fa-rotate-left"></i> ${T("8 fases padrão")}</button>
+                  <span class="cm-dica">${T("A 1ª fase é a lua nova. As fases dividem o ciclo na proporção da duração relativa (ex.: cheia com 2 dura o dobro).")}</span>
                 </div>
               </details>
-            </div>`).join("") || `<p class="cm-vazio">Sem luas.</p>`}
+            </div>`).join("") || `<p class="cm-vazio">${T("Sem luas.")}</p>`}
           </div>
-          <div class="cm-ed-rodape"><button type="button" data-action="add" data-lista="luas"><i class="fa-solid fa-plus"></i> Lua</button>
-            <span class="cm-dica">Deslocamento = em que dia do mundo a lua estava nova. "Aparece a cada" 0 = sempre no céu. O início é contado em anos exibidos (ex.: 1023), em meses desde o ano 0 ou em dias do mundo — o botão ⌖ começa o ciclo hoje.</span></div>
+          <div class="cm-ed-rodape"><button type="button" data-action="add" data-lista="luas"><i class="fa-solid fa-plus"></i> ${T("Lua")}</button>
+            <span class="cm-dica">${T("Deslocamento = em que dia do mundo a lua estava nova. \"Aparece a cada\" 0 = sempre no céu. O início é contado em anos exibidos (ex.: 1023), em meses desde o ano 0 ou em dias do mundo — o botão ⌖ começa o ciclo hoje.")}</span></div>
         </fieldset>
 
         <footer class="cm-ed-fim">
-          <p class="cm-dica"><i class="fa-solid fa-circle-info"></i> O tempo do mundo é guardado em segundos. Mudar meses, semana ou horas muda a data mostrada para o mesmo momento; as notas ficam no mesmo dia absoluto.</p>
-          <button type="button" class="cm-salvar" data-action="salvar"><i class="fa-solid fa-floppy-disk"></i> Salvar calendário</button>
+          <p class="cm-dica"><i class="fa-solid fa-circle-info"></i> ${T("O tempo do mundo é guardado em segundos. Mudar meses, semana ou horas muda a data mostrada para o mesmo momento; as notas ficam no mesmo dia absoluto.")}</p>
+          <button type="button" class="cm-salvar" data-action="salvar"><i class="fa-solid fa-floppy-disk"></i> ${T("Salvar calendário")}</button>
         </footer>
       </div>`;
   }
@@ -1032,8 +1030,8 @@ class EditorCalendario extends ApplicationV2 {
       this.render();
       const extra = r.avisos.length ? `<ul>${r.avisos.map((a) => `<li>${esc(a)}</li>`).join("")}</ul>` : "";
       Dialogo().prompt({
-        window: { title: "Calendário importado", icon: "fa-solid fa-file-import" },
-        content: `<p>Formato: <b>${esc(FORMATOS[r.formato])}</b></p><p><b>${esc(r.dados.nome)}</b>: ${r.dados.meses.length} meses, semana de ${r.dados.semana.length} dias, ${r.dados.estacoes.length} estações, ${r.dados.luas.length} luas.</p>${extra}<p class="cm-dica">Nada foi salvo ainda. Revise no editor e clique em Salvar calendário.</p>`,
+        window: { title: T("Calendário importado"), icon: "fa-solid fa-file-import" },
+        content: `<p>${T("Formato:")} <b>${esc(FORMATOS[r.formato])}</b></p><p><b>${esc(r.dados.nome)}</b>${T(": {0} meses, semana de {1} dias, {2} estações, {3} luas.", [r.dados.meses.length, r.dados.semana.length, r.dados.estacoes.length, r.dados.luas.length])}</p>${extra}<p class="cm-dica">${T("Nada foi salvo ainda. Revise no editor e clique em Salvar calendário.")}</p>`,
         rejectClose: false
       });
     } catch (err) {
@@ -1046,9 +1044,9 @@ class EditorCalendario extends ApplicationV2 {
     const fontes = fontesDoMundo();
     if (!fontes.length) return ui.notifications.warn("Não achei outro calendário neste mundo. Exporte o JSON no outro módulo e use Importar arquivo.");
     const escolha = await Dialogo().wait({
-      window: { title: "Importar do mundo", icon: "fa-solid fa-globe" },
+      window: { title: T("Importar do mundo"), icon: "fa-solid fa-globe" },
       content: `<div class="cm-form"><label>Calendário<select name="fonte">${fontes.map((f, i) => `<option value="${i}">${esc(f.rotulo)}</option>`).join("")}</select></label></div>`,
-      buttons: [{ action: "ok", label: "Importar", default: true, callback: (ev, btn) => btn.form.elements.fonte.value }, { action: "cancelar", label: "Cancelar" }],
+      buttons: [{ action: "ok", label: T("Importar"), default: true, callback: (ev, btn) => btn.form.elements.fonte.value }, { action: "cancelar", label: T("Cancelar") }],
       rejectClose: false
     });
     const f = fontes[num(escolha, -1)];
@@ -1063,11 +1061,11 @@ class EditorCalendario extends ApplicationV2 {
     const velho = lista[this.calId];
     const qtdNotas = velho ? game.journal.filter((j) => { const r = j.getFlag(MOD, "nota"); return r && calDaNota(r) === this.calId; }).length : 0;
     const r = await Dialogo().wait({
-      window: { title: "Salvar calendário", icon: "fa-solid fa-floppy-disk" },
-      content: `<div class="cm-form"><p>Salvar <b>${esc(novo.nome)}</b> para todos?</p>
-        <p class="cm-dica">${novo.meses.length} meses, ${novo.meses.reduce((s, m) => s + m.dias, 0)} dias no ano, semana de ${novo.semana.length} dias, ${novo.horasDia} horas por dia.</p>
-        ${qtdNotas ? `<label class="cm-chip"><input type="checkbox" name="manter" checked> As ${qtdNotas} notas deste calendário continuam na mesma data (ex.: "5 de Brasa" continua "5 de Brasa")</label>` : ""}</div>`,
-      buttons: [{ action: "ok", label: "Salvar", default: true, callback: (ev, btn) => ({ manter: !!btn.form.elements.manter?.checked }) }, { action: "cancelar", label: "Cancelar" }],
+      window: { title: T("Salvar calendário"), icon: "fa-solid fa-floppy-disk" },
+      content: `<div class="cm-form"><p>${T("Salvar")} <b>${esc(novo.nome)}</b> ${T("para todos?")}</p>
+        <p class="cm-dica">${T("{0} meses, {1} dias no ano, semana de {2} dias, {3} horas por dia.", [novo.meses.length, novo.meses.reduce((s, m) => s + m.dias, 0), novo.semana.length, novo.horasDia])}</p>
+        ${qtdNotas ? `<label class="cm-chip"><input type="checkbox" name="manter" checked> ${T("As {0} notas deste calendário continuam na mesma data (ex.: \"5 de Brasa\" continua \"5 de Brasa\")", [qtdNotas])}</label>` : ""}</div>`,
+      buttons: [{ action: "ok", label: T("Salvar"), default: true, callback: (ev, btn) => ({ manter: !!btn.form.elements.manter?.checked }) }, { action: "cancelar", label: T("Cancelar") }],
       rejectClose: false
     });
     if (!r || typeof r !== "object") return;
@@ -1078,9 +1076,9 @@ class EditorCalendario extends ApplicationV2 {
     aplicarCalendario();
     if (notasAntes) {
       const n = await reposicionarNotas(notasAntes, this.calId, novo);
-      if (n) ui.notifications.info(`${n} nota(s) ajustada(s) para continuar na mesma data.`);
+      if (n) ui.notifications.info(T("{0} nota(s) ajustada(s) para continuar na mesma data.", [n]));
     }
-    ui.notifications.info("Calendário salvo.");
+    ui.notifications.info(T("Calendário salvo."));
     rerenderJanelas();
     // continua no editor, já com o que foi salvo
     this.dados = normalizar(novo);
@@ -1096,14 +1094,14 @@ class JanelaLuz extends ApplicationV2 {
     id: "cm-luz",
     classes: ["cm-janela"],
     tag: "div",
-    window: { title: "Luz do mapa por hora", icon: "fa-solid fa-sun", resizable: true },
+    window: { title: T("Luz do mapa por hora"), icon: "fa-solid fa-sun", resizable: true },
     position: { width: 620, height: 720 },
     actions: {
       padrao() { this.L.horas = luzPadrao(); this.render(); },
       tudo(ev, t) { const v = num(t.dataset.v); this.L.horas = this.L.horas.map(() => v); this.render(); },
       async salvar() {
         await game.settings.set(MOD, "luz", this.L);
-        ui.notifications.info("Luz salva. As cenas com dia/noite ligado já foram atualizadas.");
+        ui.notifications.info(T("Luz salva. As cenas com dia/noite ligado já foram atualizadas."));
         this.close();
       }
     }
@@ -1123,41 +1121,40 @@ class JanelaLuz extends ApplicationV2 {
     const cenas = cenasDiaNoite().map((s) => esc(s.name)).join(", ");
     return `
       <div class="cm-raiz cm-editor cm-tema-${tema()}">
-        <p class="cm-dica" style="margin-top:0">Usa a escuridão nativa da cena (0% de luz = escuridão máxima). Entre uma hora e a seguinte a luz muda aos poucos.
-          Vale para as cenas com o dia/noite ligado (botão <i class="fa-solid fa-circle-half-stroke"></i> no HUD)${cenas ? `: <b>${cenas}</b>` : " — nenhuma ainda"}.</p>
+        <p class="cm-dica" style="margin-top:0">${T("Usa a escuridão nativa da cena (0% de luz = escuridão máxima). Entre uma hora e a seguinte a luz muda aos poucos.\n          Vale para as cenas com o dia/noite ligado (botão")} <i class="fa-solid fa-circle-half-stroke"></i> ${T("no HUD){0}.", [cenas ? `: <b>${cenas}</b>` : T(" — nenhuma ainda")])}</p>
         <div class="cm-luz-faixa">${faixa}</div>
 
-        <fieldset><legend>Luz de cada hora (${H} horas)</legend>
+        <fieldset><legend>${T("Luz de cada hora ({0} horas)", [H])}</legend>
           <div class="cm-luz-grade">${linhas}</div>
           <div class="cm-ed-rodape">
-            <button type="button" data-action="padrao"><i class="fa-solid fa-rotate-left"></i> Curva padrão</button>
-            <button type="button" data-action="tudo" data-v="100"><i class="fa-solid fa-sun"></i> Tudo claro</button>
-            <button type="button" data-action="tudo" data-v="0"><i class="fa-solid fa-moon"></i> Tudo escuro</button>
+            <button type="button" data-action="padrao"><i class="fa-solid fa-rotate-left"></i> ${T("Curva padrão")}</button>
+            <button type="button" data-action="tudo" data-v="100"><i class="fa-solid fa-sun"></i> ${T("Tudo claro")}</button>
+            <button type="button" data-action="tudo" data-v="0"><i class="fa-solid fa-moon"></i> ${T("Tudo escuro")}</button>
           </div>
         </fieldset>
 
-        <fieldset><legend>Noite e luas</legend>
+        <fieldset><legend>${T("Noite e luas")}</legend>
           <div class="cm-ed-grade cm-g3">
-            <label>Luz da lua cheia<small>quanto a lua mais clara no céu ilumina (lua nova ou sem lua = nada)</small>
+            <label>${T("Luz da lua cheia")}<small>${T("quanto a lua mais clara no céu ilumina (lua nova ou sem lua = nada)")}</small>
               <span class="cm-luz-par"><input type="range" min="0" max="100" step="5" value="${L.luaMax}" data-campo="luaMax"><span class="cm-luz-val" data-v="luaMax">${L.luaMax}%</span></span></label>
-            <label>Cor da noite<small>sem lua colorida no céu (padrão branco-azulado)</small>
+            <label>${T("Cor da noite")}<small>${T("sem lua colorida no céu (padrão branco-azulado)")}</small>
               <input type="color" value="${L.corNoite}" data-campo="corNoite"></label>
-            <label>Força da cor<small>quanto a noite fica tingida</small>
+            <label>${T("Força da cor")}<small>${T("quanto a noite fica tingida")}</small>
               <span class="cm-luz-par"><input type="range" min="0" max="1" step="0.05" value="${L.corIntensidade}" data-campo="corIntensidade"><span class="cm-luz-val" data-v="corIntensidade">${Math.round(L.corIntensidade * 100)}%</span></span></label>
           </div>
-          <p class="cm-dica">Uma lua com cor forte (ex.: Lua Rubra) tinge a noite com a cor dela enquanto for a mais clara no céu. Luas brancas ou cinzas usam a cor da noite.</p>
+          <p class="cm-dica">${T("Uma lua com cor forte (ex.: Lua Rubra) tinge a noite com a cor dela enquanto for a mais clara no céu. Luas brancas ou cinzas usam a cor da noite.")}</p>
         </fieldset>
 
-        <fieldset><legend>Saltos de tempo</legend>
+        <fieldset><legend>${T("Saltos de tempo")}</legend>
           <div class="cm-ed-grade cm-g3">
-            <label class="cm-check"><input type="checkbox" data-campo="gradual" ${L.gradual ? "checked" : ""}> Passar aos poucos ao pular horas<small>a luz passa por cada hora até chegar no horário (no máximo um dia)</small></label>
-            <label>Duração da passagem<small>segundos no total</small><input type="number" min="1" max="30" value="${L.transicao}" data-campo="transicao" data-n="1"></label>
+            <label class="cm-check"><input type="checkbox" data-campo="gradual" ${L.gradual ? "checked" : ""}> ${T("Passar aos poucos ao pular horas")}<small>${T("a luz passa por cada hora até chegar no horário (no máximo um dia)")}</small></label>
+            <label>${T("Duração da passagem")}<small>${T("segundos no total")}</small><input type="number" min="1" max="30" value="${L.transicao}" data-campo="transicao" data-n="1"></label>
           </div>
         </fieldset>
 
         <footer class="cm-ed-fim">
           <span class="cm-esp"></span>
-          <button type="button" class="cm-salvar" data-action="salvar"><i class="fa-solid fa-floppy-disk"></i> Salvar</button>
+          <button type="button" class="cm-salvar" data-action="salvar"><i class="fa-solid fa-floppy-disk"></i> ${T("Salvar")}</button>
         </footer>
       </div>`;
   }
@@ -1192,11 +1189,11 @@ class JanelaHistorico extends ApplicationV2 {
     id: "cm-historico",
     classes: ["cm-janela"],
     tag: "div",
-    window: { title: "Histórico da campanha", icon: "fa-solid fa-scroll", resizable: true },
+    window: { title: T("Histórico da campanha"), icon: "fa-solid fa-scroll", resizable: true },
     position: { width: 560, height: 640 },
     actions: {
       async novo() {
-        const texto = await pedirTexto("Registrar no histórico", "O que aconteceu hoje?");
+        const texto = await pedirTexto(T("Registrar no histórico"), T("O que aconteceu hoje?"));
         if (texto) { await registrarManual(texto); this.render(); }
       },
       async apagar(ev, t) {
@@ -1225,18 +1222,18 @@ class JanelaHistorico extends ApplicationV2 {
       <div class="cm-hist-dia">
         <h4>${esc(textoData(infoDia(td)))}</h4>
         <ul>${lista.map((i) => `<li><i class="fa-solid ${esc(i.icone)}"></i> <span>${esc(i.texto)}</span>
-          ${gm ? `<a class="cm-hist-x" data-action="apagar" data-id="${i.id}" data-tooltip="Apagar"><i class="fa-solid fa-xmark"></i></a>` : ""}</li>`).join("")}</ul>
+          ${gm ? `<a class="cm-hist-x" data-action="apagar" data-id="${i.id}" data-tooltip="${T("Apagar")}"><i class="fa-solid fa-xmark"></i></a>` : ""}</li>`).join("")}</ul>
       </div>`).join("");
     const f = (k, r) => `<button type="button" data-action="filtro" data-f="${k}" class="${this.filtro === k ? "cm-on" : ""}">${r}</button>`;
     return `<div class="cm-raiz cm-editor cm-tema-${tema()}">
       <div class="cm-ed-cals-linha">
-        ${f("tudo", "Tudo")}${f("eventos", "Eventos e viagens")}${f("manual", "Anotações")}
+        ${f("tudo", T("Tudo"))}${f("eventos", T("Eventos e viagens"))}${f("manual", T("Anotações"))}
         <span class="cm-esp"></span>
-        ${gm ? `<button type="button" data-action="novo"><i class="fa-solid fa-feather"></i> Anotar hoje</button>
-        <button type="button" data-action="exportar" data-tooltip="Cria ou atualiza o Diário 'Histórico da campanha'"><i class="fa-solid fa-book"></i> Criar Diário</button>` : ""}
+        ${gm ? `<button type="button" data-action="novo"><i class="fa-solid fa-feather"></i> ${T("Anotar hoje")}</button>
+        <button type="button" data-action="exportar" data-tooltip="${T("Cria ou atualiza o Diário 'Histórico da campanha'")}"><i class="fa-solid fa-book"></i> ${T("Criar Diário")}</button>` : ""}
       </div>
-      ${game.journal.find((j) => j.getFlag(MOD, "historico"))?.pages?.find((p) => p.getFlag(MOD, "arquivo")) ? `<p class="cm-dica"><i class="fa-solid fa-box-archive"></i> Aqui ficam os ${HIST_MAX} registros mais recentes; os mais antigos estão no Diário "Histórico da campanha", página Arquivo.</p>` : ""}
-      ${blocos || `<p class="cm-vazio">Nada registrado ainda. O histórico se preenche sozinho com o passar dos dias, eventos, viagens, clima e sessões.</p>`}
+      ${game.journal.find((j) => j.getFlag(MOD, "historico"))?.pages?.find((p) => p.getFlag(MOD, "arquivo")) ? `<p class="cm-dica"><i class="fa-solid fa-box-archive"></i> ${T("Aqui ficam os {0} registros mais recentes; os mais antigos estão no Diário \"Histórico da campanha\", página Arquivo.", [HIST_MAX])}</p>` : ""}
+      ${blocos || `<p class="cm-vazio">${T("Nada registrado ainda. O histórico se preenche sozinho com o passar dos dias, eventos, viagens, clima e sessões.")}</p>`}
     </div>`;
   }
 
@@ -1247,7 +1244,7 @@ async function pedirTexto(titulo, rotulo, valor = "") {
   const r = await Dialogo().wait({
     window: { title: titulo, icon: "fa-solid fa-feather" },
     content: `<div class="cm-form"><label>${esc(rotulo)}<textarea name="t" rows="3">${esc(valor)}</textarea></label></div>`,
-    buttons: [{ action: "ok", label: "Salvar", default: true, callback: (ev, btn) => btn.form.elements.t.value }, { action: "cancelar", label: "Cancelar" }],
+    buttons: [{ action: "ok", label: T("Salvar"), default: true, callback: (ev, btn) => btn.form.elements.t.value }, { action: "cancelar", label: T("Cancelar") }],
     rejectClose: false
   });
   return typeof r === "string" && r !== "ok" && r !== "cancelar" ? r.trim() : "";
@@ -1262,11 +1259,11 @@ async function registrarManual(texto) {
 async function exportarHistorico() {
   // a página "Recentes" é refeita; a página "Arquivo" guarda os registros antigos e nunca é apagada
   const e = await diarioHistorico();
-  const html = historicoHTML(historico()) || "<p>Nada registrado.</p>";
+  const html = historicoHTML(historico()) || `<p>${T("Nada registrado.")}</p>`;
   const pag = e.pages.find((p) => p.getFlag(MOD, "recentes"));
   if (pag) await pag.update({ "text.content": html });
-  else await e.createEmbeddedDocuments("JournalEntryPage", [{ name: "Recentes", type: "text", sort: 100000, text: { content: html }, flags: { [MOD]: { recentes: true } } }]);
-  ui.notifications.info("Diário \"Histórico da campanha\" atualizado.");
+  else await e.createEmbeddedDocuments("JournalEntryPage", [{ name: T("Recentes"), type: "text", sort: 100000, text: { content: html }, flags: { [MOD]: { recentes: true } } }]);
+  ui.notifications.info(T("Diário \"Histórico da campanha\" atualizado."));
   e.sheet?.render(true);
 }
 
@@ -1275,7 +1272,7 @@ async function exportarHistorico() {
  * Janela própria (não um diálogo do Foundry): tamanho fixo e redimensionável, só a lista de tempos rola,
  * o topo mostra o tempo de hoje ou o escolhido, e a barra de baixo (temperatura e Aplicar) fica sempre à vista. */
 
-const NOMES_ESTACAO = { primavera: "primavera", verao: "verão", outono: "outono", inverno: "inverno" };
+const NOMES_ESTACAO = { primavera: T("primavera"), verao: T("verão"), outono: T("outono"), inverno: T("inverno") };
 
 async function dialogoClima() {
   if (!game.user.isGM) return;
@@ -1285,14 +1282,14 @@ async function dialogoClima() {
 }
 
 const ICONES_CLIMA = {
-  "fa-sun": "Sol", "fa-cloud-sun": "Sol e nuvem", "fa-cloud": "Nuvem", "fa-cloud-moon": "Lua e nuvem", "fa-moon": "Lua", "fa-smog": "Névoa",
-  "fa-cloud-rain": "Chuva", "fa-cloud-showers-heavy": "Chuva forte", "fa-cloud-showers-water": "Chuva e água", "fa-cloud-bolt": "Raio e nuvem",
-  "fa-bolt": "Raio", "fa-cloud-meatball": "Granizo", "fa-snowflake": "Floco de neve", "fa-icicles": "Pingentes de gelo",
-  "fa-temperature-low": "Termômetro frio", "fa-temperature-high": "Termômetro quente", "fa-wind": "Vento", "fa-tornado": "Tornado",
-  "fa-hurricane": "Furacão", "fa-volcano": "Vulcão", "fa-fire": "Fogo", "fa-fire-flame-simple": "Chama", "fa-droplet": "Gota",
-  "fa-droplet-slash": "Sem água", "fa-water": "Água", "fa-mountain": "Montanha", "fa-sun-plant-wilt": "Seca", "fa-rainbow": "Arco-íris",
-  "fa-meteor": "Meteoro", "fa-star": "Estrela", "fa-skull": "Caveira", "fa-ghost": "Espíritos", "fa-eye": "Olho",
-  "fa-hand-sparkles": "Magia", "fa-biohazard": "Praga", "fa-hourglass-half": "Tempo", "fa-wand-magic-sparkles": "Aurora / brilho", "fa-circle-half-stroke": "Eclipse"
+  "fa-sun": T("Sol"), "fa-cloud-sun": T("Sol e nuvem"), "fa-cloud": T("Nuvem"), "fa-cloud-moon": T("Lua e nuvem"), "fa-moon": T("Lua"), "fa-smog": T("Névoa"),
+  "fa-cloud-rain": T("Chuva"), "fa-cloud-showers-heavy": T("Chuva forte"), "fa-cloud-showers-water": T("Chuva e água"), "fa-cloud-bolt": T("Raio e nuvem"),
+  "fa-bolt": T("Raio"), "fa-cloud-meatball": T("Granizo"), "fa-snowflake": T("Floco de neve"), "fa-icicles": T("Pingentes de gelo"),
+  "fa-temperature-low": T("Termômetro frio"), "fa-temperature-high": T("Termômetro quente"), "fa-wind": T("Vento"), "fa-tornado": T("Tornado"),
+  "fa-hurricane": T("Furacão"), "fa-volcano": T("Vulcão"), "fa-fire": T("Fogo"), "fa-fire-flame-simple": T("Chama"), "fa-droplet": T("Gota"),
+  "fa-droplet-slash": T("Sem água"), "fa-water": T("Água"), "fa-mountain": T("Montanha"), "fa-sun-plant-wilt": T("Seca"), "fa-rainbow": T("Arco-íris"),
+  "fa-meteor": T("Meteoro"), "fa-star": T("Estrela"), "fa-skull": T("Caveira"), "fa-ghost": T("Espíritos"), "fa-eye": T("Olho"),
+  "fa-hand-sparkles": T("Magia"), "fa-biohazard": T("Praga"), "fa-hourglass-half": T("Tempo"), "fa-wand-magic-sparkles": T("Aurora / brilho"), "fa-circle-half-stroke": T("Eclipse")
 };
 const opcoesIcone = (atual) => `${atual && !ICONES_CLIMA[atual] ? `<option value="${esc(atual)}" selected>${esc(atual)}</option>` : ""}${Object.entries(ICONES_CLIMA).map(([k, r]) => `<option value="${k}" ${atual === k ? "selected" : ""}>${esc(r)}</option>`).join("")}`;
 /** <select> de tempos agrupados. vazio = rótulo da opção "" (ou nada). */
@@ -1306,7 +1303,7 @@ class JanelaClima extends ApplicationV2 {
     id: "cm-clima",
     classes: ["cm-janela", "cm-clima-app"],
     tag: "div",
-    window: { title: "Clima", icon: "fa-solid fa-cloud-sun", resizable: true },
+    window: { title: T("Clima"), icon: "fa-solid fa-cloud-sun", resizable: true },
     position: { width: 820, height: 680 },
     actions: {
       aba(ev, t) { this.aba = t.dataset.aba; this.render(); },
@@ -1325,7 +1322,7 @@ class JanelaClima extends ApplicationV2 {
         this.guardarRascunho("anomalias");
         const id = this.ed.anomalias, r = this.rascunhos[`anomalias:${id}`];
         if (!r) return;
-        (r.climas ??= {})[N.idClimaAnomalia(id, foundry.utils.randomID(6))] = { nome: "Novo clima", grupo: "chuva", icone: "fa-cloud", efeito: "", temp: 0, desc: "" };
+        (r.climas ??= {})[N.idClimaAnomalia(id, foundry.utils.randomID(6))] = { nome: T("Novo clima"), grupo: "chuva", icone: "fa-cloud", efeito: "", temp: 0, desc: "" };
         this.render();
       },
       copiarClimaDe() {
@@ -1353,7 +1350,7 @@ class JanelaClima extends ApplicationV2 {
       async salvarTipo(ev, t) { await this.salvarTipo(t.dataset.grupo); },
       async restaurar(ev, t) { await this.restaurar(t.dataset.grupo); },
       async apagarTipo(ev, t) { await this.apagarTipo(t.dataset.grupo); },
-      async tornarPadrao() { await game.settings.set(MOD, "zonaPadrao", this.ed.zonas); ui.notifications.info(`"${ZONAS[this.ed.zonas]?.nome}" é a região padrão do mundo.`); this.render(); }
+      async tornarPadrao() { await game.settings.set(MOD, "zonaPadrao", this.ed.zonas); ui.notifications.info(`${T("\"{0}\" é a região padrão do mundo.", [ZONAS[this.ed.zonas]?.nome])}`); this.render(); }
     }
   };
 
@@ -1485,22 +1482,22 @@ class JanelaClima extends ApplicationV2 {
     const faixaTopo = this.faixa ?? (!CLIMAS[this.sel] && !this.mexeu ? atual : null);
     const anDe = N.anomaliaDe(zona);
     const anAtiva = anDe ? ANOMALIAS[anDe.tipo] : null;
-    const rotuloTopo = rolando ? "Rolar de novo" : CLIMAS[this.sel] ? "Novo tempo" : `Hoje em ${ZONAS[zona].nome}`;
+    const rotuloTopo = rolando ? T("Rolar de novo") : CLIMAS[this.sel] ? T("Novo tempo") : `${T("Hoje em {0}", [ZONAS[zona].nome])}`;
     const heroi = `<section class="cm-clima-heroi g-${rolando ? "rolar" : info?.grupo ?? "ceu"}">
         <div class="cm-clima-heroi-ico"><i class="fa-solid ${rolando ? "fa-dice" : info?.icone ?? "fa-cloud-sun"}"></i></div>
         <div class="cm-clima-heroi-txt">
           <small>${esc(rotuloTopo)} · ${esc(NOMES_ESTACAO[est])}</small>
-          <h2>${rolando ? "Surpresa" : esc(info?.nome ?? "Ainda não rolado")}</h2>
-          <p>${rolando ? `O clima de hoje será sorteado de novo pela tabela de ${esc(ZONAS[zona].nome)}.` : esc(info?.desc ?? "Escolha um tempo abaixo ou role pela tabela da região.")}</p>
+          <h2>${rolando ? T("Surpresa") : esc(info?.nome ?? T("Ainda não rolado"))}</h2>
+          <p>${rolando ? `${T("O clima de hoje será sorteado de novo pela tabela de {0}.", [esc(ZONAS[zona].nome)])}` : esc(info?.desc ?? T("Escolha um tempo abaixo ou role pela tabela da região."))}</p>
           ${anAtiva ? `<span class="cm-clima-anom"><i class="fa-solid ${anAtiva.icone ?? "fa-skull"}"></i> ${esc(anAtiva.nome)}</span>` : ""}
         </div>
         <div class="cm-clima-heroi-temp">
           <b data-temp-topo>${rolando ? "?" : `${this.paraTela(tempTopo)}${this.un}`}</b>
-          ${!rolando && faixaTopo?.min != null ? `<small>mín. ${this.paraTela(faixaTopo.min)} · máx. ${this.paraTela(faixaTopo.max)}</small>` : ""}
-          ${!rolando && faixaTopo?.onda ? `<small class="cm-clima-onda"><i class="fa-solid fa-temperature-arrow-${faixaTopo.onda === "calor" ? "up" : "down"}"></i> onda de ${esc(faixaTopo.onda)}</small>` : ""}
+          ${!rolando && faixaTopo?.min != null ? `<small>${T("mín. {0} · máx. {1}", [this.paraTela(faixaTopo.min), this.paraTela(faixaTopo.max)])}</small>` : ""}
+          ${!rolando && faixaTopo?.onda ? `<small class="cm-clima-onda"><i class="fa-solid fa-temperature-arrow-${faixaTopo.onda === "calor" ? "up" : "down"}"></i> ${T("onda de {0}", [esc(T(faixaTopo.onda))])}</small>` : ""}
         </div>
       </section>`;
-    const filtros = [["todos", "Todos", "fa-layer-group"], ...Object.entries(GRUPOS_CLIMA).map(([k, r]) => [k, r, { ceu: "fa-cloud-sun", nevoa: "fa-smog", chuva: "fa-cloud-rain", frio: "fa-snowflake", vento: "fa-wind" }[k]])]
+    const filtros = [["todos", T("Todos"), "fa-layer-group"], ...Object.entries(GRUPOS_CLIMA).map(([k, r]) => [k, r, { ceu: "fa-cloud-sun", nevoa: "fa-smog", chuva: "fa-cloud-rain", frio: "fa-snowflake", vento: "fa-wind" }[k]])]
       .map(([k, r, ic]) => `<button type="button" class="${this.filtro === k ? "ativo" : ""}" data-action="filtro" data-grupo="${k}"><i class="fa-solid ${ic}"></i> ${esc(r)}</button>`).join("");
     const cartoes = Object.entries(CLIMAS)
       .filter(([k, c]) => (!c.daAnomalia || c.daAnomalia === ZONAS[zona]?.anomaliaFixa) && (this.filtro === "todos" || c.grupo === this.filtro) && (!this.soEstacao || pesos[k]))
@@ -1508,17 +1505,17 @@ class JanelaClima extends ApplicationV2 {
         const pct = pesos[k] ? Math.max(1, Math.round((pesos[k] / soma) * 100)) : 0;
         return `<button type="button" class="cm-clima-cartao g-${c.grupo} ${this.sel === k ? "escolhido" : ""} ${atual?.tipo === k ? "hoje" : ""} ${pct ? "" : "raro"}"
             data-action="escolher" data-tipo="${k}" data-tooltip="${esc(c.desc ?? "")}">
-          <span class="cm-clima-selos">${atual?.tipo === k ? `<span class="cm-clima-hoje-selo">hoje</span>` : ""}${N.efeitoCena(k).weather || N.efeitoCena(k).preset ? `<i class="fa-solid fa-film" data-tooltip="Tem efeito na cena${N.efeitoCena(k).preset ? " (FXMaster)" : ""}"></i>` : ""}</span>
+          <span class="cm-clima-selos">${atual?.tipo === k ? `<span class="cm-clima-hoje-selo">${T("hoje")}</span>` : ""}${N.efeitoCena(k).weather || N.efeitoCena(k).preset ? `<i class="fa-solid fa-film" data-tooltip="${T("Tem efeito na cena{0}", [N.efeitoCena(k).preset ? T(" (FXMaster)") : ""])}"></i>` : ""}</span>
           <span class="cm-clima-cartao-ico"><i class="fa-solid ${c.icone}"></i></span>
           <span class="cm-clima-cartao-nome">${esc(c.nome)}</span>
           <span class="cm-clima-chance"><span style="width:${Math.round((pesos[k] ?? 0) / maxPeso * 100)}%"></span></span>
-          <small>${pct ? `${pct}% nesta estação` : "raro aqui"}</small>
+          <small>${pct ? `${T("{0}% nesta estação", [pct])}` : "raro aqui"}</small>
         </button>`;
-      }).join("") || `<p class="cm-vazio">Nenhum tempo deste grupo acontece nesta estação.</p>`;
+      }).join("") || `<p class="cm-vazio">${T("Nenhum tempo deste grupo acontece nesta estação.")}</p>`;
     const avancado = `<details class="cm-clima-avancado" ${this.avancadoAberto ? "open" : ""}>
-        <summary><i class="fa-solid fa-sliders"></i> ${anOk && N.anomaliaRegiaoInteira() ? "Região da cena e anomalia ativa" : "Região da cena"}</summary>
-        ${cena ? `<label>Região desta cena (${esc(cena.name)})<select name="zonaCena">
-          <option value="" ${!zonaCena ? "selected" : ""}>Padrão do mundo (${esc(ZONAS[N.zonaPadraoValida()]?.nome)})</option>
+        <summary><i class="fa-solid fa-sliders"></i> ${anOk && N.anomaliaRegiaoInteira() ? T("Região da cena e anomalia ativa") : T("Região da cena")}</summary>
+        ${cena ? `<label>${T("Região desta cena ({0})", [esc(cena.name)])}<select name="zonaCena">
+          <option value="" ${!zonaCena ? "selected" : ""}>${T("Padrão do mundo ({0})", [esc(ZONAS[N.zonaPadraoValida()]?.nome)])}</option>
           ${opcoes(ZONAS, zonaCena, (v) => v.nome)}</select></label>` : ""}
         ${cena ? (() => {
           const decisao = cena.getFlag(MOD, "climaNaCena");
@@ -1526,32 +1523,32 @@ class JanelaClima extends ApplicationV2 {
           return `<label class="cm-check cm-clima-na-cena"><input type="checkbox" name="climaNaCena" ${marcado ? "checked" : ""}> ${T("Mostrar o efeito do clima nesta cena")}</label>
             <p class="cm-dica">${esc(N.planoClimaCena(cena).incluir ? T("Esta cena recebe o efeito do clima.") : N.planoClimaCena(cena).motivo)}</p>`;
         })() : ""}
-        ${cena?.getFlag(MOD, "zonaAtiva") ? `<p class="cm-dica"><i class="fa-solid fa-map-location-dot"></i> O grupo está numa Região de clima do mapa; ela vale mais que a região da cena.</p>` : ""}
-        ${anOk && ZONAS[zona]?.virtual ? `<p class="cm-dica"><i class="fa-solid ${anAtiva?.icone ?? "fa-skull"}"></i> Esta é a região da anomalia <b>${esc(anAtiva?.nome ?? "")}</b>: ela está sempre ativa aqui.</p>` : ""}
-        ${anOk && N.anomaliaRegiaoInteira() && !ZONAS[zona]?.virtual ? `<label>Anomalia cobrindo ${esc(ZONAS[zona].nome)} inteira<select name="anomalia">${opcoes(ANOMALIAS, an.tipo, (v) => v.nome)}</select></label>` : ""}
-        ${anOk && (ZONAS[zona]?.virtual || N.anomaliaRegiaoInteira()) ? `<label>Descrição da anomalia para os jogadores<textarea name="anTexto" rows="2" placeholder="Deixe vazio para usar o texto da anomalia">${esc(an.texto ?? "")}</textarea></label>` : ""}
-        <p class="cm-dica">Os tempos, as regiões${anOk ? " e as anomalias" : ""} são criados e editados nas outras abas.</p>
+        ${cena?.getFlag(MOD, "zonaAtiva") ? `<p class="cm-dica"><i class="fa-solid fa-map-location-dot"></i> ${T("O grupo está numa Região de clima do mapa; ela vale mais que a região da cena.")}</p>` : ""}
+        ${anOk && ZONAS[zona]?.virtual ? `<p class="cm-dica"><i class="fa-solid ${anAtiva?.icone ?? "fa-skull"}"></i> ${T("Esta é a região da anomalia")} <b>${esc(anAtiva?.nome ?? "")}</b>${T(": ela está sempre ativa aqui.")}</p>` : ""}
+        ${anOk && N.anomaliaRegiaoInteira() && !ZONAS[zona]?.virtual ? `<label>${T("Anomalia cobrindo {0} inteira", [esc(ZONAS[zona].nome)])}<select name="anomalia">${opcoes(ANOMALIAS, an.tipo, (v) => v.nome)}</select></label>` : ""}
+        ${anOk && (ZONAS[zona]?.virtual || N.anomaliaRegiaoInteira()) ? `<label>${T("Descrição da anomalia para os jogadores")}<textarea name="anTexto" rows="2" placeholder="${T("Deixe vazio para usar o texto da anomalia")}">${esc(an.texto ?? "")}</textarea></label>` : ""}
+        <p class="cm-dica">${T("Os tempos, as regiões{0} são criados e editados nas outras abas.", [anOk ? T(" e as anomalias") : ""])}</p>
       </details>`;
     const t = this.paraTela(tempTopo);
     return `${heroi}
       <nav class="cm-clima-abas">${filtros}
-        <button type="button" class="cm-clima-estacao ${this.soEstacao ? "ativo" : ""}" data-action="estacao" data-tooltip="Mostrar só os tempos que acontecem nesta estação"><i class="fa-solid fa-filter"></i></button>
+        <button type="button" class="cm-clima-estacao ${this.soEstacao ? "ativo" : ""}" data-action="estacao" data-tooltip="${T("Mostrar só os tempos que acontecem nesta estação")}"><i class="fa-solid fa-filter"></i></button>
       </nav>
       <div class="cm-clima-lista">
         <div class="cm-clima-grade">${cartoes}</div>
         ${avancado}
       </div>
       <footer class="cm-clima-rodape">
-        <button type="button" class="cm-clima-rolar ${rolando ? "ativo" : ""}" data-action="rolar" data-tooltip="Sortear o tempo e a temperatura de novo pela tabela da região"><i class="fa-solid fa-dice"></i> Rolar tempo</button>
-        <div class="cm-clima-termo" data-tooltip="Temperatura do dia (${this.un})">
+        <button type="button" class="cm-clima-rolar ${rolando ? "ativo" : ""}" data-action="rolar" data-tooltip="${T("Sortear o tempo e a temperatura de novo pela tabela da região")}"><i class="fa-solid fa-dice"></i> ${T("Rolar tempo")}</button>
+        <div class="cm-clima-termo" data-tooltip="${T("Temperatura do dia ({0})", [this.un])}">
           <i class="fa-solid fa-temperature-half"></i>
           <input type="range" name="tempFaixa" min="${this.paraTela(-40)}" max="${this.paraTela(55)}" step="1" value="${t}" ${rolando ? "disabled" : ""}>
           <input type="number" name="temp" value="${t}" ${rolando ? "disabled" : ""}><span>${this.un}</span>
-          <button type="button" class="cm-clima-dado" data-action="rolarTemp" ${rolando ? "disabled" : ""} data-tooltip="Rolar só a temperatura (com mínima e máxima) para este tempo"><i class="fa-solid fa-dice-d20"></i></button>
+          <button type="button" class="cm-clima-dado" data-action="rolarTemp" ${rolando ? "disabled" : ""} data-tooltip="${T("Rolar só a temperatura (com mínima e máxima) para este tempo")}"><i class="fa-solid fa-dice-d20"></i></button>
         </div>
         <span class="cm-esp"></span>
-        <button type="button" data-action="cancelar">Cancelar</button>
-        <button type="button" class="cm-clima-aplicar" data-action="aplicar"><i class="fa-solid fa-check"></i> Aplicar</button>
+        <button type="button" data-action="cancelar">${T("Cancelar")}</button>
+        <button type="button" class="cm-clima-aplicar" data-action="aplicar"><i class="fa-solid fa-check"></i> ${T("Aplicar")}</button>
       </footer>`;
   }
 
@@ -1601,10 +1598,10 @@ class JanelaClima extends ApplicationV2 {
     const salvos = game.settings.get(MOD, "climaTipos")?.[grupo] ?? {};
     const rascunhos = Object.entries(this.rascunhos).filter(([k]) => k.startsWith(`${grupo}:`)).map(([k, d]) => [k.slice(grupo.length + 1), d]);
     const itens = [...Object.entries(mapa).filter(([k, d]) => k !== "nenhuma" && !d.virtual && !d.daAnomalia), ...rascunhos.filter(([id]) => !mapa[id])];
-    const novo = { climas: "Novo clima", zonas: "Nova região", anomalias: "Nova anomalia", efeitos: "Novo efeito" }[grupo];
+    const novo = { climas: T("Novo clima"), zonas: T("Nova região"), anomalias: T("Nova anomalia"), efeitos: T("Novo efeito") }[grupo];
     const item = ([id, d]) => {
       const rasc = this.rascunhos[`${grupo}:${id}`];
-      const marca = rasc ? (mapa[id] ? "alterações não salvas" : "não salvo") : N.ehDeFabrica(grupo, id) ? (salvos[id] ? "de fábrica · editado" : "de fábrica") : grupo === "anomalias" && d.regiao ? "criada · é uma região" : "criado por você";
+      const marca = rasc ? (mapa[id] ? T("alterações não salvas") : T("não salvo")) : N.ehDeFabrica(grupo, id) ? (salvos[id] ? T("de fábrica · editado") : T("de fábrica")) : grupo === "anomalias" && d.regiao ? T("criada · é uma região") : T("criado por você");
       const v = rasc ?? d;
       const ic = grupo === "zonas" ? (v.elemento ? "fa-gem" : "fa-earth-americas") : grupo === "efeitos" ? "fa-wand-magic-sparkles" : (v.icone ?? "fa-skull");
       return `<button type="button" class="cm-ce-item ${grupo === "climas" ? `g-${v.grupo}` : ""} ${id === atualId ? "ativo" : ""}" data-action="editar" data-grupo="${grupo}" data-id="${id}">
@@ -1612,9 +1609,9 @@ class JanelaClima extends ApplicationV2 {
     };
     const corpo = grupo === "climas"
       ? Object.entries(GRUPOS_CLIMA).map(([g, rot]) => { const doGrupo = itens.filter(([, d]) => d.grupo === g); return doGrupo.length ? `<h5>${esc(rot)}</h5>${doGrupo.map(item).join("")}` : ""; }).join("")
-      : itens.map(item).join("") || (grupo === "efeitos" ? `<p class="cm-dica">Nenhum efeito criado ainda.</p>` : "");
+      : itens.map(item).join("") || (grupo === "efeitos" ? `<p class="cm-dica">${T("Nenhum efeito criado ainda.")}</p>` : "");
     const troca = grupo === "climas" || grupo === "efeitos"
-      ? `<div class="cm-ce-sub"><button type="button" class="${grupo === "climas" ? "ativo" : ""}" data-action="subClimas" data-sub="climas"><i class="fa-solid fa-cloud-sun"></i> Climas</button><button type="button" class="${grupo === "efeitos" ? "ativo" : ""}" data-action="subClimas" data-sub="efeitos"><i class="fa-solid fa-wand-magic-sparkles"></i> Efeitos</button></div>` : "";
+      ? `<div class="cm-ce-sub"><button type="button" class="${grupo === "climas" ? "ativo" : ""}" data-action="subClimas" data-sub="climas"><i class="fa-solid fa-cloud-sun"></i> ${T("Climas")}</button><button type="button" class="${grupo === "efeitos" ? "ativo" : ""}" data-action="subClimas" data-sub="efeitos"><i class="fa-solid fa-wand-magic-sparkles"></i> ${T("Efeitos")}</button></div>` : "";
     return `<aside class="cm-ce-lista">
       ${troca}
       <button type="button" class="cm-ce-novo" data-action="novo" data-grupo="${grupo}"><i class="fa-solid fa-plus"></i> ${novo}</button>
@@ -1632,7 +1629,7 @@ class JanelaClima extends ApplicationV2 {
       efeitos: { nome: "", base: "rain", cor: "", forca: 1, velocidade: 1, tamanho: 1, direcao: null, base2: "", cor2: "", forca2: 1 }
     }[grupo];
     const base = duplicar && atual ? foundry.utils.deepClone(atual) : vazio;
-    base.nome = duplicar ? `${base.nome} (cópia)` : { climas: "Novo clima", zonas: "Nova região", anomalias: "Nova anomalia", efeitos: "Novo efeito" }[grupo];
+    base.nome = duplicar ? `${T("{0} (cópia)", [base.nome])}` : { climas: T("Novo clima"), zonas: T("Nova região"), anomalias: T("Nova anomalia"), efeitos: T("Novo efeito") }[grupo];
     base.criada = true;
     delete base.elemento; delete base.reserva; delete base.virtual; delete base.anomaliaFixa;
     if (grupo === "anomalias" && duplicar) {
@@ -1651,15 +1648,15 @@ class JanelaClima extends ApplicationV2 {
   }
 
   rodapeEditor(grupo, { fabrica, editada, novo, alterado, extra = "" }) {
-    const nome = { climas: "clima", zonas: "região", anomalias: "anomalia", efeitos: "efeito" }[grupo];
+    const nome = { climas: T("clima"), zonas: T("região"), anomalias: T("anomalia"), efeitos: T("efeito") }[grupo];
     return `<footer class="cm-ce-acoes">
       ${extra}
-      <button type="button" data-action="duplicar" data-grupo="${grupo}"><i class="fa-solid fa-copy"></i> Duplicar</button>
-      ${alterado ? `<button type="button" data-action="descartar" data-grupo="${grupo}"><i class="fa-solid fa-xmark"></i> Descartar alterações</button>` : ""}
-      ${editada && !alterado ? `<button type="button" data-action="restaurar" data-grupo="${grupo}"><i class="fa-solid fa-rotate-left"></i> Restaurar de fábrica</button>` : ""}
-      ${!fabrica && !alterado ? `<button type="button" class="cm-ce-perigo" data-action="apagarTipo" data-grupo="${grupo}"><i class="fa-solid fa-trash"></i> ${novo ? "Descartar" : "Apagar"}</button>` : ""}
+      <button type="button" data-action="duplicar" data-grupo="${grupo}"><i class="fa-solid fa-copy"></i> ${T("Duplicar")}</button>
+      ${alterado ? `<button type="button" data-action="descartar" data-grupo="${grupo}"><i class="fa-solid fa-xmark"></i> ${T("Descartar alterações")}</button>` : ""}
+      ${editada && !alterado ? `<button type="button" data-action="restaurar" data-grupo="${grupo}"><i class="fa-solid fa-rotate-left"></i> ${T("Restaurar de fábrica")}</button>` : ""}
+      ${!fabrica && !alterado ? `<button type="button" class="cm-ce-perigo" data-action="apagarTipo" data-grupo="${grupo}"><i class="fa-solid fa-trash"></i> ${novo ? T("Descartar") : T("Apagar")}</button>` : ""}
       <span class="cm-esp"></span>
-      <button type="button" class="cm-clima-aplicar" data-action="salvarTipo" data-grupo="${grupo}"><i class="fa-solid fa-floppy-disk"></i> Salvar ${nome}</button>
+      <button type="button" class="cm-clima-aplicar" data-action="salvarTipo" data-grupo="${grupo}"><i class="fa-solid fa-floppy-disk"></i> ${T("Salvar {0}", [nome])}</button>
     </footer>`;
   }
 
@@ -1678,12 +1675,12 @@ class JanelaClima extends ApplicationV2 {
     const grupos = [
       ["Foundry", Object.keys(W).filter((k) => !k.startsWith("cm-") && !k.startsWith(N.PREFIXO_EFEITO) && !k.startsWith("fxmaster."))],
       ["Calendário da Mesa", Object.keys(W).filter((k) => k.startsWith("cm-"))],
-      ...(semPersonalizados ? [] : [["Seus efeitos", Object.keys(W).filter((k) => k.startsWith(N.PREFIXO_EFEITO) && k !== `${N.PREFIXO_EFEITO}teste`)]]),
-      ["FXMaster (partículas)", Object.keys(W).filter((k) => k.startsWith("fxmaster."))]
+      ...(semPersonalizados ? [] : [[T("Seus efeitos"), Object.keys(W).filter((k) => k.startsWith(N.PREFIXO_EFEITO) && k !== `${N.PREFIXO_EFEITO}teste`)]]),
+      [T("FXMaster (partículas)"), Object.keys(W).filter((k) => k.startsWith("fxmaster."))]
     ];
     return `<option value="" ${!atual ? "selected" : ""}>${esc(vazio)}</option>` +
       grupos.filter(([, ks]) => ks.length).map(([g, ks]) => `<optgroup label="${esc(g)}">${ks.map((k) => `<option value="${esc(k)}" ${atual === k ? "selected" : ""}>${esc(rot(k))}</option>`).join("")}</optgroup>`).join("") +
-      (atual && !W[atual] ? `<option value="${esc(atual)}" selected>${esc(atual)} (não encontrado neste mundo)</option>` : "");
+      (atual && !W[atual] ? `<option value="${esc(atual)}" selected>${T("{0} (não encontrado neste mundo)", [esc(atual)])}</option>` : "");
   }
 
   /** Tabela de chances (pesos por estação). climas = [[id, clima]]. */
@@ -1693,20 +1690,20 @@ class JanelaClima extends ApplicationV2 {
       const doGrupo = climas.filter(([, c]) => c.grupo === g);
       if (!doGrupo.length) return "";
       return `<tr class="cm-ce-grupo"><th colspan="5">${esc(rot)}</th></tr>` + doGrupo.map(([k, c]) => `<tr>
-        <td class="cm-ce-tipo g-${c.grupo}"><span class="cm-ce-bola"><i class="fa-solid ${c.icone}"></i></span> ${esc(c.nome)}${c.daAnomalia ? ` <small class="cm-ce-novo-selo">desta anomalia</small>` : N.ehDeFabrica("climas", k) ? "" : ` <small class="cm-ce-novo-selo">novo</small>`}</td>
+        <td class="cm-ce-tipo g-${c.grupo}"><span class="cm-ce-bola"><i class="fa-solid ${c.icone}"></i></span> ${esc(c.nome)}${c.daAnomalia ? ` <small class="cm-ce-novo-selo">${T("desta anomalia")}</small>` : N.ehDeFabrica("climas", k) ? "" : ` <small class="cm-ce-novo-selo">${T("novo")}</small>`}</td>
         ${N.ESTACOES_CLIMA.map((e) => `<td><input type="number" min="0" max="1000" step="1" name="peso.${e}.${k}" value="${pesos?.[e]?.[k] ?? 0}" data-estacao="${e}"></td>`).join("")}
       </tr>`).join("");
     }).join("");
     return `<div class="cm-ce-tabela-caixa"><table class="cm-ce-tabela">
-      <thead><tr><th>Clima</th>${N.ESTACOES_CLIMA.map((e) => `<th>${esc(NOMES_ESTACAO[e])}<small data-soma="${e}" class="${somas[e] ? "" : "zero"}">soma ${somas[e]}</small></th>`).join("")}</tr></thead>
+      <thead><tr><th>${T("Clima")}</th>${N.ESTACOES_CLIMA.map((e) => `<th>${esc(NOMES_ESTACAO[e])}<small data-soma="${e}" class="${somas[e] ? "" : "zero"}">${T("soma {0}", [somas[e]])}</small></th>`).join("")}</tr></thead>
       <tbody>${linhas}</tbody>
     </table></div>`;
   }
 
   /** Temperatura média por estação + variação. */
   camposTemperatura(z) {
-    return `<div class="cm-ce-temps cinco">${N.ESTACOES_CLIMA.map((e) => `<label>Média · ${esc(NOMES_ESTACAO[e])}<input type="number" name="temp.${e}" value="${this.paraTela(z?.temp?.[e] ?? 15)}"></label>`).join("")}
-      <label data-tooltip="Quanto um dia comum pode fugir da média, para cima ou para baixo. Os extremos (raros) chegam a 1,5× isso, mais as ondas de calor e frio.">Variação ± <input type="number" name="variacao" min="1" max="40" value="${this.difTela(z?.variacao ?? 10)}"></label></div>`;
+    return `<div class="cm-ce-temps cinco">${N.ESTACOES_CLIMA.map((e) => `<label>${T("Média · {0}", [esc(NOMES_ESTACAO[e])])}<input type="number" name="temp.${e}" value="${this.paraTela(z?.temp?.[e] ?? 15)}"></label>`).join("")}
+      <label data-tooltip="${T("Quanto um dia comum pode fugir da média, para cima ou para baixo. Os extremos (raros) chegam a 1,5× isso, mais as ondas de calor e frio.")}">${T("Variação ±")} <input type="number" name="variacao" min="1" max="40" value="${this.difTela(z?.variacao ?? 10)}"></label></div>`;
   }
 
   lerTemperaturaEPesos(f, climasValidos) {
@@ -1731,37 +1728,37 @@ class JanelaClima extends ApplicationV2 {
     const presets = api ? N.presetsFx() : N.PRESETS_FX_CONHECIDOS;
     const particulas = Object.keys(CONFIG.weatherEffects ?? {}).filter((k) => k.startsWith("fxmaster."));
     const fxAtual = c.fx ?? "";
-    const fxOp = `<option value="" ${!fxAtual ? "selected" : ""}>— nenhum: usa o efeito do Foundry —</option>
-      <optgroup label="Presets do FXMaster">${presets.map((p) => `<option value="fxp:${esc(p)}" ${fxAtual === `fxp:${p}` ? "selected" : ""}>${esc(p)}</option>`).join("")}</optgroup>
-      ${particulas.length ? `<optgroup label="Partículas do FXMaster">${particulas.map((k) => `<option value="${esc(k)}" ${fxAtual === k ? "selected" : ""}>${esc(k.slice(9))}</option>`).join("")}</optgroup>` : ""}
-      ${fxAtual && !presets.includes(fxAtual.slice(4)) && !particulas.includes(fxAtual) ? `<option value="${esc(fxAtual)}" selected>${esc(fxAtual.replace(/^fxp:/, ""))} (não encontrado)</option>` : ""}`;
-    const niveis = (atual) => [["", "padrão"], ["very-low", "muito baixa"], ["low", "baixa"], ["medium", "média"], ["high", "alta"], ["very-high", "muito alta"]].map(([k, r]) => `<option value="${k}" ${(atual ?? "") === k ? "selected" : ""}>${r}</option>`).join("");
+    const fxOp = `<option value="" ${!fxAtual ? "selected" : ""}>${T("— nenhum: usa o efeito do Foundry —")}</option>
+      <optgroup label="${T("Presets do FXMaster")}">${presets.map((p) => `<option value="fxp:${esc(p)}" ${fxAtual === `fxp:${p}` ? "selected" : ""}>${esc(p)}</option>`).join("")}</optgroup>
+      ${particulas.length ? `<optgroup label="${T("Partículas do FXMaster")}">${particulas.map((k) => `<option value="${esc(k)}" ${fxAtual === k ? "selected" : ""}>${esc(k.slice(9))}</option>`).join("")}</optgroup>` : ""}
+      ${fxAtual && !presets.includes(fxAtual.slice(4)) && !particulas.includes(fxAtual) ? `<option value="${esc(fxAtual)}" selected>${T("{0} (não encontrado)", [esc(fxAtual.replace(/^fxp:/, ""))])}</option>` : ""}`;
+    const niveis = (atual) => [["", T("padrão")], ["very-low", T("muito baixa")], ["low", T("baixa")], ["medium", T("média")], ["high", T("alta")], ["very-high", T("muito alta")]].map(([k, r]) => `<option value="${k}" ${(atual ?? "") === k ? "selected" : ""}>${r}</option>`).join("");
     const o = c.fxOpcoes ?? {};
-    const situacaoFx = !api ? "O FXMaster não está ativo neste mundo: o clima usa o efeito do Foundry. A escolha abaixo fica guardada para quando ele estiver." : !ligado ? "A opção \"Usar o FXMaster nos climas\" está desligada nas configurações." : fxAtual ? "Com o FXMaster ativo, este clima usa o efeito dele no lugar do efeito do Foundry." : "Sem efeito do FXMaster: usa o efeito do Foundry.";
-    const efeitoInfo = c.efeito ? (CONFIG.weatherEffects?.[c.efeito] ? "com efeito na cena" : "efeito não encontrado") : "sem efeito na cena";
+    const situacaoFx = !api ? T("O FXMaster não está ativo neste mundo: o clima usa o efeito do Foundry. A escolha abaixo fica guardada para quando ele estiver.") : !ligado ? T("A opção \"Usar o FXMaster nos climas\" está desligada nas configurações.") : fxAtual ? T("Com o FXMaster ativo, este clima usa o efeito dele no lugar do efeito do Foundry.") : T("Sem efeito do FXMaster: usa o efeito do Foundry.");
+    const efeitoInfo = c.efeito ? (CONFIG.weatherEffects?.[c.efeito] ? T("com efeito na cena") : T("efeito não encontrado")) : T("sem efeito na cena");
     return `<div class="cm-ce">
       ${this.listaEditor("climas", st.id)}
       <section class="cm-ce-form" data-grupo="climas">
         <div class="cm-ce-corpo">
           <div class="cm-ce-previa g-${c.grupo}"><span class="cm-ce-bola grande"><i class="fa-solid ${c.icone ?? "fa-cloud"}"></i></span>
-            <div><b>${esc(c.nome || "Sem nome")}</b><small>${esc(GRUPOS_CLIMA[c.grupo] ?? "")} · ${c.temp > 0 ? "+" : ""}${this.difTela(c.temp ?? 0)}${this.un} · ${efeitoInfo}${fxAtual ? ` · FXMaster: ${esc(fxAtual.replace(/^fxp:|^fxmaster\./, ""))}` : ""}</small>
-            <small>${st.novo ? "Ainda não salvo." : uso.zonas.length || uso.anoms.length ? `Usado em: ${esc([...uso.zonas, ...uso.anoms].join(", "))}` : "Nenhuma região dá chance a este clima ainda (aba Regiões)."}</small></div></div>
+            <div><b>${esc(c.nome || T("Sem nome"))}</b><small>${esc(GRUPOS_CLIMA[c.grupo] ?? "")} · ${c.temp > 0 ? "+" : ""}${this.difTela(c.temp ?? 0)}${this.un} · ${efeitoInfo}${fxAtual ? ` ${T("· FXMaster: {0}", [esc(fxAtual.replace(/^fxp:|^fxmaster\./, ""))])}` : ""}</small>
+            <small>${st.novo ? T("Ainda não salvo.") : uso.zonas.length || uso.anoms.length ? `${T("Usado em: {0}", [esc([...uso.zonas, ...uso.anoms].join(", "))])}` : T("Nenhuma região dá chance a este clima ainda (aba Regiões).")}</small></div></div>
           <div class="cm-ce-campos">
-            <label>Nome<input type="text" name="nome" value="${esc(c.nome)}" maxlength="60" placeholder="Ex.: Chuva seca"></label>
-            <label>Grupo<select name="grupo">${Object.entries(GRUPOS_CLIMA).map(([k, r]) => `<option value="${k}" ${c.grupo === k ? "selected" : ""}>${esc(r)}</option>`).join("")}</select></label>
-            <label>Ícone<select name="icone">${opcoesIcone(c.icone)}</select></label>
-            <label>Efeito na cena (Foundry)<select name="efeito">${this.opcoesEfeito(c.efeito, "— nenhum (sem efeito na cena) —")}</select></label>
-            <label>Muda a temperatura do dia em (${this.un})<input type="number" name="temp" value="${this.difTela(c.temp ?? 0)}"></label>
-            <label class="cm-ce-largo">Descrição (vai para o chat)<textarea name="desc" rows="2" placeholder="O que os personagens veem e sentem.">${esc(c.desc ?? "")}</textarea></label>
+            <label>${T("Nome")}<input type="text" name="nome" value="${esc(c.nome)}" maxlength="60" placeholder="${T("Ex.: Chuva seca")}"></label>
+            <label>${T("Grupo")}<select name="grupo">${Object.entries(GRUPOS_CLIMA).map(([k, r]) => `<option value="${k}" ${c.grupo === k ? "selected" : ""}>${esc(r)}</option>`).join("")}</select></label>
+            <label>${T("Ícone")}<select name="icone">${opcoesIcone(c.icone)}</select></label>
+            <label>${T("Efeito na cena (Foundry)")}<select name="efeito">${this.opcoesEfeito(c.efeito, T("— nenhum (sem efeito na cena) —"))}</select></label>
+            <label>${T("Muda a temperatura do dia em ({0})", [this.un])}<input type="number" name="temp" value="${this.difTela(c.temp ?? 0)}"></label>
+            <label class="cm-ce-largo">${T("Descrição (vai para o chat)")}<textarea name="desc" rows="2" placeholder="${T("O que os personagens veem e sentem.")}">${esc(c.desc ?? "")}</textarea></label>
           </div>
           <h4><i class="fa-solid fa-wand-sparkles"></i> FXMaster <small>${esc(situacaoFx)}</small></h4>
           <div class="cm-ce-campos cm-ce-fx">
-            <label class="cm-ce-largo">Efeito do FXMaster<select name="fx">${fxOp}</select></label>
-            <label>Densidade<select name="fxDensidade">${niveis(o.densidade)}</select></label>
-            <label>Velocidade<select name="fxVelocidade">${niveis(o.velocidade)}</select></label>
-            <label class="cm-ce-cor"><span><input type="checkbox" name="fxUsarCor" ${o.cor ? "checked" : ""}> Mudar a cor (só presets)</span><input type="color" name="fxCor" value="${esc(o.cor || "#88ccff")}"></label>
+            <label class="cm-ce-largo">${T("Efeito do FXMaster")}<select name="fx">${fxOp}</select></label>
+            <label>${T("Densidade")}<select name="fxDensidade">${niveis(o.densidade)}</select></label>
+            <label>${T("Velocidade")}<select name="fxVelocidade">${niveis(o.velocidade)}</select></label>
+            <label class="cm-ce-cor"><span><input type="checkbox" name="fxUsarCor" ${o.cor ? "checked" : ""}> ${T("Mudar a cor (só presets)")}</span><input type="color" name="fxCor" value="${esc(o.cor || "#88ccff")}"></label>
           </div>
-          <p class="cm-dica">Para um visual só seu (chuva vermelha, neblina roxa...), crie um efeito em <b>Efeitos</b> (botão no alto da lista) e escolha-o em "Efeito na cena".</p>
+          <p class="cm-dica">${T("Para um visual só seu (chuva vermelha, neblina roxa...), crie um efeito em")} <b>${T("Efeitos")}</b> ${T("(botão no alto da lista) e escolha-o em \"Efeito na cena\".")}</p>
         </div>
         ${this.rodapeEditor("climas", st)}
       </section>
@@ -1778,9 +1775,9 @@ class JanelaClima extends ApplicationV2 {
       return `<div class="cm-ce">${this.listaEditor("efeitos", null)}
         <section class="cm-ce-form" data-grupo="efeitos"><div class="cm-ce-corpo"><div class="cm-ce-vazio-grande">
           <i class="fa-solid fa-wand-magic-sparkles"></i>
-          <h3>Seus efeitos de clima</h3>
-          <p>Faça versões dos efeitos do Foundry, do Calendário ou do FXMaster: mude a cor, a força, a velocidade, o tamanho e a direção, e junte dois efeitos num só. Exemplos: chuva vermelha, neblina roxa, neve dourada, chuva com neve, tempestade com névoa baixa.</p>
-          <button type="button" class="cm-clima-aplicar" data-action="novo" data-grupo="efeitos"><i class="fa-solid fa-plus"></i> Novo efeito</button>
+          <h3>${T("Seus efeitos de clima")}</h3>
+          <p>${T("Faça versões dos efeitos do Foundry, do Calendário ou do FXMaster: mude a cor, a força, a velocidade, o tamanho e a direção, e junte dois efeitos num só. Exemplos: chuva vermelha, neblina roxa, neve dourada, chuva com neve, tempestade com névoa baixa.")}</p>
+          <button type="button" class="cm-clima-aplicar" data-action="novo" data-grupo="efeitos"><i class="fa-solid fa-plus"></i> ${T("Novo efeito")}</button>
         </div></div></section></div>`;
     }
     const aj = N.ajustesDoEfeito(e.base);
@@ -1790,34 +1787,34 @@ class JanelaClima extends ApplicationV2 {
     const dica = (ok) => (ok ? "" : ` data-tooltip="Esta base não tem esse ajuste"`);
     const faixa = (nome, rot, min, max, passo, valor, ok, sufixo = "×") => `<label class="cm-ce-faixa ${ok ? "" : "off"}"${dica(ok)}>${rot}
       <span><input type="range" name="${nome}" min="${min}" max="${max}" step="${passo}" value="${valor}" ${desl(ok)}><output data-saida="${nome}">${valor}${sufixo}</output></span></label>`;
-    const testando = this.testando ? `<button type="button" data-action="pararTeste"><i class="fa-solid fa-stop"></i> Parar de ver</button>` : `<button type="button" data-action="testarEfeito" ${canvas?.scene ? "" : "disabled"} data-tooltip="Mostra este efeito só para você, na cena aberta, sem salvar"><i class="fa-solid fa-eye"></i> Ver nesta cena</button>`;
+    const testando = this.testando ? `<button type="button" data-action="pararTeste"><i class="fa-solid fa-stop"></i> ${T("Parar de ver")}</button>` : `<button type="button" data-action="testarEfeito" ${canvas?.scene ? "" : "disabled"} data-tooltip="${T("Mostra este efeito só para você, na cena aberta, sem salvar")}"><i class="fa-solid fa-eye"></i> ${T("Ver nesta cena")}</button>`;
     return `<div class="cm-ce">
       ${this.listaEditor("efeitos", st.id)}
       <section class="cm-ce-form" data-grupo="efeitos">
         <div class="cm-ce-corpo">
           <div class="cm-ce-previa"><span class="cm-ce-bola grande efeito" style="${e.cor ? `--cor-ef:${esc(e.cor)}` : ""}"><i class="fa-solid fa-wand-magic-sparkles"></i></span>
-            <div><b>${esc(e.nome || "Sem nome")}</b><small>Base: ${esc(CONFIG.weatherEffects?.[e.base]?.label ?? e.base)}${e.base2 ? ` + ${esc(CONFIG.weatherEffects?.[e.base2]?.label ?? e.base2)}` : ""}</small>
-            <small>${st.novo ? "Ainda não salvo." : uso.length ? `Usado nos climas: ${esc(uso.join(", "))}` : `Nenhum clima usa este efeito ainda (aba Climas → "Efeito na cena").`}</small></div></div>
+            <div><b>${esc(e.nome || T("Sem nome"))}</b><small>${T("Base: {0}{1}", [esc(CONFIG.weatherEffects?.[e.base]?.label ?? e.base), e.base2 ? ` + ${esc(CONFIG.weatherEffects?.[e.base2]?.label ?? e.base2)}` : ""])}</small>
+            <small>${st.novo ? T("Ainda não salvo.") : uso.length ? `${T("Usado nos climas: {0}", [esc(uso.join(", "))])}` : `${T("Nenhum clima usa este efeito ainda (aba Climas → \"Efeito na cena\").")}`}</small></div></div>
           <div class="cm-ce-campos">
-            <label>Nome<input type="text" name="nome" value="${esc(e.nome)}" maxlength="60" placeholder="Ex.: Chuva de sangue"></label>
-            <label>Efeito base<select name="base">${this.opcoesEfeito(e.base, "— escolha —", { semPersonalizados: true })}</select></label>
+            <label>${T("Nome")}<input type="text" name="nome" value="${esc(e.nome)}" maxlength="60" placeholder="${T("Ex.: Chuva de sangue")}"></label>
+            <label>${T("Efeito base")}<select name="base">${this.opcoesEfeito(e.base, T("— escolha —"), { semPersonalizados: true })}</select></label>
           </div>
-          <h4>Ajustes</h4>
+          <h4>${T("Ajustes")}</h4>
           <div class="cm-ce-campos">
-            <label class="cm-ce-cor ${aj.cor ? "" : "off"}"${dica(aj.cor)}><span><input type="checkbox" name="usarCor" ${e.cor ? "checked" : ""} ${desl(aj.cor)}> Mudar a cor</span><input type="color" name="cor" value="${esc(e.cor || "#c0392b")}" ${desl(aj.cor)}></label>
-            ${faixa("forca", "Força", 0.1, 3, 0.05, e.forca, aj.forca)}
-            ${faixa("velocidade", "Velocidade", 0, 3, 0.05, e.velocidade, aj.velocidade)}
-            ${faixa("tamanho", "Tamanho", 0.3, 3, 0.05, e.tamanho, aj.tamanho)}
-            <label class="cm-ce-faixa ${aj.direcao ? "" : "off"}"${dica(aj.direcao)}><span><input type="checkbox" name="usarDirecao" ${e.direcao != null ? "checked" : ""} ${desl(aj.direcao)}> Direção</span>
+            <label class="cm-ce-cor ${aj.cor ? "" : "off"}"${dica(aj.cor)}><span><input type="checkbox" name="usarCor" ${e.cor ? "checked" : ""} ${desl(aj.cor)}> ${T("Mudar a cor")}</span><input type="color" name="cor" value="${esc(e.cor || "#c0392b")}" ${desl(aj.cor)}></label>
+            ${faixa("forca", T("Força"), 0.1, 3, 0.05, e.forca, aj.forca)}
+            ${faixa("velocidade", T("Velocidade"), 0, 3, 0.05, e.velocidade, aj.velocidade)}
+            ${faixa("tamanho", T("Tamanho"), 0.3, 3, 0.05, e.tamanho, aj.tamanho)}
+            <label class="cm-ce-faixa ${aj.direcao ? "" : "off"}"${dica(aj.direcao)}><span><input type="checkbox" name="usarDirecao" ${e.direcao != null ? "checked" : ""} ${desl(aj.direcao)}> ${T("Direção")}</span>
               <span><input type="range" name="direcao" min="0" max="360" step="5" value="${e.direcao ?? 15}" ${desl(aj.direcao)}><output data-saida="direcao">${e.direcao ?? 15}°</output></span></label>
           </div>
-          <h4>Juntar com outro efeito <small>(opcional)</small></h4>
+          <h4>${T("Juntar com outro efeito")} <small>${T("(opcional)")}</small></h4>
           <div class="cm-ce-campos">
-            <label>Segundo efeito<select name="base2">${this.opcoesEfeito(e.base2, "— nenhum —", { semPersonalizados: true })}</select></label>
-            <label class="cm-ce-cor ${aj2?.cor ? "" : "off"}"><span><input type="checkbox" name="usarCor2" ${e.cor2 ? "checked" : ""} ${desl(aj2?.cor)}> Cor do segundo</span><input type="color" name="cor2" value="${esc(e.cor2 || "#9b59b6")}" ${desl(aj2?.cor)}></label>
-            ${faixa("forca2", "Força do segundo", 0.1, 3, 0.05, e.forca2, !!aj2?.forca)}
+            <label>${T("Segundo efeito")}<select name="base2">${this.opcoesEfeito(e.base2, T("— nenhum —"), { semPersonalizados: true })}</select></label>
+            <label class="cm-ce-cor ${aj2?.cor ? "" : "off"}"><span><input type="checkbox" name="usarCor2" ${e.cor2 ? "checked" : ""} ${desl(aj2?.cor)}> ${T("Cor do segundo")}</span><input type="color" name="cor2" value="${esc(e.cor2 || "#9b59b6")}" ${desl(aj2?.cor)}></label>
+            ${faixa("forca2", T("Força do segundo"), 0.1, 3, 0.05, e.forca2, !!aj2?.forca)}
           </div>
-          <p class="cm-dica">Os ajustes que a base não tem ficam apagados. Velocidade, tamanho e direção valem para o primeiro efeito. Depois de salvo, o efeito aparece em "Efeito na cena", no grupo "Seus efeitos".</p>
+          <p class="cm-dica">${T("Os ajustes que a base não tem ficam apagados. Velocidade, tamanho e direção valem para o primeiro efeito. Depois de salvo, o efeito aparece em \"Efeito na cena\", no grupo \"Seus efeitos\".")}</p>
         </div>
         ${this.rodapeEditor("efeitos", { ...st, extra: testando })}
       </section>
@@ -1831,18 +1828,18 @@ class JanelaClima extends ApplicationV2 {
     const id = st.id;
     const z = this.tipoAberto("zonas");
     const uso = this.usoDaZona(id);
-    const extra = !st.novo && !uso.padrao ? `<button type="button" data-action="tornarPadrao"><i class="fa-solid fa-star"></i> Tornar padrão do mundo</button>` : "";
+    const extra = !st.novo && !uso.padrao ? `<button type="button" data-action="tornarPadrao"><i class="fa-solid fa-star"></i> ${T("Tornar padrão do mundo")}</button>` : "";
     return `<div class="cm-ce">
       ${this.listaEditor("zonas", id)}
       <section class="cm-ce-form" data-grupo="zonas">
         <div class="cm-ce-cab">
-          <label class="cm-ce-nome">Nome<input type="text" name="nome" value="${esc(z.nome)}" maxlength="80"></label>
-          <label class="cm-check"><input type="checkbox" name="elemento" ${z.elemento ? "checked" : ""}> Reino de elemento</label>
+          <label class="cm-ce-nome">${T("Nome")}<input type="text" name="nome" value="${esc(z.nome)}" maxlength="80"></label>
+          <label class="cm-check"><input type="checkbox" name="elemento" ${z.elemento ? "checked" : ""}> ${T("Reino de elemento")}</label>
         </div>
-        <p class="cm-dica">${st.novo ? "Ainda não salva." : uso.cenas || uso.regioes || uso.padrao ? `Em uso: ${[uso.padrao ? "região padrão do mundo" : "", uso.cenas ? `${uso.cenas} cena(s)` : "", uso.regioes ? `${uso.regioes} Região(ões) do mapa` : ""].filter(Boolean).join(", ")}.` : "Nenhuma cena usa esta região ainda."}</p>
-        <h4>Temperatura (${this.un})</h4>
+        <p class="cm-dica">${st.novo ? T("Ainda não salva.") : uso.cenas || uso.regioes || uso.padrao ? `${T("Em uso: {0}.", [[uso.padrao ? T("região padrão do mundo") : "", uso.cenas ? T("{0} cena(s)", [uso.cenas]) : "", uso.regioes ? `${T("{0} Região(ões) do mapa", [uso.regioes])}` : ""].filter(Boolean).join(", ")])}` : T("Nenhuma cena usa esta região ainda.")}</p>
+        <h4>${T("Temperatura ({0})", [this.un])}</h4>
         ${this.camposTemperatura(z)}
-        <h4>Chance de cada clima <small>(peso; 0 = nunca. A % é calculada sobre a soma da estação.)</small></h4>
+        <h4>${T("Chance de cada clima")} <small>${T("(peso; 0 = nunca. A % é calculada sobre a soma da estação.)")}</small></h4>
         ${this.tabelaPesos(z.pesos, Object.entries(CLIMAS).filter(([, c]) => !c.daAnomalia))}
         ${this.rodapeEditor("zonas", { ...st, extra })}
       </section>
@@ -1862,21 +1859,21 @@ class JanelaClima extends ApplicationV2 {
   }
 
   linhaTroca(de, para, a = this.tipoAberto("anomalias")) {
-    return `<tr><td><select name="trocaDe">${this.opcoesTempoAnomalia(a, de, "— escolha —")}</select></td><td class="cm-ce-seta"><i class="fa-solid fa-arrow-right"></i></td>
-      <td><select name="trocaPara">${this.opcoesTempoAnomalia(a, para, "— escolha —")}</select></td>
-      <td><button type="button" class="cm-ce-x" data-action="tirarLinha" data-tooltip="Tirar"><i class="fa-solid fa-xmark"></i></button></td></tr>`;
+    return `<tr><td><select name="trocaDe">${this.opcoesTempoAnomalia(a, de, T("— escolha —"))}</select></td><td class="cm-ce-seta"><i class="fa-solid fa-arrow-right"></i></td>
+      <td><select name="trocaPara">${this.opcoesTempoAnomalia(a, para, T("— escolha —"))}</select></td>
+      <td><button type="button" class="cm-ce-x" data-action="tirarLinha" data-tooltip="${T("Tirar")}"><i class="fa-solid fa-xmark"></i></button></td></tr>`;
   }
 
   linhaClimaLocal(gid, c) {
     return `<div class="cm-ce-local g-${c.grupo}" data-gid="${esc(gid)}">
       <span class="cm-ce-bola"><i class="fa-solid ${c.icone ?? "fa-cloud"}"></i></span>
-      <input type="text" name="lcNome" value="${esc(c.nome)}" maxlength="60" placeholder="Nome (ex.: Chuva seca)">
+      <input type="text" name="lcNome" value="${esc(c.nome)}" maxlength="60" placeholder="${T("Nome (ex.: Chuva seca)")}">
       <select name="lcGrupo">${Object.entries(GRUPOS_CLIMA).map(([k, r]) => `<option value="${k}" ${c.grupo === k ? "selected" : ""}>${esc(r)}</option>`).join("")}</select>
       <select name="lcIcone">${opcoesIcone(c.icone)}</select>
-      <select name="lcEfeito">${this.opcoesEfeito(c.efeito, "— sem efeito —")}</select>
-      <input type="number" name="lcTemp" value="${this.difTela(c.temp ?? 0)}" data-tooltip="Muda a temperatura do dia (${this.un})">
-      <button type="button" class="cm-ce-x" data-action="tirarLinha" data-tooltip="Tirar este clima"><i class="fa-solid fa-xmark"></i></button>
-      <input type="text" name="lcDesc" class="cm-ce-local-desc" value="${esc(c.desc ?? "")}" maxlength="300" placeholder="Descrição para o chat">
+      <select name="lcEfeito">${this.opcoesEfeito(c.efeito, T("— sem efeito —"))}</select>
+      <input type="number" name="lcTemp" value="${this.difTela(c.temp ?? 0)}" data-tooltip="${T("Muda a temperatura do dia ({0})", [this.un])}">
+      <button type="button" class="cm-ce-x" data-action="tirarLinha" data-tooltip="${T("Tirar este clima")}"><i class="fa-solid fa-xmark"></i></button>
+      <input type="text" name="lcDesc" class="cm-ce-local-desc" value="${esc(c.desc ?? "")}" maxlength="300" placeholder="${T("Descrição para o chat")}">
     </div>`;
   }
 
@@ -1886,7 +1883,7 @@ class JanelaClima extends ApplicationV2 {
     const st = this.estado("anomalias");
     const id = st.id;
     const a = this.tipoAberto("anomalias");
-    if (!a) return `<div class="cm-ce">${this.listaEditor("anomalias", null)}<section class="cm-ce-form"><p class="cm-vazio">Nenhuma anomalia. Crie uma com "Nova anomalia".</p></section></div>`;
+    if (!a) return `<div class="cm-ce">${this.listaEditor("anomalias", null)}<section class="cm-ce-form"><p class="cm-vazio">${T("Nenhuma anomalia. Crie uma com \"Nova anomalia\".")}</p></section></div>`;
     const regiaoId = `${N.PREFIXO_ANOM}${id}`;
     const usoRegiao = ZONAS[regiaoId] ? this.usoDaZona(regiaoId) : { cenas: 0, regioes: 0 };
     const inteira = N.anomaliaRegiaoInteira();
@@ -1897,7 +1894,7 @@ class JanelaClima extends ApplicationV2 {
     const resumoTrocas = trocas.length ? trocas.map(([de, para]) => `${nomeClima(de)} → ${nomeClima(para)}`).join(", ") : "";
     const zona = a.zona ?? ZONAS[a.base] ?? ZONAS.temperada;
     const situacao = [
-      a.regiao ? (st.novo || st.alterado ? `Ao salvar, vira a região "${a.nome}"` : `É a região "${a.nome}"${usoRegiao.cenas || usoRegiao.regioes ? `, usada em ${[usoRegiao.cenas ? `${usoRegiao.cenas} cena(s)` : "", usoRegiao.regioes ? `${usoRegiao.regioes} Região(ões) do mapa` : ""].filter(Boolean).join(" e ")}` : ""}`) : "Não é uma região",
+      a.regiao ? (st.novo || st.alterado ? `${T("Ao salvar, vira a região \"{0}\"", [a.nome])}` : `${T("É a região \"{0}\"{1}", [a.nome, usoRegiao.cenas || usoRegiao.regioes ? `${T(", usada em {0}", [[usoRegiao.cenas ? T("{0} cena(s)", [usoRegiao.cenas]) : "", usoRegiao.regioes ? `${T("{0} Região(ões) do mapa", [usoRegiao.regioes])}` : ""].filter(Boolean).join(T(" e "))])}` : ""])}`) : T("Não é uma região"),
       ativas.length ? `cobre: ${ativas.join(", ")}` : ""
     ].filter(Boolean).join(" · ");
     const regioesModelo = Object.entries(ZONAS).filter(([, z]) => !z.virtual).map(([k, z]) => `<option value="${k}" ${(a.base ?? "temperada") === k ? "selected" : ""}>${esc(z.nome)}</option>`).join("");
@@ -1906,38 +1903,38 @@ class JanelaClima extends ApplicationV2 {
       <section class="cm-ce-form" data-grupo="anomalias">
         <div class="cm-ce-corpo">
         <div class="cm-ce-previa"><span class="cm-ce-bola grande anom"><i class="fa-solid ${a.icone ?? "fa-skull"}"></i></span>
-          <div><b>${esc(a.nome || "Sem nome")}</b><small>${a.clima ? `Força: ${esc(nomeClima(a.clima))}` : resumoTrocas ? `Troca: ${esc(resumoTrocas)}` : "Não mexe no tempo"} · ${a.temp > 0 ? "+" : ""}${this.difTela(a.temp ?? 0)}${this.un}${locais.length ? ` · ${locais.length} clima(s) próprio(s)` : ""}</small>
+          <div><b>${esc(a.nome || T("Sem nome"))}</b><small>${a.clima ? `${T("Força: {0}", [esc(nomeClima(a.clima))])}` : resumoTrocas ? `${T("Troca: {0}", [esc(resumoTrocas)])}` : T("Não mexe no tempo")} · ${a.temp > 0 ? "+" : ""}${this.difTela(a.temp ?? 0)}${this.un}${locais.length ? ` ${T("· {0} clima(s) próprio(s)", [locais.length])}` : ""}</small>
           <small>${esc(situacao)}</small></div></div>
         <div class="cm-ce-campos">
-          <label>Nome<input type="text" name="nome" value="${esc(a.nome)}" maxlength="80" placeholder="Ex.: Eclipse eterno"></label>
-          <label>Ícone<select name="icone">${opcoesIcone(a.icone)}</select></label>
-          <label>Tempo forçado<select name="clima">${this.opcoesTempoAnomalia(a, a.clima, "— não força: usa as chances e trocas —")}</select></label>
-          <label>Muda a temperatura em (${this.un})<input type="number" name="temp" value="${this.difTela(a.temp ?? 0)}"></label>
-          <label class="cm-ce-largo">Texto para os jogadores<textarea name="texto" rows="2" placeholder="O que os personagens percebem enquanto a anomalia está ativa.">${esc(a.texto ?? "")}</textarea></label>
+          <label>${T("Nome")}<input type="text" name="nome" value="${esc(a.nome)}" maxlength="80" placeholder="${T("Ex.: Eclipse eterno")}"></label>
+          <label>${T("Ícone")}<select name="icone">${opcoesIcone(a.icone)}</select></label>
+          <label>${T("Tempo forçado")}<select name="clima">${this.opcoesTempoAnomalia(a, a.clima, T("— não força: usa as chances e trocas —"))}</select></label>
+          <label>${T("Muda a temperatura em ({0})", [this.un])}<input type="number" name="temp" value="${this.difTela(a.temp ?? 0)}"></label>
+          <label class="cm-ce-largo">${T("Texto para os jogadores")}<textarea name="texto" rows="2" placeholder="${T("O que os personagens percebem enquanto a anomalia está ativa.")}">${esc(a.texto ?? "")}</textarea></label>
         </div>
 
-        <h4><i class="fa-solid fa-cloud-sun"></i> Climas desta anomalia <small>(só existem aqui; não mudam os climas da aba Climas)</small></h4>
+        <h4><i class="fa-solid fa-cloud-sun"></i> ${T("Climas desta anomalia")} <small>${T("(só existem aqui; não mudam os climas da aba Climas)")}</small></h4>
         <div class="cm-ce-locais">
-          ${locais.map(([gid, c]) => this.linhaClimaLocal(gid, c)).join("") || `<p class="cm-dica">Nenhum. Ex.: uma "Chuva seca" com nuvens carregadas e sem efeito de chuva, para trocar com a Chuva.</p>`}
-          <button type="button" class="cm-ce-mais" data-action="maisLocal"><i class="fa-solid fa-plus"></i> Novo clima desta anomalia</button>
+          ${locais.map(([gid, c]) => this.linhaClimaLocal(gid, c)).join("") || `<p class="cm-dica">${T("Nenhum. Ex.: uma \"Chuva seca\" com nuvens carregadas e sem efeito de chuva, para trocar com a Chuva.")}</p>`}
+          <button type="button" class="cm-ce-mais" data-action="maisLocal"><i class="fa-solid fa-plus"></i> ${T("Novo clima desta anomalia")}</button>
         </div>
 
-        <h4><i class="fa-solid fa-right-left"></i> Trocar climas <small>(enquanto ativa; não vale se ela forçar um tempo)</small></h4>
+        <h4><i class="fa-solid fa-right-left"></i> ${T("Trocar climas")} <small>${T("(enquanto ativa; não vale se ela forçar um tempo)")}</small></h4>
         <div class="cm-ce-trocas">
           <table><tbody>${trocas.map(([de, para]) => this.linhaTroca(de, para, a)).join("")}${trocas.length ? "" : this.linhaTroca("", "", a)}</tbody></table>
-          <button type="button" class="cm-ce-mais" data-action="maisTroca"><i class="fa-solid fa-plus"></i> Adicionar troca</button>
+          <button type="button" class="cm-ce-mais" data-action="maisTroca"><i class="fa-solid fa-plus"></i> ${T("Adicionar troca")}</button>
         </div>
 
-        <h4><i class="fa-solid fa-map-location-dot"></i> Usar como região</h4>
+        <h4><i class="fa-solid fa-map-location-dot"></i> ${T("Usar como região")}</h4>
         <label class="cm-ce-chave"><input type="checkbox" name="regiao" ${a.regiao ? "checked" : ""}>
-          <span><b>Gerar a região "${esc(a.nome || "…")}"</b><small>Ligado: aparece na lista de regiões das Regiões do mapa e das cenas, com o clima configurado aqui e a anomalia sempre ativa. Desligado: a região some (os lugares que a usavam voltam para a região padrão).</small></span></label>
+          <span><b>${T("Gerar a região \"{0}\"", [esc(a.nome || "…")])}</b><small>${T("Ligado: aparece na lista de regiões das Regiões do mapa e das cenas, com o clima configurado aqui e a anomalia sempre ativa. Desligado: a região some (os lugares que a usavam voltam para a região padrão).")}</small></span></label>
         ${a.regiao ? `<div class="cm-ce-regiao">
-          <div class="cm-ce-copiar"><label>Copiar o clima de<select name="copiarDe">${regioesModelo}</select></label>
-            <button type="button" data-action="copiarClimaDe"><i class="fa-solid fa-copy"></i> Copiar</button>
-            <span class="cm-dica">Copia temperaturas e chances de uma região como ponto de partida. O que for salvo aqui fica só na anomalia.</span></div>
-          <h4>Temperatura (${this.un})</h4>
+          <div class="cm-ce-copiar"><label>${T("Copiar o clima de")}<select name="copiarDe">${regioesModelo}</select></label>
+            <button type="button" data-action="copiarClimaDe"><i class="fa-solid fa-copy"></i> ${T("Copiar")}</button>
+            <span class="cm-dica">${T("Copia temperaturas e chances de uma região como ponto de partida. O que for salvo aqui fica só na anomalia.")}</span></div>
+          <h4>${T("Temperatura ({0})", [this.un])}</h4>
           ${this.camposTemperatura(zona)}
-          <h4>Chance de cada clima <small>(peso; 0 = nunca)</small></h4>
+          <h4>${T("Chance de cada clima")} <small>${T("(peso; 0 = nunca)")}</small></h4>
           ${this.tabelaPesos(zona.pesos, this.climasDaAnomalia(a))}
         </div>` : ""}
         </div>
@@ -1951,18 +1948,18 @@ class JanelaClima extends ApplicationV2 {
     const f = this.element.querySelector(`.cm-ce-form[data-grupo="${grupo}"]`);
     const v = (n) => f?.querySelector(`[name="${n}"]`);
     if (grupo === "zonas") {
-      return { nome: v("nome")?.value.trim() || "Região sem nome", elemento: !!v("elemento")?.checked, ...this.lerTemperaturaEPesos(f) };
+      return { nome: v("nome")?.value.trim() || T("Região sem nome"), elemento: !!v("elemento")?.checked, ...this.lerTemperaturaEPesos(f) };
     }
     if (grupo === "climas") {
       return {
-        nome: v("nome")?.value.trim() || "Clima sem nome", grupo: v("grupo")?.value, icone: v("icone")?.value, efeito: v("efeito")?.value ?? "",
+        nome: v("nome")?.value.trim() || T("Clima sem nome"), grupo: v("grupo")?.value, icone: v("icone")?.value, efeito: v("efeito")?.value ?? "",
         temp: this.difDeTela(num(v("temp")?.value, 0)), desc: v("desc")?.value ?? "",
         fx: v("fx")?.value ?? "", fxOpcoes: { densidade: v("fxDensidade")?.value ?? "", velocidade: v("fxVelocidade")?.value ?? "", cor: v("fxUsarCor")?.checked ? v("fxCor")?.value : "" }
       };
     }
     if (grupo === "efeitos") {
       return {
-        nome: v("nome")?.value.trim() || "Efeito sem nome", base: v("base")?.value || "rain",
+        nome: v("nome")?.value.trim() || T("Efeito sem nome"), base: v("base")?.value || "rain",
         cor: v("usarCor")?.checked ? v("cor")?.value : "", forca: num(v("forca")?.value, 1), velocidade: num(v("velocidade")?.value, 1), tamanho: num(v("tamanho")?.value, 1),
         direcao: v("usarDirecao")?.checked ? num(v("direcao")?.value, 0) : null,
         base2: v("base2")?.value ?? "", cor2: v("usarCor2")?.checked ? v("cor2")?.value : "", forca2: num(v("forca2")?.value, 1)
@@ -1972,7 +1969,7 @@ class JanelaClima extends ApplicationV2 {
     const climas = {};
     f.querySelectorAll(".cm-ce-local").forEach((el) => {
       const q = (n) => el.querySelector(`[name="${n}"]`)?.value;
-      climas[el.dataset.gid] = { nome: q("lcNome")?.trim() || "Clima sem nome", grupo: q("lcGrupo"), icone: q("lcIcone"), efeito: q("lcEfeito") ?? "", temp: this.difDeTela(num(q("lcTemp"), 0)), desc: q("lcDesc") ?? "" };
+      climas[el.dataset.gid] = { nome: q("lcNome")?.trim() || T("Clima sem nome"), grupo: q("lcGrupo"), icone: q("lcIcone"), efeito: q("lcEfeito") ?? "", temp: this.difDeTela(num(q("lcTemp"), 0)), desc: q("lcDesc") ?? "" };
     });
     const trocas = {};
     f.querySelectorAll(".cm-ce-trocas tbody tr").forEach((tr) => {
@@ -1982,7 +1979,7 @@ class JanelaClima extends ApplicationV2 {
     const regiaoBox = f.querySelector(".cm-ce-regiao");
     const valido = (k) => (CLIMAS[k] && !CLIMAS[k].daAnomalia) || !!climas[k];
     return {
-      nome: v("nome")?.value.trim() || "Anomalia sem nome", icone: v("icone")?.value, clima: v("clima")?.value ?? "", trocas, climas,
+      nome: v("nome")?.value.trim() || T("Anomalia sem nome"), icone: v("icone")?.value, clima: v("clima")?.value ?? "", trocas, climas,
       temp: this.difDeTela(num(v("temp")?.value, 0)), texto: v("texto")?.value ?? "",
       base: v("copiarDe")?.value || this.tipoAberto("anomalias")?.base || "temperada",
       regiao: !!v("regiao")?.checked,
@@ -2015,7 +2012,7 @@ class JanelaClima extends ApplicationV2 {
 
   async restaurar(grupo) {
     const id = this.ed[grupo];
-    const ok = await Dialogo().confirm({ window: { title: "Restaurar de fábrica" }, content: `<p>Voltar <b>${esc(MAPA_TIPOS[grupo]()[id]?.nome)}</b> para os valores originais do módulo?</p>` });
+    const ok = await Dialogo().confirm({ window: { title: T("Restaurar de fábrica") }, content: `<p>${T("Voltar")} <b>${esc(MAPA_TIPOS[grupo]()[id]?.nome)}</b> ${T("para os valores originais do módulo?")}</p>` });
     if (!ok) return;
     await N.salvarTipoDeClima(grupo, id, null);
     this.render();
@@ -2028,19 +2025,19 @@ class JanelaClima extends ApplicationV2 {
     let aviso = "";
     if (grupo === "zonas") {
       const u = this.usoDaZona(id);
-      if (u.cenas || u.regioes || u.padrao) aviso = `<p class="cm-dica">Ela está em uso (${[u.padrao ? "padrão do mundo" : "", u.cenas ? `${u.cenas} cena(s)` : "", u.regioes ? `${u.regioes} Região(ões)` : ""].filter(Boolean).join(", ")}). Esses lugares passam a usar a região padrão (ou a Temperada).</p>`;
+      if (u.cenas || u.regioes || u.padrao) aviso = `<p class="cm-dica">${T("Ela está em uso ({0}). Esses lugares passam a usar a região padrão (ou a Temperada).", [[u.padrao ? T("padrão do mundo") : "", u.cenas ? T("{0} cena(s)", [u.cenas]) : "", u.regioes ? `${T("{0} Região(ões)", [u.regioes])}` : ""].filter(Boolean).join(", ")])}</p>`;
     } else if (grupo === "climas") {
       const u = this.usoDoClima(id);
-      if (u.zonas.length || u.anoms.length) aviso = `<p class="cm-dica">Usado em: ${esc([...u.zonas, ...u.anoms].join(", "))}. Ele sai das tabelas dessas regiões e das trocas dessas anomalias.</p>`;
+      if (u.zonas.length || u.anoms.length) aviso = `<p class="cm-dica">${T("Usado em: {0}. Ele sai das tabelas dessas regiões e das trocas dessas anomalias.", [esc([...u.zonas, ...u.anoms].join(", "))])}</p>`;
     } else if (grupo === "efeitos") {
       const u = this.usoDoEfeito(id);
-      if (u.length) aviso = `<p class="cm-dica">Usado nos climas: ${esc(u.join(", "))}. Eles ficam sem efeito na cena até você escolher outro.</p>`;
+      if (u.length) aviso = `<p class="cm-dica">${T("Usado nos climas: {0}. Eles ficam sem efeito na cena até você escolher outro.", [esc(u.join(", "))])}</p>`;
     } else {
       const u = this.usoDaZona(`${N.PREFIXO_ANOM}${id}`);
-      if (u.cenas || u.regioes) aviso = `<p class="cm-dica">Os lugares que a usam como região voltam para a região padrão.</p>`;
+      if (u.cenas || u.regioes) aviso = `<p class="cm-dica">${T("Os lugares que a usam como região voltam para a região padrão.")}</p>`;
     }
     const nome = MAPA_TIPOS[grupo]()[id]?.nome ?? id;
-    const ok = await Dialogo().confirm({ window: { title: "Apagar" }, content: `<p>Apagar <b>${esc(nome)}</b>?</p>${aviso}` });
+    const ok = await Dialogo().confirm({ window: { title: T("Apagar") }, content: `<p>${T("Apagar")} <b>${esc(nome)}</b>?</p>${aviso}` });
     if (!ok) return;
     if (grupo === "efeitos") N.pararPreviaEfeito();
     await N.salvarTipoDeClima(grupo, id, null);
@@ -2165,10 +2162,10 @@ class JanelaClima extends ApplicationV2 {
       hoje.zonas[zonaAlvo] = { ...semOnda, temp: this.temp, min: faixa?.min ?? (c.min ?? c.temp - 4) + d, max: faixa?.max ?? (c.max ?? c.temp + 4) + d, ...(faixa?.onda ? { onda: faixa.onda } : {}) };
     }
     await game.settings.set(MOD, "climaAtual", hoje);
-    if (anomalia !== anAntes && anomalia !== "nenhuma") await registrar(`${ANOMALIAS[anomalia].nome} em ${ZONAS[zonaAlvo].nome}`, { icone: ANOMALIAS[anomalia].icone ?? "fa-skull" });
+    if (anomalia !== anAntes && anomalia !== "nenhuma") await registrar(T("{0} em {1}", [ANOMALIAS[anomalia].nome, ZONAS[zonaAlvo].nome]), { icone: ANOMALIAS[anomalia].icone ?? "fa-skull" });
     await aplicarClimaNasCenas();
     HUD.render();
-    ui.notifications.info(`Clima de ${ZONAS[zonaAlvo].nome}: ${CLIMAS[hoje.zonas[zonaAlvo]?.tipo]?.nome ?? "?"}, ${temperaturaTexto(hoje.zonas[zonaAlvo]?.temp)}.`);
+    ui.notifications.info(`${T("Clima de {0}: {1}, {2}.", [ZONAS[zonaAlvo].nome, CLIMAS[hoje.zonas[zonaAlvo]?.tipo]?.nome ?? "?", temperaturaTexto(hoje.zonas[zonaAlvo]?.temp)])}`);
     this.close();
   }
 }
@@ -2181,7 +2178,7 @@ class JanelaContadores extends HandlebarsApplicationMixin(ApplicationV2) {
     id: "cm-contadores",
     classes: ["cm-janela"],
     tag: "div",
-    window: { title: "Contadores e prazos", icon: "fa-solid fa-hourglass-half", resizable: true },
+    window: { title: T("Contadores e prazos"), icon: "fa-solid fa-hourglass-half", resizable: true },
     position: { width: 460, height: 480 },
     actions: {
       async novo() { await novoContador(); this.render(); },
@@ -2216,12 +2213,12 @@ class JanelaContadores extends HandlebarsApplicationMixin(ApplicationV2) {
   async _prepareContext(options) {
     const ctx = await super._prepareContext(options);
     const gm = game.user.isGM, wt = game.time.worldTime;
-    const fimTexto = (fim) => `${textoData(infoDia(diaTotalDe(fim)), { semana: false })} às ${textoHora(Math.floor(segundoDoDia(fim) / segHora()), Math.floor((segundoDoDia(fim) % segHora()) / segMinuto()))}`;
+    const fimTexto = (fim) => `${T("{0} às {1}", [textoData(infoDia(diaTotalDe(fim)), { semana: false }), textoHora(Math.floor(segundoDoDia(fim) / segHora()), Math.floor((segundoDoDia(fim) % segHora()) / segMinuto()))])}`;
     const itens = contadores().filter((c) => gm || c.visivel).sort((a, b) => a.feito - b.feito || a.fim - b.fim).map((c) => {
       const total = Math.max(1, c.fim - c.inicio);
       return {
         id: c.id, nome: c.nome, visivel: !!c.visivel, feito: !!c.feito,
-        estado: c.feito ? "terminou" : `falta ${duracaoTexto(c.fim - wt)}`,
+        estado: c.feito ? T("terminou") : T("falta {0}", [duracaoTexto(c.fim - wt)]),
         pct: Math.min(100, Math.max(0, ((wt - c.inicio) / total) * 100)).toFixed(1),
         termina: fimTexto(c.fim)
       };
@@ -2233,24 +2230,24 @@ class JanelaContadores extends HandlebarsApplicationMixin(ApplicationV2) {
 async function novoContador() {
   if (!game.user.isGM) return;
   const r = await Dialogo().wait({
-    window: { title: "Novo contador", icon: "fa-solid fa-hourglass-start" },
+    window: { title: T("Novo contador"), icon: "fa-solid fa-hourglass-start" },
     content: `<div class="cm-form">
-      <label>Nome<input type="text" name="nome" placeholder="O ritual se completa" autofocus></label>
+      <label>${T("Nome")}<input type="text" name="nome" placeholder="${T("O ritual se completa")}" autofocus></label>
       <div class="cm-form-2">
-        <label>Daqui a<input type="number" name="q" min="0" step="0.5" value="1"></label>
-        <label>Unidade<select name="un"><option value="m">minutos</option><option value="h" selected>horas</option><option value="d">dias</option><option value="s">semanas</option></select></label>
+        <label>${T("Daqui a")}<input type="number" name="q" min="0" step="0.5" value="1"></label>
+        <label>${T("Unidade")}<select name="un"><option value="m">${T("minutos")}</option><option value="h" selected>${T("horas")}</option><option value="d">${T("dias")}</option><option value="s">${T("semanas")}</option></select></label>
       </div>
       <div class="cm-form-2">
-        <label>Quem vê<select name="vis"><option value="1">Todos</option><option value="">Só o mestre</option></select></label>
-        <label>Quando terminar<select name="aviso"><option value="mestre">Avisar só o mestre</option><option value="todos">Avisar todos</option></select></label>
+        <label>${T("Quem vê")}<select name="vis"><option value="1">${T("Todos")}</option><option value="">${T("Só o mestre")}</option></select></label>
+        <label>${T("Quando terminar")}<select name="aviso"><option value="mestre">${T("Avisar só o mestre")}</option><option value="todos">${T("Avisar todos")}</option></select></label>
       </div></div>`,
-    buttons: [{ action: "ok", label: "Criar", default: true, callback: (ev, btn) => Object.fromEntries(new FormData(btn.form)) }, { action: "cancelar", label: "Cancelar" }],
+    buttons: [{ action: "ok", label: T("Criar"), default: true, callback: (ev, btn) => Object.fromEntries(new FormData(btn.form)) }, { action: "cancelar", label: T("Cancelar") }],
     rejectClose: false
   });
   if (!r || typeof r !== "object") return;
   const un = { m: segMinuto(), h: segHora(), d: segDia(), s: segDia() * N.CFG.semana.length }[r.un] ?? segHora();
   const wt = game.time.worldTime;
-  const novo = { id: foundry.utils.randomID(), nome: String(r.nome || "Contador").trim(), inicio: wt, fim: wt + Math.round(num(r.q, 1) * un), visivel: !!r.vis, aviso: r.aviso === "todos" ? "todos" : "mestre", feito: false };
+  const novo = { id: foundry.utils.randomID(), nome: String(r.nome || T("Contador")).trim(), inicio: wt, fim: wt + Math.round(num(r.q, 1) * un), visivel: !!r.vis, aviso: r.aviso === "todos" ? "todos" : "mestre", feito: false };
   await alterarContadores((lista) => { lista.push(novo); });
 }
 
@@ -2285,8 +2282,7 @@ async function dialogoAcoesNota(j) {
     render: (ev, dlg) => {
       const el = dlg.element ?? dlg;
       el.querySelector("[data-escolher-som]")?.addEventListener("click", () => {
-        const FP = foundry.applications?.apps?.FilePicker?.implementation ?? globalThis.FilePicker;
-        new FP({ type: "audio", current: el.querySelector('[name="som"]').value, callback: (path) => { el.querySelector('[name="som"]').value = path; } }).render(true);
+        new foundry.applications.apps.FilePicker.implementation({ type: "audio", current: el.querySelector('[name="som"]').value, callback: (path) => { el.querySelector('[name="som"]').value = path; } }).render(true);
       });
     },
     buttons: [
@@ -2313,7 +2309,7 @@ function tabelasDeEncontro() {
   const todas = game.tables?.contents ?? [];
   const ids = game.settings.get(MOD, "tabelasEncontro")?.ids ?? [];
   const escolhidas = todas.filter((t) => ids.includes(t.id));
-  return (escolhidas.length ? escolhidas : todas).sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
+  return (escolhidas.length ? escolhidas : todas).sort((a, b) => a.name.localeCompare(b.name, game.i18n.lang));
 }
 
 /** Configurações → Tabelas de encontro: marcar quais tabelas aparecem na janela de viagem. */
@@ -2322,7 +2318,7 @@ class JanelaTabelas extends ApplicationV2 {
     id: "cm-tabelas",
     classes: ["cm-janela"],
     tag: "div",
-    window: { title: "Tabelas de encontro da viagem", icon: "fa-solid fa-table-list", resizable: true },
+    window: { title: T("Tabelas de encontro da viagem"), icon: "fa-solid fa-table-list", resizable: true },
     position: { width: 460, height: 560 },
     actions: {
       todas() { this.element.querySelectorAll(".cm-tab-item input").forEach((el) => { if (!el.closest(".cm-tab-item").hidden) el.checked = true; }); this.contar(); },
@@ -2330,7 +2326,7 @@ class JanelaTabelas extends ApplicationV2 {
       async salvar() {
         const ids = [...this.element.querySelectorAll(".cm-tab-item input:checked")].map((el) => el.value);
         await game.settings.set(MOD, "tabelasEncontro", { ids });
-        ui.notifications.info(ids.length ? `${ids.length} tabela(s) na janela de viagem.` : "Todas as tabelas aparecem na janela de viagem.");
+        ui.notifications.info(ids.length ? T("{0} tabela(s) na janela de viagem.", [ids.length]) : T("Todas as tabelas aparecem na janela de viagem."));
         this.close();
       },
       cancelar() { this.close(); }
@@ -2339,23 +2335,23 @@ class JanelaTabelas extends ApplicationV2 {
 
   async _renderHTML() {
     const ids = new Set(game.settings.get(MOD, "tabelasEncontro")?.ids ?? []);
-    const tabelas = [...(game.tables?.contents ?? [])].sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
+    const tabelas = [...(game.tables?.contents ?? [])].sort((a, b) => a.name.localeCompare(b.name, game.i18n.lang));
     const porPasta = new Map();
-    for (const t of tabelas) { const k = t.folder?.name ?? "Sem pasta"; if (!porPasta.has(k)) porPasta.set(k, []); porPasta.get(k).push(t); }
-    const grupos = [...porPasta.entries()].sort(([a], [b]) => (a === "Sem pasta") - (b === "Sem pasta") || a.localeCompare(b, "pt-BR")).map(([pasta, ts]) => `
+    for (const t of tabelas) { const k = t.folder?.name ?? T("Sem pasta"); if (!porPasta.has(k)) porPasta.set(k, []); porPasta.get(k).push(t); }
+    const grupos = [...porPasta.entries()].sort(([a], [b]) => (a === T("Sem pasta")) - (b === T("Sem pasta")) || a.localeCompare(b, game.i18n.lang)).map(([pasta, ts]) => `
       <div class="cm-tab-grupo"><h4><i class="fa-solid fa-folder"></i> ${esc(pasta)}</h4>
-        ${ts.map((t) => `<label class="cm-tab-item"><input type="checkbox" value="${t.id}" ${ids.has(t.id) ? "checked" : ""}> <img src="${esc(t.img || "icons/svg/d20-black.svg")}" alt=""> <span>${esc(t.name)}</span><small>${t.results?.size ?? 0} resultados</small></label>`).join("")}
+        ${ts.map((t) => `<label class="cm-tab-item"><input type="checkbox" value="${t.id}" ${ids.has(t.id) ? "checked" : ""}> <img src="${esc(t.img || "icons/svg/d20-black.svg")}" alt=""> <span>${esc(t.name)}</span><small>${T("{0} resultados", [t.results?.size ?? 0])}</small></label>`).join("")}
       </div>`).join("");
     return `<div class="cm-raiz cm-tabelas-raiz cm-tema-${tema()}">
-      <p class="cm-dica">Marque as tabelas que devem aparecer em "Tabela de encontros" na janela de viagem. Sem nenhuma marcada, aparecem todas.</p>
-      <div class="cm-tab-busca"><input type="search" name="busca" placeholder="Procurar tabela..."><span data-contagem></span></div>
-      <div class="cm-tab-lista">${grupos || `<p class="cm-vazio">Nenhuma tabela no mundo. Crie em Tabelas (aba de tabelas aleatórias).</p>`}</div>
+      <p class="cm-dica">${T("Marque as tabelas que devem aparecer em \"Tabela de encontros\" na janela de viagem. Sem nenhuma marcada, aparecem todas.")}</p>
+      <div class="cm-tab-busca"><input type="search" name="busca" placeholder="${T("Procurar tabela...")}"><span data-contagem></span></div>
+      <div class="cm-tab-lista">${grupos || `<p class="cm-vazio">${T("Nenhuma tabela no mundo. Crie em Tabelas (aba de tabelas aleatórias).")}</p>`}</div>
       <footer class="cm-tab-rodape">
-        <button type="button" data-action="todas">Marcar todas</button>
-        <button type="button" data-action="nenhuma">Desmarcar</button>
+        <button type="button" data-action="todas">${T("Marcar todas")}</button>
+        <button type="button" data-action="nenhuma">${T("Desmarcar")}</button>
         <span class="cm-esp"></span>
-        <button type="button" data-action="cancelar">Cancelar</button>
-        <button type="button" class="cm-clima-aplicar" data-action="salvar"><i class="fa-solid fa-floppy-disk"></i> Salvar</button>
+        <button type="button" data-action="cancelar">${T("Cancelar")}</button>
+        <button type="button" class="cm-clima-aplicar" data-action="salvar"><i class="fa-solid fa-floppy-disk"></i> ${T("Salvar")}</button>
       </footer>
     </div>`;
   }
@@ -2379,41 +2375,41 @@ class JanelaTabelas extends ApplicationV2 {
   }
 }
 
-const RITMOS = { lento: { nome: "Lento (furtivo)", km: 3.2, mi: 2 }, normal: { nome: "Normal", km: 4.8, mi: 3 }, rapido: { nome: "Rápido (−5 em Percepção passiva)", km: 6.4, mi: 4 } };
+const RITMOS = { lento: { nome: T("Lento (furtivo)"), km: 3.2, mi: 2 }, normal: { nome: T("Normal"), km: 4.8, mi: 3 }, rapido: { nome: T("Rápido (−5 em Percepção passiva)"), km: 6.4, mi: 4 } };
 
 async function dialogoViagem() {
   if (!game.user.isGM) return;
   if (viagemAtual()) return new JanelaViagem().render({ force: true });
   const tabelas = tabelasDeEncontro();
   const r = await Dialogo().wait({
-    window: { title: "Viajar", icon: "fa-solid fa-route" },
+    window: { title: T("Viajar"), icon: "fa-solid fa-route" },
     position: { width: 480 },
     content: `<div class="cm-form">
-      <label>Destino (opcional)<input type="text" name="destino" placeholder="Porto de Tir'Wara"></label>
+      <label>${T("Destino (opcional)")}<input type="text" name="destino" placeholder="${T("Porto de Tir'Wara")}"></label>
       <div class="cm-form-2">
-        <label>Distância<input type="number" name="dist" min="0" step="0.5" value="30"></label>
-        <label>Unidade<select name="un"><option value="km">km</option><option value="mi">milhas</option><option value="lg">léguas (3 mi)</option></select></label>
+        <label>${T("Distância")}<input type="number" name="dist" min="0" step="0.5" value="30"></label>
+        <label>${T("Unidade")}<select name="un"><option value="km">${T("km")}</option><option value="mi">${T("milhas")}</option><option value="lg">${T("léguas (3 mi)")}</option></select></label>
       </div>
       <div class="cm-form-2">
-        <label>Ritmo<select name="ritmo">${opcoes(RITMOS, "normal", (v) => v.nome)}</select></label>
-        <label>Horas de viagem por dia<input type="number" name="hd" min="1" max="${N.CFG.horasDia}" value="8"></label>
+        <label>${T("Ritmo")}<select name="ritmo">${opcoes(RITMOS, "normal", (v) => v.nome)}</select></label>
+        <label>${T("Horas de viagem por dia")}<input type="number" name="hd" min="1" max="${N.CFG.horasDia}" value="8"></label>
       </div>
       <div class="cm-form-2">
-        <label>Chance de encontro por dia (%)<input type="number" name="chance" min="0" max="100" value="0"></label>
-        <label>Tabela de encontros<select name="tabela"><option value="">— nenhuma —</option>${tabelas.map((t) => `<option value="${t.id}">${esc(t.name)}</option>`).join("")}</select>
-          <small class="cm-dica-campo">Quais aparecem aqui: Configurações → Calendário da Mesa → Tabelas de encontro.</small></label>
+        <label>${T("Chance de encontro por dia (%)")}<input type="number" name="chance" min="0" max="100" value="0"></label>
+        <label>${T("Tabela de encontros")}<select name="tabela"><option value="">${T("— nenhuma —")}</option>${tabelas.map((t) => `<option value="${t.id}">${esc(t.name)}</option>`).join("")}</select>
+          <small class="cm-dica-campo">${T("Quais aparecem aqui: Configurações → Calendário da Mesa → Tabelas de encontro.")}</small></label>
       </div>
-      <fieldset class="cm-rep"><legend><i class="fa-solid fa-campground"></i> Dia a dia</legend>
-        <label class="cm-chip"><input type="checkbox" name="separado"> Passar os dias separadamente (narração de cada momento e vigias à noite)</label>
+      <fieldset class="cm-rep"><legend><i class="fa-solid fa-campground"></i> ${T("Dia a dia")}</legend>
+        <label class="cm-chip"><input type="checkbox" name="separado"> ${T("Passar os dias separadamente (narração de cada momento e vigias à noite)")}</label>
         <div class="cm-form-2">
-          <label>Partida de cada dia (HH:MM)<input type="text" name="saida" value="08:00" placeholder="08:00"></label>
-          <label>Vigias liberadas a partir de (HH:MM)<input type="text" name="acamp" value="20:00" placeholder="20:00"></label>
+          <label>${T("Partida de cada dia (HH:MM)")}<input type="text" name="saida" value="08:00" placeholder="08:00"></label>
+          <label>${T("Vigias liberadas a partir de (HH:MM)")}<input type="text" name="acamp" value="20:00" placeholder="20:00"></label>
         </div>
-        <p class="cm-dica">Cada dia é avançado pelo mestre. Quando o relógio chega no horário das vigias, libera o botão de montar as vigias (2 horas cada).</p>
+        <p class="cm-dica">${T("Cada dia é avançado pelo mestre. Quando o relógio chega no horário das vigias, libera o botão de montar as vigias (2 horas cada).")}</p>
       </fieldset>
-      <p class="cm-dica">Sem o dia a dia: o tempo avança direto as horas de viagem e as paradas para dormir. O resumo vai para o chat e para o histórico.</p>
+      <p class="cm-dica">${T("Sem o dia a dia: o tempo avança direto as horas de viagem e as paradas para dormir. O resumo vai para o chat e para o histórico.")}</p>
     </div>`,
-    buttons: [{ action: "ok", label: "Partir", icon: "fa-solid fa-person-hiking", default: true, callback: (ev, btn) => Object.fromEntries(new FormData(btn.form)) }, { action: "cancelar", label: "Cancelar" }],
+    buttons: [{ action: "ok", label: T("Partir"), icon: "fa-solid fa-person-hiking", default: true, callback: (ev, btn) => Object.fromEntries(new FormData(btn.form)) }, { action: "cancelar", label: T("Cancelar") }],
     rejectClose: false
   });
   if (!r || typeof r !== "object") return;
@@ -2421,7 +2417,7 @@ async function dialogoViagem() {
   const vel = r.un === "km" ? ritmo.km : r.un === "lg" ? ritmo.mi / 3 : ritmo.mi;
   const horas = Math.max(0, num(r.dist, 0)) / vel;
   const hd = Math.min(Math.max(1, num(r.hd, 8)), N.CFG.horasDia);
-  const un = { km: "km", mi: "milhas", lg: "léguas" }[r.un] ?? "km";
+  const un = { km: "km", mi: T("milhas"), lg: T("léguas") }[r.un] ?? "km";
   const destino = String(r.destino ?? "").trim();
   const chance = Math.min(100, Math.max(0, num(r.chance, 0)));
   if (r.separado) {
@@ -2434,15 +2430,15 @@ async function dialogoViagem() {
   let resto = horas - dias * hd;
   if (resto < 1e-6 && dias > 0) resto = 0;
   const seg = Math.round(dias * segDia() + resto * segHora());
-  const tempo = `${dias ? `${dias} dia${dias > 1 ? "s" : ""}` : ""}${dias && resto ? " e " : ""}${resto ? `${Math.floor(resto)}h${Math.round((resto % 1) * N.CFG.minutosHora) ? pad(Math.round((resto % 1) * N.CFG.minutosHora)) : ""}` : ""}` || "nada";
+  const tempo = `${dias ? (dias > 1 ? T("{0} dias", [dias]) : T("1 dia")) : ""}${dias && resto ? T(" e ") : ""}${resto ? `${Math.floor(resto)}h${Math.round((resto % 1) * N.CFG.minutosHora) ? pad(Math.round((resto % 1) * N.CFG.minutosHora)) : ""}` : ""}` || T("nada");
   // encontros: um teste por dia (ou fração) de viagem
   const encontros = [];
   if (chance > 0) for (let d = 1; d <= Math.ceil(horas / hd); d++) if (Math.random() * 100 < chance) encontros.push(d);
-  await chat(`<i class="fa-solid fa-route"></i> <b>Viagem${destino ? ` até ${esc(destino)}` : ""}</b>: ${num(r.dist)} ${un} em ritmo ${esc(ritmo.nome.split(" ")[0].toLowerCase())} — ${tempo}.`);
-  if (chance > 0) await chat(`<i class="fa-solid fa-dragon"></i> Encontros na viagem: ${encontros.length ? encontros.map((d) => `dia ${d}`).join(", ") : "nenhum"}.`, idsGM());
+  await chat(`<i class="fa-solid fa-route"></i> <b>${T("Viagem{0}", [destino ? ` ${T("até {0}", [esc(destino)])}` : ""])}</b>${T(": {0} {1} em ritmo {2} — {3}.", [num(r.dist), un, esc(ritmo.nome.split(" ")[0].toLowerCase()), tempo])}`);
+  if (chance > 0) await chat(`<i class="fa-solid fa-dragon"></i> ${T("Encontros na viagem: {0}.", [encontros.length ? encontros.map((d) => T("dia {0}", [d])).join(", ") : T("nenhum")])}`, idsGM());
   const tabela = r.tabela ? game.tables.get(r.tabela) : null;
   if (tabela) for (const _ of encontros) await tabela.draw({ rollMode: "gmroll" });
-  await registrar(`Viagem${destino ? ` até ${destino}` : ""}: ${num(r.dist)} ${un}, ${tempo}${encontros.length ? `, ${encontros.length} encontro(s)` : ""}`, { icone: "fa-route" });
+  await registrar(`${T("Viagem{0}: {1} {2}, {3}{4}", [destino ? ` ${T("até {0}", [destino])}` : "", num(r.dist), un, tempo, encontros.length ? T(", {0} encontro(s)", [encontros.length]) : ""])}`, { icone: "fa-route" });
   if (seg > 0) await game.time.advance(seg);
 }
 
@@ -2476,8 +2472,8 @@ async function iniciarViagemSeparada(p) {
     alvoAcampamento: proximoHorario(wt, p.acampamento), fase: "viajando", vigias: null, historicoVigias: []
   };
   await alterarViagem(() => estado);
-  await chat(`<i class="fa-solid fa-route"></i> <b>O grupo parte${p.destino ? ` rumo a ${esc(p.destino)}` : ""}</b>: ${p.dist} ${esc(p.un)} em ritmo ${esc(p.ritmo.toLowerCase())}, cerca de ${diasTotal} dia${diasTotal > 1 ? "s" : ""} de estrada.`);
-  await registrar(`Partida${p.destino ? ` para ${p.destino}` : ""}: ${p.dist} ${p.un}, cerca de ${diasTotal} dia(s)`, { icone: "fa-route" });
+  await chat(`<i class="fa-solid fa-route"></i> <b>${T("O grupo parte{0}", [p.destino ? T(" rumo a {0}", [esc(p.destino)]) : ""])}</b>${T(": {0} {1} em ritmo {2}, cerca de {3} dia{4} de estrada.", [p.dist, esc(p.un), esc(p.ritmo.toLowerCase()), diasTotal, diasTotal > 1 ? "s" : ""])}`);
+  await registrar(`${T("Partida{0}: {1} {2}, cerca de {3} dia(s)", [p.destino ? T(" para {0}", [p.destino]) : "", p.dist, p.un, diasTotal])}`, { icone: "fa-route" });
   await rolarEncontroDoDia();
   return new JanelaViagem().render({ force: true });
 }
@@ -2488,7 +2484,7 @@ async function rolarEncontroDoDia() {
   if (!v || !(v.chance > 0)) return;
   if (Math.random() * 100 >= v.chance) return;
   await alterarViagem((x) => { (x.encontros ??= []).push(x.dia); });
-  await chat(`<i class="fa-solid fa-dragon"></i> <b>Encontro hoje</b> (dia ${v.dia} da viagem${v.destino ? ` para ${esc(v.destino)}` : ""}).`, idsGM());
+  await chat(`<i class="fa-solid fa-dragon"></i> <b>${T("Encontro hoje")}</b> ${T("(dia {0} da viagem{1}).", [v.dia, v.destino ? T(" para {0}", [esc(v.destino)]) : ""])}`, idsGM());
   const tabela = v.tabela ? game.tables.get(v.tabela) : null;
   if (tabela) await tabela.draw({ rollMode: "gmroll" });
 }
@@ -2505,14 +2501,14 @@ async function dialogoVigias() {
   const jogadores = game.users.filter((u) => !u.isGM);
   if (!jogadores.length) return ui.notifications.warn("Não há jogadores cadastrados no mundo.");
   const r = await Dialogo().wait({
-    window: { title: "Vigias da noite", icon: "fa-solid fa-campground" },
+    window: { title: T("Vigias da noite"), icon: "fa-solid fa-campground" },
     position: { width: 440 },
     content: `<div class="cm-form">
-      <label>Quantas vigias (${DURACAO_VIGIA_H} horas cada)<input type="number" name="n" min="1" max="12" value="4"></label>
-      <p class="cm-dica">A partir de agora (${esc(hhmm(game.time.worldTime))}). Quem participa escolhe na tela em qual vigia fica.</p>
-      <div class="cm-vg-escolher">${jogadores.map((u) => `<label class="cm-chip"><input type="checkbox" name="u-${u.id}" ${u.active || u.character ? "checked" : ""}> ${esc(nomeDoJogador(u.id))}${u.active ? "" : " <small>(offline)</small>"}</label>`).join("")}</div>
+      <label>${T("Quantas vigias ({0} horas cada)", [DURACAO_VIGIA_H])}<input type="number" name="n" min="1" max="12" value="4"></label>
+      <p class="cm-dica">${T("A partir de agora ({0}). Quem participa escolhe na tela em qual vigia fica.", [esc(hhmm(game.time.worldTime))])}</p>
+      <div class="cm-vg-escolher">${jogadores.map((u) => `<label class="cm-chip"><input type="checkbox" name="u-${u.id}" ${u.active || u.character ? "checked" : ""}> ${esc(nomeDoJogador(u.id))}${u.active ? "" : ` <small>${T("(offline)")}</small>`}</label>`).join("")}</div>
     </div>`,
-    buttons: [{ action: "ok", label: "Mostrar aos jogadores", icon: "fa-solid fa-eye", default: true, callback: (ev, btn) => Object.fromEntries(new FormData(btn.form)) }, { action: "cancelar", label: "Cancelar" }],
+    buttons: [{ action: "ok", label: T("Mostrar aos jogadores"), icon: "fa-solid fa-eye", default: true, callback: (ev, btn) => Object.fromEntries(new FormData(btn.form)) }, { action: "cancelar", label: T("Cancelar") }],
     rejectClose: false
   });
   if (!r || typeof r !== "object") return;
@@ -2524,7 +2520,7 @@ async function dialogoVigias() {
     x.fase = "escolha";
     x.vigias = { n, participantes, escolhas: {}, atual: -1, inicio: game.time.worldTime };
   });
-  await chat(`<i class="fa-solid fa-campground"></i> <b>O grupo monta acampamento.</b> ${n} vigia${n > 1 ? "s" : ""} de ${DURACAO_VIGIA_H} horas: ${participantes.map((id) => esc(nomeDoJogador(id))).join(", ")}, escolham onde ficam.`);
+  await chat(`<i class="fa-solid fa-campground"></i> <b>${T("O grupo monta acampamento.")}</b> ${T("{0} vigia{1} de {2} horas: {3}, escolham onde ficam.", [n, n > 1 ? "s" : "", DURACAO_VIGIA_H, participantes.map((id) => esc(nomeDoJogador(id))).join(", ")])}`);
 }
 
 /** Ações do mestre na viagem (janela e painel das vigias). */
@@ -2546,7 +2542,7 @@ async function acaoViagem(acao, dado = null) {
       if (v.fase !== "escolha") return;
       await alterarViagem((x) => { x.fase = "vigias"; x.vigias.atual = 0; x.vigias.inicio = game.time.worldTime; });
       const g = gruposDaVigia(viagemAtual().vigias);
-      return chat(`<i class="fa-solid fa-moon"></i> <b>Vigias da noite</b><ol>${g.map((ids, i) => `<li>${esc(horarioVigia(viagemAtual().vigias, i))}: ${ids.map((id) => esc(nomeDoJogador(id))).join(", ") || "ninguém"}</li>`).join("")}</ol>`);
+      return chat(`<i class="fa-solid fa-moon"></i> <b>${T("Vigias da noite")}</b><ol>${g.map((ids, i) => `<li>${esc(horarioVigia(viagemAtual().vigias, i))}: ${ids.map((id) => esc(nomeDoJogador(id))).join(", ") || T("ninguém")}</li>`).join("")}</ol>`);
     }
     case "proximaVigia": {
       if (v.fase !== "vigias") return;
@@ -2556,9 +2552,9 @@ async function acaoViagem(acao, dado = null) {
         return avancar(segVigia());
       }
       const g = gruposDaVigia(v.vigias);
-      const resumo = g.map((ids, i) => `${i + 1}ª ${ids.map(nomeDoJogador).join(", ") || "ninguém"}`).join("; ");
+      const resumo = g.map((ids, i) => `${i + 1}ª ${ids.map(nomeDoJogador).join(", ") || T("ninguém")}`).join("; ");
       await alterarViagem((x) => { x.fase = "noite"; (x.historicoVigias ??= []).push({ dia: x.dia, grupos: g }); x.vigias = null; });
-      await registrar(`Vigias (dia ${v.dia} da viagem): ${resumo}`, { icone: "fa-campground" });
+      await registrar(`${T("Vigias (dia {0} da viagem): {1}", [v.dia, resumo])}`, { icone: "fa-campground" });
       return avancar(segVigia());
     }
     case "amanhecer": {
@@ -2568,21 +2564,21 @@ async function acaoViagem(acao, dado = null) {
       await alterarViagem((x) => { x.dia += 1; x.fase = "viajando"; x.vigias = null; x.alvoAcampamento = proximoHorario(alvo, x.acampamento); });
       await avancarPara(alvo);
       const nv = viagemAtual();
-      await chat(`<i class="fa-solid fa-sun"></i> <b>Dia ${nv.dia} de viagem</b>${nv.destino ? ` rumo a ${esc(nv.destino)}` : ""}. O grupo levanta acampamento.`);
+      await chat(`<i class="fa-solid fa-sun"></i> <b>${T("Dia {0} de viagem", [nv.dia])}</b>${T("{0}. O grupo levanta acampamento.", [nv.destino ? ` rumo a ${esc(nv.destino)}` : ""])}`);
       return rolarEncontroDoDia();
     }
     case "chegar": {
       await alterarViagem(() => ({ ativa: false }));
-      await chat(`<i class="fa-solid fa-flag-checkered"></i> <b>O grupo chega${v.destino ? ` a ${esc(v.destino)}` : " ao destino"}</b> depois de ${v.dia} dia${v.dia > 1 ? "s" : ""} de viagem.`);
-      await registrar(`Chegada${v.destino ? ` a ${v.destino}` : ""} (${v.dia} dia(s) de viagem${v.encontros?.length ? `, ${v.encontros.length} encontro(s)` : ""})`, { icone: "fa-route" });
+      await chat(`<i class="fa-solid fa-flag-checkered"></i> <b>${T("O grupo chega{0}", [v.destino ? T(" a {0}", [esc(v.destino)]) : T(" ao destino")])}</b> ${T("depois de {0} dia{1} de viagem.", [v.dia, v.dia > 1 ? "s" : ""])}`);
+      await registrar(`${T("Chegada{0} ({1} dia(s) de viagem{2})", [v.destino ? T(" a {0}", [v.destino]) : "", v.dia, v.encontros?.length ? T(", {0} encontro(s)", [v.encontros.length]) : ""])}`, { icone: "fa-route" });
       foundry.applications.instances.get("cm-viagem")?.close();
       return;
     }
     case "cancelar": {
-      const ok = await Dialogo().confirm({ window: { title: "Encerrar viagem" }, content: "<p>Encerrar a viagem agora? O tempo não muda.</p>" });
+      const ok = await Dialogo().confirm({ window: { title: T("Encerrar viagem") }, content: `<p>${T("Encerrar a viagem agora? O tempo não muda.")}</p>` });
       if (!ok) return;
       await alterarViagem(() => ({ ativa: false }));
-      await registrar(`Viagem interrompida no dia ${v.dia}${v.destino ? ` (destino: ${v.destino})` : ""}`, { icone: "fa-route" });
+      await registrar(`${T("Viagem interrompida no dia {0}{1}", [v.dia, v.destino ? T(" (destino: {0})", [v.destino]) : ""])}`, { icone: "fa-route" });
       foundry.applications.instances.get("cm-viagem")?.close();
       return;
     }
@@ -2590,7 +2586,7 @@ async function acaoViagem(acao, dado = null) {
       const texto = String(dado ?? "").trim();
       if (!texto) return;
       await chat(`<div class="cm-narracao"><i class="fa-solid fa-feather"></i> ${esc(texto).replace(/\n/g, "<br>")}</div>`);
-      return registrar(`Viagem, dia ${v.dia} (${hhmm(agoraT)}): ${texto}`, { icone: "fa-feather" });
+      return registrar(`${T("Viagem, dia {0} ({1}): {2}", [v.dia, hhmm(agoraT), texto])}`, { icone: "fa-feather" });
     }
   }
 }
@@ -2600,7 +2596,7 @@ class JanelaViagem extends ApplicationV2 {
     id: "cm-viagem",
     classes: ["cm-janela"],
     tag: "div",
-    window: { title: "Viagem", icon: "fa-solid fa-route", resizable: true },
+    window: { title: T("Viagem"), icon: "fa-solid fa-route", resizable: true },
     position: { width: 520, height: "auto" },
     actions: {
       acao(ev, t) { acaoViagem(t.dataset.acao).catch((err) => relatarErro("viagem", err)); },
@@ -2615,7 +2611,7 @@ class JanelaViagem extends ApplicationV2 {
 
   async _renderHTML() {
     const v = viagemAtual();
-    if (!v) return `<div class="cm-raiz cm-editor cm-tema-${tema()}"><p class="cm-vazio">Nenhuma viagem em andamento.</p></div>`;
+    if (!v) return `<div class="cm-raiz cm-editor cm-tema-${tema()}"><p class="cm-vazio">${T("Nenhuma viagem em andamento.")}</p></div>`;
     const wt = game.time.worldTime, a = agora();
     const per = periodoDe(a.horaDec, a.mes, a.dia);
     const btn = (acao, icone, rotulo, extra = "") => `<button type="button" data-action="acao" data-acao="${acao}" ${extra}><i class="fa-solid ${icone}"></i> ${rotulo}</button>`;
@@ -2627,40 +2623,39 @@ class JanelaViagem extends ApplicationV2 {
     let fase = "";
     if (v.fase === "viajando") {
       fase = `<div class="cm-ed-cals-linha">
-          ${btn("meiaHora", "fa-forward-step", "+30 min")}${btn("hora", "fa-forward", "+1 hora")}
-          ${btn("acampamento", "fa-campground", `Até as ${hhmm(v.alvoAcampamento)}`, liberado ? "disabled" : "")}
+          ${btn("meiaHora", "fa-forward-step", T("+30 min"))}${btn("hora", "fa-forward", T("+1 hora"))}
+          ${btn("acampamento", "fa-campground", `${T("Até as {0}", [hhmm(v.alvoAcampamento)])}`, liberado ? "disabled" : "")}
         </div>
         <div class="cm-ed-cals-linha">
-          ${btn("vigias", "fa-moon", "Montar as vigias", liberado ? "" : `disabled data-tooltip="Libera às ${hhmm(v.alvoAcampamento)}"`)}
-          ${liberado ? "" : `<span class="cm-dica">libera às ${esc(hhmm(v.alvoAcampamento))} (falta ${esc(duracaoTexto(falta))})</span>`}
-          ${btn("amanhecer", ultimoDia ? "fa-flag-checkered" : "fa-sun", ultimoDia ? "Chegar ao destino" : `Pular a noite (sem vigias)`)}
+          ${btn("vigias", "fa-moon", T("Montar as vigias"), liberado ? "" : `disabled data-tooltip="${T("Libera às {0}", [hhmm(v.alvoAcampamento)])}"`)}
+          ${liberado ? "" : `<span class="cm-dica">${T("libera às {0} (falta {1})", [esc(hhmm(v.alvoAcampamento)), esc(duracaoTexto(falta))])}</span>`}
+          ${btn("amanhecer", ultimoDia ? "fa-flag-checkered" : "fa-sun", ultimoDia ? T("Chegar ao destino") : `${T("Pular a noite (sem vigias)")}`)}
         </div>`;
     } else if (v.fase === "escolha") {
       const vg = v.vigias;
-      fase = `<p class="cm-dica">Os jogadores estão escolhendo as vigias na tela deles. Você pode escolher por quem estiver offline.</p>
+      fase = `<p class="cm-dica">${T("Os jogadores estão escolhendo as vigias na tela deles. Você pode escolher por quem estiver offline.")}</p>
         <div class="cm-vg-atribuir">${vg.participantes.map((id) => `<label>${esc(nomeDoJogador(id))}
-          <select data-vg-atribuir="${id}"><option value="">— ainda não escolheu —</option>${Array.from({ length: vg.n }, (_, i) => `<option value="${i}" ${vg.escolhas?.[id] === i ? "selected" : ""}>${i + 1}ª vigia (${esc(horarioVigia(vg, i))})</option>`).join("")}</select></label>`).join("")}</div>
-        <div class="cm-ed-cals-linha">${btn("comecarVigias", "fa-play", "Começar as vigias")}${btn("cancelarVigias", "fa-xmark", "Desfazer")}</div>`;
+          <select data-vg-atribuir="${id}"><option value="">${T("— ainda não escolheu —")}</option>${Array.from({ length: vg.n }, (_, i) => `<option value="${i}" ${vg.escolhas?.[id] === i ? "selected" : ""}>${T("{0}ª vigia ({1})", [i + 1, esc(horarioVigia(vg, i))])}</option>`).join("")}</select></label>`).join("")}</div>
+        <div class="cm-ed-cals-linha">${btn("comecarVigias", "fa-play", T("Começar as vigias"))}${btn("cancelarVigias", "fa-xmark", T("Desfazer"))}</div>`;
     } else if (v.fase === "vigias") {
       const vg = v.vigias, i = vg.atual;
       const g = gruposDaVigia(vg);
-      fase = `<p><b>${i + 1}ª vigia de ${vg.n}</b> · ${esc(horarioVigia(vg, i))} · ${(g[i] ?? []).map((id) => esc(nomeDoJogador(id))).join(", ") || "ninguém"}</p>
-        <div class="cm-ed-cals-linha">${btn("proximaVigia", "fa-forward", i >= vg.n - 1 ? "Terminar a última vigia" : "Próxima vigia (+2 h)")}</div>`;
+      fase = `<p><b>${T("{0}ª vigia de {1}", [i + 1, vg.n])}</b> · ${esc(horarioVigia(vg, i))} · ${(g[i] ?? []).map((id) => esc(nomeDoJogador(id))).join(", ") || T("ninguém")}</p>
+        <div class="cm-ed-cals-linha">${btn("proximaVigia", "fa-forward", i >= vg.n - 1 ? T("Terminar a última vigia") : T("Próxima vigia (+2 h)"))}</div>`;
     } else if (v.fase === "noite") {
-      fase = `<p class="cm-dica">Vigias encerradas. ${ultimoDia ? "Último dia: o grupo pode chegar ao destino." : `Amanhece às ${esc(textoHoraDec(v.saida))}.`}</p>
-        <div class="cm-ed-cals-linha">${btn("hora", "fa-forward", "+1 hora")}${btn("amanhecer", ultimoDia ? "fa-flag-checkered" : "fa-sun", ultimoDia ? "Chegar ao destino" : "Seguir viagem")}</div>`;
+      fase = `<p class="cm-dica">${T("Vigias encerradas. {0}", [ultimoDia ? T("Último dia: o grupo pode chegar ao destino.") : `${T("Amanhece às {0}.", [esc(textoHoraDec(v.saida))])}`])}</p>
+        <div class="cm-ed-cals-linha">${btn("hora", "fa-forward", T("+1 hora"))}${btn("amanhecer", ultimoDia ? "fa-flag-checkered" : "fa-sun", ultimoDia ? T("Chegar ao destino") : T("Seguir viagem"))}</div>`;
     }
     return `<div class="cm-raiz cm-editor cm-viagem cm-tema-${tema()}">
-      <h3><i class="fa-solid fa-route"></i> ${v.destino ? esc(v.destino) : "Viagem"} <small>· dia ${v.dia} de ${v.diasTotal}</small></h3>
+      <h3><i class="fa-solid fa-route"></i> ${v.destino ? esc(v.destino) : T("Viagem")} <small>${T("· dia {0} de {1}", [v.dia, v.diasTotal])}</small></h3>
       <div class="cm-barra"><span style="width:${pct}%"></span></div>
-      <p class="cm-dica">${esc(textoData(a))} · ${esc(hhmm(wt))} · ${esc(per.nome)} · ritmo ${esc(String(v.ritmo).toLowerCase())}, cerca de ${kmDia} ${esc(v.un)} por dia (${v.hd} h)
-        ${(v.encontros ?? []).includes(v.dia) ? ` · <b class="cm-aviso"><i class="fa-solid fa-dragon"></i> encontro hoje</b>` : ""}</p>
+      <p class="cm-dica">${T("{0} · {1} · {2} · ritmo {3}, cerca de {4} {5} por dia ({6} h)\n        {7}", [esc(textoData(a)), esc(hhmm(wt)), esc(per.nome), esc(String(v.ritmo).toLowerCase()), kmDia, esc(v.un), v.hd, (v.encontros ?? []).includes(v.dia) ? ` · <b class="cm-aviso"><i class="fa-solid fa-dragon"></i> ${T("encontro hoje")}</b>` : ""])}</p>
       ${fase}
-      <fieldset><legend><i class="fa-solid fa-feather"></i> Narração deste momento</legend>
-        <textarea class="cm-vg-narracao" rows="3" placeholder="O que o grupo vê, ouve e sente agora... (vai para o chat de todos e para o histórico)"></textarea>
-        <div class="cm-ed-rodape"><button type="button" data-action="narrar"><i class="fa-solid fa-comment"></i> Enviar narração</button></div>
+      <fieldset><legend><i class="fa-solid fa-feather"></i> ${T("Narração deste momento")}</legend>
+        <textarea class="cm-vg-narracao" rows="3" placeholder="${T("O que o grupo vê, ouve e sente agora... (vai para o chat de todos e para o histórico)")}"></textarea>
+        <div class="cm-ed-rodape"><button type="button" data-action="narrar"><i class="fa-solid fa-comment"></i> ${T("Enviar narração")}</button></div>
       </fieldset>
-      <footer class="cm-ed-fim"><span class="cm-esp"></span>${btn("cancelar", "fa-ban", "Encerrar a viagem")}</footer>
+      <footer class="cm-ed-fim"><span class="cm-esp"></span>${btn("cancelar", "fa-ban", T("Encerrar a viagem"))}</footer>
     </div>`;
   }
 
@@ -2685,7 +2680,7 @@ class JanelaViagem extends ApplicationV2 {
 
 /** Divindades do Journal (páginas do tipo "Divindade"). */
 function divindades() {
-  return game.journal.filter((e) => e.pages?.contents?.some((p) => p.flags?.[JOURNAL]?.tipo === "deus")).sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
+  return game.journal.filter((e) => e.pages?.contents?.some((p) => p.flags?.[JOURNAL]?.tipo === "deus")).sort((a, b) => a.name.localeCompare(b.name, game.i18n.lang));
 }
 
 async function dialogoDiaSagrado() {
@@ -2693,33 +2688,33 @@ async function dialogoDiaSagrado() {
   const deuses = divindades();
   const a = agora();
   const r = await Dialogo().wait({
-    window: { title: "Dia sagrado", icon: "fa-solid fa-hands-praying" },
+    window: { title: T("Dia sagrado"), icon: "fa-solid fa-hands-praying" },
     position: { width: 460 },
     content: `<div class="cm-form">
-      <label>Divindade<select name="deus">
+      <label>${T("Divindade")}<select name="deus">
         ${deuses.map((d) => `<option value="${d.id}">${esc(d.name)}</option>`).join("")}
-        <option value="">Outra (escrever o nome)</option></select></label>
-      ${deuses.length ? "" : `<p class="cm-dica">Nenhuma divindade do Journal da Mesa encontrada; escreva o nome abaixo.</p>`}
-      <label>Nome da divindade (se for "Outra")<input type="text" name="outra"></label>
-      <label>Nome do dia sagrado<input type="text" name="nome" placeholder="Festival das Marés"></label>
+        <option value="">${T("Outra (escrever o nome)")}</option></select></label>
+      ${deuses.length ? "" : `<p class="cm-dica">${T("Nenhuma divindade do Journal da Mesa encontrada; escreva o nome abaixo.")}</p>`}
+      <label>${T("Nome da divindade (se for \"Outra\")")}<input type="text" name="outra"></label>
+      <label>${T("Nome do dia sagrado")}<input type="text" name="nome" placeholder="${T("Festival das Marés")}"></label>
       <div class="cm-form-2">
-        <label>Dia<input type="number" name="dia" min="1" value="${a.dia + 1}"></label>
-        <label>Mês<select name="mes">${N.CFG.meses.map((m, i) => `<option value="${i}" ${i === a.mes ? "selected" : ""}>${esc(m.nome)}</option>`).join("")}</select></label>
+        <label>${T("Dia")}<input type="number" name="dia" min="1" value="${a.dia + 1}"></label>
+        <label>${T("Mês")}<select name="mes">${N.CFG.meses.map((m, i) => `<option value="${i}" ${i === a.mes ? "selected" : ""}>${esc(m.nome)}</option>`).join("")}</select></label>
       </div>
       <div class="cm-form-2">
-        <label>Dura quantos dias<input type="number" name="duracao" min="1" value="1"></label>
-        <label>Cor<input type="color" name="cor" value="#c9a227"></label>
+        <label>${T("Dura quantos dias")}<input type="number" name="duracao" min="1" value="1"></label>
+        <label>${T("Cor")}<input type="color" name="cor" value="#c9a227"></label>
       </div>
-      <label>Quando chegar<select name="aviso">${opcoes(AVISOS, "todos")}</select></label>
-      <p class="cm-dica">Vira uma nota que se repete todo ano, ligada à página da divindade. Ela aparece no calendário e no Journal da Mesa.</p>
+      <label>${T("Quando chegar")}<select name="aviso">${opcoes(AVISOS, "todos")}</select></label>
+      <p class="cm-dica">${T("Vira uma nota que se repete todo ano, ligada à página da divindade. Ela aparece no calendário e no Journal da Mesa.")}</p>
     </div>`,
-    buttons: [{ action: "ok", label: "Criar", default: true, callback: (ev, btn) => Object.fromEntries(new FormData(btn.form)) }, { action: "cancelar", label: "Cancelar" }],
+    buttons: [{ action: "ok", label: T("Criar"), default: true, callback: (ev, btn) => Object.fromEntries(new FormData(btn.form)) }, { action: "cancelar", label: T("Cancelar") }],
     rejectClose: false
   });
   if (!r || typeof r !== "object") return;
   const deus = r.deus ? game.journal.get(r.deus) : null;
   const nomeDeus = deus?.name ?? (String(r.outra ?? "").trim() || "divindade");
-  const nome = String(r.nome ?? "").trim() || `Dia sagrado de ${nomeDeus}`;
+  const nome = String(r.nome ?? "").trim() || `${T("Dia sagrado de {0}", [nomeDeus])}`;
   const mes = Math.min(Math.max(0, num(r.mes)), N.CFG.meses.length - 1);
   const ano = mesExiste(a.ano, mes) ? a.ano : a.ano + 1;
   const td = tdDe(ano, mes, Math.min(Math.max(1, num(r.dia, 1)), Math.max(1, diasNoMes(ano, mes))) - 1);
@@ -2730,9 +2725,9 @@ async function dialogoDiaSagrado() {
     folder: pasta?.id ?? null,
     ownership: { default: 2 },
     flags: { [MOD]: { nota: notaNova(td, { repetir: "anual", cada: 1, icone: "fa-hands-praying", cor: r.cor || "#c9a227", aviso: AVISOS[r.aviso] ? r.aviso : "todos", duracao: Math.max(1, num(r.duracao, 1)), divindade: deus?.uuid ?? nomeDeus }) } },
-    pages: [paginaDeEvento(nome, `<p>Dia sagrado de ${link}.</p>`)]
+    pages: [paginaDeEvento(nome, `<p>${T("Dia sagrado de {0}.", [link])}</p>`)]
   });
-  if (e) ui.notifications.info(`"${nome}" marcado todo ano em ${num(r.dia)} de ${N.CFG.meses[mes].nome}.`);
+  if (e) ui.notifications.info(T("\"{0}\" marcado todo ano em {1} de {2}.", [nome, num(r.dia), N.CFG.meses[mes].nome]));
   return e;
 }
 

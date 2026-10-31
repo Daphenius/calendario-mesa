@@ -36,7 +36,7 @@ export class CentralConfig extends HandlebarsApplicationMixin(ApplicationV2) {
     id: "cm-central",
     classes: ["cm-janela", "cm-central-app"],
     tag: "div",
-    window: { title: "Calendário da Mesa — Central de Configurações", icon: "fa-solid fa-star-and-crescent", resizable: true },
+    window: { title: T("Calendário da Mesa — Central de Configurações"), icon: "fa-solid fa-star-and-crescent", resizable: true },
     position: { width: 880, height: 660 },
     actions: {
       aba: CentralConfig.#aba,
@@ -261,7 +261,7 @@ export class CentralConfig extends HandlebarsApplicationMixin(ApplicationV2) {
       const nomes = conflitos.map((k) => localizar(registro(k)?.name) || k);
       const sobrescrever = await DialogV2.confirm({
         window: { title: T("Configurações mudaram enquanto a Central estava aberta") },
-        content: `<p>${T("Estas configurações foram mudadas por outra pessoa ou outra janela:")}</p><ul>${nomes.map((n) => `<li>${foundry.utils.escapeHTML?.(n) ?? n}</li>`).join("")}</ul><p>${T("Gravar os seus valores por cima? (Não = manter os valores novos e salvar só o resto.)")}</p>`
+        content: `<p>${T("Estas configurações foram mudadas por outra pessoa ou outra janela:")}</p><ul>${nomes.map((n) => `<li>${foundry.utils.escapeHTML(n)}</li>`).join("")}</ul><p>${T("Gravar os seus valores por cima? (Não = manter os valores novos e salvar só o resto.)")}</p>`
       });
       if (!sobrescrever) pular = new Set(conflitos);
     }

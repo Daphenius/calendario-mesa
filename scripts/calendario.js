@@ -1,8 +1,8 @@
 /* =========================================================
- * Calendário da Mesa — Foundry VTT v13/v14
+ * Calendário da Mesa — Foundry VTT v14
  * Usa o tempo nativo do Foundry (game.time + CalendarData)
  * com um calendário próprio, HUD, luas, estações, notas e
- * integração com o módulo Journal (journal-mesa).
+ * integração com o módulo Journal da Mesa (journal-mesa).
  * ========================================================= */
 
 import { CHAVES_CENTRAL } from "./central-mapa.js";
@@ -49,7 +49,29 @@ function traduzirConfiguracoes() {
     menu.name = tr(menu._pt.name); menu.label = tr(menu._pt.label); menu.hint = tr(menu._pt.hint);
   }
 }
-Hooks.once("i18nInit", () => { try { traduzirConfiguracoes(); } catch (err) { console.warn(`${MOD} | tradução das configurações`, err); } });
+/** Textos de fábrica definidos no carregamento do módulo (antes de o Foundry ler lang/): no i18nInit, troca pelo
+ *  idioma carregado. Só nomes e descrições; ids e chaves não mudam. Dados criados pelo mestre não passam aqui. */
+function traduzirConstantes() {
+  const tr = (o, campos) => { for (const c of campos) if (typeof o?.[c] === "string") o[c] = T(o[c]); };
+  const valores = (mapa) => { for (const k of Object.keys(mapa)) if (typeof mapa[k] === "string") mapa[k] = T(mapa[k]); };
+  for (const mapa of [REPETIR, FIM, ICONES, AVISOS, MODOS_CENA, GRUPOS_CLIMA, UNIDADES, UNIDADE_SING]) valores(mapa);
+  for (const f of FASES_PADRAO) tr(f, ["nome"]);
+  for (const grupo of [CLIMAS, CLIMAS_PADRAO]) for (const c of Object.values(grupo)) tr(c, ["nome", "desc"]);
+  for (const grupo of [ZONAS, ZONAS_PADRAO]) for (const z of Object.values(grupo)) tr(z, ["nome"]);
+  for (const grupo of [ANOMALIAS, ANOMALIAS_PADRAO]) for (const a of Object.values(grupo)) tr(a, ["nome", "texto"]);
+  for (const k of Object.keys(ESCOLHAS_ZONAS)) if (typeof ESCOLHAS_ZONAS[k] === "string") ESCOLHAS_ZONAS[k] = T(ESCOLHAS_ZONAS[k]);
+  const p = PRESET_ELEMENTOS;
+  tr(p, ["nome"]);
+  for (const d of p.semana) tr(d, ["nome", "abrev"]);
+  for (const m of p.meses) { const pt = m.nome; tr(m, ["nome"]); if (m.nome !== pt) m.abrev = m.nome.slice(0, 3); }
+  for (const e of p.estacoes) tr(e, ["nome"]);
+  for (const l of p.luas) tr(l, ["nome"]);
+  for (const [id, ef] of Object.entries(CONFIG.weatherEffects ?? {})) if (id.startsWith("cm-") && typeof ef?.label === "string") ef.label = T(ef.label);
+}
+Hooks.once("i18nInit", () => {
+  try { traduzirConstantes(); } catch (err) { console.warn(`${MOD} | tradução dos textos de fábrica`, err); }
+  try { traduzirConfiguracoes(); } catch (err) { console.warn(`${MOD} | tradução das configurações`, err); }
+});
 
 /* ---------------- utilidades ---------------- */
 
@@ -83,7 +105,7 @@ function relatarErro(onde, err, { avisar = true } = {}) {
   const agoraMs = Date.now();
   if (agoraMs - (ULT_AVISO.get(onde) ?? 0) < 60000) return;
   ULT_AVISO.set(onde, agoraMs);
-  ui.notifications?.error(`Calendário: falha em "${onde}" (${err?.message ?? err}). Detalhes no console (F12).`);
+  ui.notifications?.error(T("Calendário: falha em \"{0}\" ({1}). Detalhes no console (F12).", [T(onde), err?.message ?? err]));
 }
 
 /* ---------------- calendários prontos ---------------- */
@@ -132,12 +154,12 @@ function normalizar(c) {
     minutosHora: Math.max(1, Math.trunc(num(c.minutosHora, 60))),
     segundosMinuto: Math.max(1, Math.trunc(num(c.segundosMinuto, 60))),
     semana: (Array.isArray(c.semana) && c.semana.length ? c.semana : p.semana)
-      .map((d, i) => ({ nome: String(d?.nome || `Dia ${i + 1}`), abrev: String(d?.abrev || String(d?.nome || `D${i + 1}`).slice(0, 3)) })),
+      .map((d, i) => ({ nome: String(d?.nome || `${T("Dia {0}", [i + 1])}`), abrev: String(d?.abrev || String(d?.nome || `D${i + 1}`).slice(0, 3)) })),
     meses: (Array.isArray(c.meses) && c.meses.length ? c.meses : p.meses)
       .map((m, i) => {
         const dias = Math.max(1, Math.trunc(num(m?.dias, 30)));
         return {
-          nome: String(m?.nome || `Mês ${i + 1}`), abrev: String(m?.abrev || String(m?.nome || `M${i + 1}`).slice(0, 3)), dias,
+          nome: String(m?.nome || `${T("Mês {0}", [i + 1])}`), abrev: String(m?.abrev || String(m?.nome || `M${i + 1}`).slice(0, 3)), dias,
           diasBissexto: Math.max(1, Math.trunc(num(m?.diasBissexto, dias))),
           aparicao: {
             cada: Math.max(0, Math.trunc(num(m?.aparicao?.cada, 0))),
@@ -156,7 +178,7 @@ function normalizar(c) {
       const inicio = Math.trunc(num(e?.inicio, 0));
       const fim = e?.fim === "" || e?.fim == null || !Number.isFinite(Number(e.fim)) ? null : Math.trunc(Number(e.fim));
       return {
-        nome: String(e?.nome || `Era ${i + 1}`),
+        nome: String(e?.nome || `${T("Era {0}", [i + 1])}`),
         sufixo: String(e?.sufixo ?? ""),
         inicio,
         fim: fim != null && fim < inicio ? inicio : fim,
@@ -164,14 +186,14 @@ function normalizar(c) {
       };
     }),
     estacoes: (Array.isArray(c.estacoes) ? c.estacoes : []).map((e, i) => ({
-      nome: String(e?.nome || `Estação ${i + 1}`),
+      nome: String(e?.nome || `${T("Estação {0}", [i + 1])}`),
       mesInicio: Math.max(1, Math.trunc(num(e?.mesInicio, 1))),
       diaInicio: Math.max(1, Math.trunc(num(e?.diaInicio, 1))),
       nascer: num(e?.nascer, 6), por: num(e?.por, 18),
       icone: String(e?.icone || "fa-cloud-sun")
     })),
     luas: (Array.isArray(c.luas) ? c.luas : []).map((l, i) => ({
-      nome: String(l?.nome || `Lua ${i + 1}`),
+      nome: String(l?.nome || `${T("Lua {0}", [i + 1])}`),
       ciclo: Math.max(1, num(l?.ciclo, 29.5)),
       deslocamento: num(l?.deslocamento, 0),
       cor: /^#[0-9a-f]{6}$/i.test(l?.cor) ? l.cor : "#e8e4d8",
@@ -183,7 +205,7 @@ function normalizar(c) {
         inicio: Math.trunc(num(l?.aparicao?.inicio, 0))
       },
       fases: (Array.isArray(l?.fases) && l.fases.length ? l.fases : FASES_PADRAO)
-        .map((f, k) => ({ nome: String(f?.nome || `Fase ${k + 1}`), peso: Math.max(0.1, num(f?.peso, 1)) }))
+        .map((f, k) => ({ nome: String(f?.nome || `${T("Fase {0}", [k + 1])}`), peso: Math.max(0.1, num(f?.peso, 1)) }))
     }))
   };
   r.primeiroDiaSemana = Math.min(r.primeiroDiaSemana, r.semana.length - 1);
@@ -339,7 +361,7 @@ function tabelaAnos(cm) {
  * continua achando os formatadores dele (formatMonthDay, formatApproximateTime...) e a recuperação
  * "ao amanhecer / ao anoitecer" do D&D 6 usa o nascer e o pôr do sol das nossas estações.
  * Em outros sistemas, herda direto do CalendarData nativo do Foundry. */
-const CalendarioBase = globalThis.dnd5e?.dataModels?.calendar?.CalendarData5e ?? foundry.data?.CalendarData ?? class { constructor() {} };
+const CalendarioBase = globalThis.dnd5e?.dataModels?.calendar?.CalendarData5e ?? foundry.data.CalendarData;
 
 /** Calendário nativo (do Foundry ou do D&D 5e) com o nascer e o pôr do sol das estações. */
 class CalendarioNativo extends CalendarioBase {
@@ -572,7 +594,8 @@ function tdDe(ano, mes, dia) {
 }
 
 function textoData(inf, { semana = true, ano = true } = {}) {
-  const partes = `${inf.dia + 1} de ${CFG.meses[inf.mes]?.nome ?? "?"}${ano ? ` de ${textoAno(inf.ano)}` : ""}`;
+  const mes = CFG.meses[inf.mes]?.nome ?? "?";
+  const partes = ano ? T("{0} de {1} de {2}", [inf.dia + 1, mes, textoAno(inf.ano)]) : T("{0} de {1}", [inf.dia + 1, mes]);
   return semana ? `${CFG.semana[inf.sem]?.nome ?? ""}, ${partes}` : partes;
 }
 
@@ -597,10 +620,10 @@ const eraDoAno = (anoInterno) => eraDoAnoCfg(CFG, anoInterno + CFG.anoInicial);
 function periodoDe(hd, mes, dia = 0) {
   const { nascer, por } = solDe(mes, dia);
   const meio = (nascer + por) / 2;
-  if (hd < nascer) return { nome: "Madrugada", icone: "fa-moon" };
-  if (hd < meio) return { nome: "Manhã", icone: "fa-sun" };
-  if (hd < por) return { nome: "Tarde", icone: "fa-sun" };
-  return { nome: "Noite", icone: "fa-moon" };
+  if (hd < nascer) return { nome: T("Madrugada"), icone: "fa-moon" };
+  if (hd < meio) return { nome: T("Manhã"), icone: "fa-sun" };
+  if (hd < por) return { nome: T("Tarde"), icone: "fa-sun" };
+  return { nome: T("Noite"), icone: "fa-moon" };
 }
 
 const FASES_PADRAO = ["Lua nova", "Crescente", "Quarto crescente", "Gibosa crescente", "Lua cheia", "Gibosa minguante", "Quarto minguante", "Minguante"]
@@ -674,7 +697,7 @@ function visibilidadeLua(lua, td) {
 }
 
 const luasNoCeu = (td) => CFG.luas.filter((l) => visibilidadeLua(l, td).visivel);
-const textoFalta = (v) => `${v.faltaDias} ${v.faltaDias === 1 ? "dia" : "dias"} (${textoData(infoDia(v.alvoTd), { semana: false })})`;
+const textoFalta = (v) => `${v.faltaDias === 1 ? T("1 dia") : T("{0} dias", [v.faltaDias])} (${textoData(infoDia(v.alvoTd), { semana: false })})`;
 
 /** Desenha a fase da lua em SVG (p de 0 a 1: 0 nova, 0.5 cheia). */
 function luaSVG(p, cor, tam = 16) {
@@ -807,23 +830,23 @@ function proximasVezes(n, desde, qtd = 5, limite = 4000) {
 
 /** Frase que descreve a repetição, ex.: "A cada 2 semanas: Dia da Água e Dia do Fogo, até 3 de Brasa de 1024". */
 function descreverRepeticao(n) {
-  if (n.repetir === "nao") return n.duracao > 1 ? `${n.duracao} dias` : "Não repete";
+  if (n.repetir === "nao") return n.duracao > 1 ? T("{0} dias", [n.duracao]) : T("Não repete");
   const base = infoDia(n.td);
-  const un = { dias: ["dia", "dias"], semanas: ["semana", "semanas"], meses: ["mês", "meses"], anos: ["ano", "anos"] }[n.repetir];
-  let t = n.cada === 1 ? { dias: "Todo dia", semanas: "Toda semana", meses: "Todo mês", anos: "Todo ano" }[n.repetir] : `A cada ${n.cada} ${un[1]}`;
+  const un = { dias: T("dias"), semanas: T("semanas"), meses: T("meses"), anos: T("anos") }[n.repetir];
+  let t = n.cada === 1 ? { dias: T("Todo dia"), semanas: T("Toda semana"), meses: T("Todo mês"), anos: T("Todo ano") }[n.repetir] : T("A cada {0} {1}", [n.cada, un]);
   const sem = (i) => CFG.semana[i]?.nome ?? "?";
-  const ordinal = (k) => ["1º", "2º", "3º", "4º", "5º", "6º"][k] ?? `${k + 1}º`;
-  if (n.repetir === "semanas") t += `: ${n.diasSemana.map(sem).join(", ").replace(/, ([^,]*)$/, " e $1")}`;
+  const ordinal = (k) => [T("1º"), T("2º"), T("3º"), T("4º"), T("5º"), T("6º")][k] ?? `${k + 1}º`;
+  if (n.repetir === "semanas") t += `: ${n.diasSemana.map(sem).join(", ").replace(/, ([^,]*)$/, ` ${T("e")} $1`)}`;
   if (n.repetir === "meses" || n.repetir === "anos") {
-    const mes = n.repetir === "anos" ? ` de ${CFG.meses[base.mes]?.nome}` : "";
-    t += n.modoMes === "dia" ? `, no dia ${base.dia + 1}${mes}`
-      : n.modoMes === "ultima" ? `, no último ${sem(base.sem)}${mes}`
-      : `, no ${ordinal(posNoMes(base).nth)} ${sem(base.sem)}${mes}`;
+    const mes = n.repetir === "anos" ? T(" de {0}", [CFG.meses[base.mes]?.nome]) : "";
+    t += n.modoMes === "dia" ? T(", no dia {0}{1}", [base.dia + 1, mes])
+      : n.modoMes === "ultima" ? T(", no último {0}{1}", [sem(base.sem), mes])
+      : T(", no {0} {1}{2}", [ordinal(posNoMes(base).nth), sem(base.sem), mes]);
   }
-  if (n.duracao > 1) t += `, durando ${n.duracao} dias`;
-  if (n.fim.tipo === "data") t += `, até ${textoData(infoDia(n.fim.td), { semana: false })}`;
-  if (n.fim.tipo === "vezes") t += `, ${n.fim.vezes} ${n.fim.vezes === 1 ? "vez" : "vezes"}`;
-  if (n.excecoes.length) t += ` (${n.excecoes.length} pulada${n.excecoes.length > 1 ? "s" : ""})`;
+  if (n.duracao > 1) t += T(", durando {0} dias", [n.duracao]);
+  if (n.fim.tipo === "data") t += T(", até {0}", [textoData(infoDia(n.fim.td), { semana: false })]);
+  if (n.fim.tipo === "vezes") t += n.fim.vezes === 1 ? T(", 1 vez") : T(", {0} vezes", [n.fim.vezes]);
+  if (n.excecoes.length) t += n.excecoes.length === 1 ? T(" (1 pulada)") : T(" ({0} puladas)", [n.excecoes.length]);
   return t;
 }
 
@@ -887,11 +910,11 @@ async function novaNotaNoJournal(td) {
   const ownership = { default: 0 };
   if (!gm) ownership[game.user.id] = 3;
   const e = await JournalEntry.create({
-    name: "Novo evento",
+    name: T("Novo evento"),
     folder: pasta?.id ?? null,
     ownership,
     flags: { [MOD]: { nota: notaNova(td) } },
-    pages: [paginaDeEvento("Novo evento")]
+    pages: [paginaDeEvento(T("Novo evento"))]
   });
   if (e) game.modules.get(JOURNAL).api.abrir(e.id);
   return e;
@@ -917,9 +940,9 @@ function paginaDeEvento(nome, html = "") {
 
 async function apagarNota(j) {
   const ok = await Dialogo().confirm({
-    window: { title: "Apagar nota", icon: "fa-solid fa-trash" },
-    content: `<p>Apagar <b>${esc(j.name)}</b> do calendário?</p><p class="cm-dica">Isso apaga o Diário "${esc(j.name)}". Para só tirar do calendário e manter o Diário, escolha "Tirar do calendário".</p>`,
-    yes: { label: "Apagar o Diário" }, no: { label: "Cancelar" }
+    window: { title: T("Apagar nota"), icon: "fa-solid fa-trash" },
+    content: `<p>${T("Apagar")} <b>${esc(j.name)}</b> ${T("do calendário?")}</p><p class="cm-dica">${T("Isso apaga o Diário \"{0}\". Para só tirar do calendário e manter o Diário, escolha \"Tirar do calendário\".", [esc(j.name)])}</p>`,
+    yes: { label: T("Apagar o Diário") }, no: { label: T("Cancelar") }
   });
   if (ok) return j.delete();
 }
@@ -969,10 +992,10 @@ async function integrarJournal(dias, semanas) {
     // o Journal devolve true quando renovou as lojas sozinho (opção dele); senão, só avisamos o mestre
     let renovou = false;
     if (typeof jm.api?.renovarEstoques === "function") {
-      try { renovou = !!(await jm.api.renovarEstoques()); } catch (err) { relatarErro("renovar estoques do Journal da Mesa", err); }
+      try { renovou = !!(await jm.api.renovarEstoques()); } catch (err) { relatarErro(T("renovar estoques do Journal da Mesa"), err); }
     }
     if (!renovou && game.settings.get(MOD, "avisoSemana")) {
-      await chat(`<i class="fa-solid fa-store"></i> Começou uma nova semana. Hora de renovar o <b>estoque das lojas</b> no Journal da Mesa.`, idsGM());
+      await chat(`<i class="fa-solid fa-store"></i> ${T("Começou uma nova semana. Hora de renovar o")} <b>${T("estoque das lojas")}</b> ${T("no Journal da Mesa.")}`, idsGM());
     }
   }
 }
@@ -1051,7 +1074,7 @@ const cenaEmUso = (s) => s.active || game.users.some((u) => u.active && u.viewed
  *  e relata quais falharam, sem esconder a falha. */
 async function atualizarCenas(updates, opcoes = {}, onde = "atualizar cenas") {
   if (!updates.length) return;
-  const Cena = CONFIG.Scene?.documentClass ?? globalThis.Scene;
+  const Cena = CONFIG.Scene.documentClass;
   try {
     await Cena.updateDocuments(updates, opcoes);
   } catch (err) {
@@ -1151,7 +1174,7 @@ async function processarMudancaDeTempo(antes, wt, delta) {
     await integrarJournal(d1 - d0, semanas);
     // histórico: eventos que começaram e saltos grandes
     const reg = [];
-    if (Math.abs(d1 - d0) > 1) reg.push({ texto: `${d1 > d0 ? "Passaram" : "Voltaram"} ${Math.abs(d1 - d0)} dias`, icone: "fa-forward" });
+    if (Math.abs(d1 - d0) > 1) reg.push({ texto: d1 > d0 ? T("Passaram {0} dias", [Math.abs(d1 - d0)]) : T("Voltaram {0} dias", [Math.abs(d1 - d0)]), icone: "fa-forward" });
     if (d1 > d0) {
       const lista = notas({ todas: true });
       for (let td = Math.max(d0 + 1, d1 - 60); td <= d1; td++) {
@@ -1238,8 +1261,7 @@ async function executarAcoes(j, a, td) {
   if (a.chat) await chat(`<i class="fa-solid fa-bell"></i> <b>${esc(nome)}</b><br>${esc(a.chat)}`, a.chatPara === "mestre" ? idsGM() : []);
   if (a.som) {
     try {
-      const Audio = foundry.audio?.AudioHelper ?? globalThis.AudioHelper;
-      await Audio?.play({ src: a.som, volume: a.volume, autoplay: true, loop: false }, true);
+      await foundry.audio.AudioHelper.play({ src: a.som, volume: a.volume, autoplay: true, loop: false }, true);
     } catch (err) { relatarErro(T("som da nota {nome}", { nome }), err); }
   }
   if (a.cena) {
@@ -1477,10 +1499,10 @@ async function irPara(td, { manterHora = true } = {}) {
 async function definirHoraDialogo() {
   const a = agora();
   const dados = await Dialogo().wait({
-    window: { title: "Definir hora", icon: "fa-solid fa-clock" },
+    window: { title: T("Definir hora"), icon: "fa-solid fa-clock" },
     position: { width: 300 },
-    content: `<div class="cm-form"><label>Hora do dia<input type="text" name="hora" value="${textoRelogio(segundoDoDia(a.wt))}" placeholder="HH:MM ou HH:MM:SS" autofocus></label></div>`,
-    buttons: [{ action: "ok", label: "Definir", default: true, callback: (ev, btn) => btn.form.elements.hora.value }, { action: "cancelar", label: "Cancelar" }],
+    content: `<div class="cm-form"><label>${T("Hora do dia")}<input type="text" name="hora" value="${textoRelogio(segundoDoDia(a.wt))}" placeholder="${T("HH:MM ou HH:MM:SS")}" autofocus></label></div>`,
+    buttons: [{ action: "ok", label: T("Definir"), default: true, callback: (ev, btn) => btn.form.elements.hora.value }, { action: "cancelar", label: T("Cancelar") }],
     rejectClose: false
   });
   const m = typeof dados === "string" ? dados.trim().match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?$/) : null;
@@ -1514,7 +1536,7 @@ function iniciarRelogio() {
     if (seg < 1) return;
     RELOGIO_RESTO -= seg;
     DESFAZER.tique = game.time.worldTime + seg;   // tique do relógio não entra no Desfazer
-    game.time.advance(seg).catch((err) => relatarErro("relógio em tempo real", err));
+    game.time.advance(seg).catch((err) => relatarErro(T("relógio em tempo real"), err));
   }, PASSO * 1000);
 }
 
@@ -1576,7 +1598,7 @@ class HUD {
         window.removeEventListener("pointerup", soltar);
         el.classList.remove("cm-movendo");
         if (!movendo) return;
-        game.settings.set(MOD, "posHud", { left: el.style.left, top: el.style.top }).catch((err) => relatarErro("posição do HUD", err, { avisar: false }));
+        game.settings.set(MOD, "posHud", { left: el.style.left, top: el.style.top }).catch((err) => relatarErro(T("posição do HUD"), err, { avisar: false }));
       };
       window.addEventListener("pointermove", mover);
       window.addEventListener("pointerup", soltar);
@@ -1685,7 +1707,7 @@ class HUD {
         if (!s) return ui.notifications.warn("Nenhuma cena aberta.");
         const ligado = !s.getFlag(MOD, "diaNoite");
         await s.setFlag(MOD, "diaNoite", ligado);
-        ui.notifications.info(ligado ? `"${s.name}" agora segue o dia e a noite do calendário.` : `"${s.name}" não segue mais o dia e a noite.`);
+        ui.notifications.info(ligado ? `${T("\"{0}\" agora segue o dia e a noite do calendário.", [s.name])}` : `${T("\"{0}\" não segue mais o dia e a noite.", [s.name])}`);
         if (ligado) await aplicarLuz(estadoLuz(game.time.worldTime), 2000, [s]);
         return this.render();
       }
@@ -1710,13 +1732,13 @@ class HUD {
     const mostrarHoraMini = gm || game.settings.get(MOD, "jogadoresVeemHora");
     if (modo === "oculto") {
       this.el.className = `cm-tema-${tema()} cm-oculto`;
-      this.el.innerHTML = `<div class="cm-bolinha" data-tooltip="${esc(textoData(a))} — clique duas vezes para mostrar; arraste para mover"><i class="fa-solid fa-calendar-days"></i></div>`;
+      this.el.innerHTML = `<div class="cm-bolinha" data-tooltip="${T("{0} — clique duas vezes para mostrar; arraste para mover", [esc(textoData(a))])}"><i class="fa-solid fa-calendar-days"></i></div>`;
       return;
     }
     if (modo === "mini") {
       const p = periodoDe(a.horaDec, a.mes, a.dia);
       this.el.className = `cm-tema-${tema()} cm-mini`;
-      this.el.innerHTML = `<div class="cm-linha" data-tooltip="Clique duas vezes para ocultar; arraste para mover">
+      this.el.innerHTML = `<div class="cm-linha" data-tooltip="${T("Clique duas vezes para ocultar; arraste para mover")}">
         <span class="cm-mini-data">${esc(textoData(a, { semana: false }))}</span>
         <span class="cm-hora">${mostrarHoraMini ? `<span class="cm-hora-txt">${textoRelogio(segundoDoDia(a.wt))}</span>` : `<i class="fa-solid ${p.icone}"></i> ${p.nome}`}</span>
       </div>`;
@@ -1739,7 +1761,7 @@ class HUD {
         <span class="cm-astro ${luzDoSol(a.wt) > 0.4 ? "sol" : "lua"}"></span>
       </div>
       <div class="cm-linha">
-        <a class="cm-arrasta" data-tooltip="Arrastar"><i class="fa-solid fa-grip-vertical"></i></a>
+        <a class="cm-arrasta" data-tooltip="${T("Arrastar")}"><i class="fa-solid fa-grip-vertical"></i></a>
         <div class="cm-data">
           <div class="cm-data-sem">${esc(CFG.semana[a.sem]?.nome ?? "")}${Object.keys(listaCalendarios().lista).length > 1 ? ` · <span class="cm-cal-nome">${esc(CFG.nome)}</span>` : ""}</div>
           <div class="cm-data-txt">${esc(textoData(a, { semana: false }))}</div>
@@ -1751,46 +1773,46 @@ class HUD {
           ${est ? `<span class="cm-estacao" data-tooltip="${esc(est.nome)}"><i class="fa-solid ${esc(est.icone)}"></i></span>` : ""}
           ${(() => {
             const zona = zonaDaCena(), c = climaDe(zona);
-            if (!c) return gm ? `<a class="cm-clima" data-acao="clima" data-tooltip="Clima (ainda não rolado hoje)"><i class="fa-solid fa-cloud-sun"></i></a>` : "";
+            if (!c) return gm ? `<a class="cm-clima" data-acao="clima" data-tooltip="${T("Clima (ainda não rolado hoje)")}"><i class="fa-solid fa-cloud-sun"></i></a>` : "";
             const an = anomaliaDe(zona);
             const dica = `${ZONAS[zona].nome}: ${CLIMAS[c.tipo]?.nome}, ${temperaturaTexto(c.temp)}${an ? ` — ${an.texto || ANOMALIAS[an.tipo].texto}` : ""}`;
             return `<span class="cm-clima ${an ? "cm-anomalia" : ""}" ${gm ? `data-acao="clima"` : ""} data-tooltip="${esc(dica)}"><i class="fa-solid ${CLIMAS[c.tipo]?.icone ?? "fa-cloud"}"></i> ${temperaturaTexto(c.temp)}</span>`;
           })()}
           ${luas}
         </div>
-        ${(() => { const n = contadores().filter((c) => !c.feito && (gm || c.visivel)).length; return n && !gm ? `<a class="cm-btn cm-badge" data-acao="contadores" data-tooltip="Contadores"><i class="fa-solid fa-hourglass-half"></i><b>${n}</b></a>` : ""; })()}
-        ${!gm && game.settings.get(MOD, "historicoJogadores") ? btn("historico", "fa-scroll", "Histórico da campanha") : ""}
-        ${btn("abrir", "fa-calendar-days", "Abrir o calendário")}
-        ${gm ? btn("compactar", compacto ? "fa-chevron-down" : "fa-chevron-up", compacto ? "Mostrar controles" : "Esconder controles") : ""}
+        ${(() => { const n = contadores().filter((c) => !c.feito && (gm || c.visivel)).length; return n && !gm ? `<a class="cm-btn cm-badge" data-acao="contadores" data-tooltip="${T("Contadores")}"><i class="fa-solid fa-hourglass-half"></i><b>${n}</b></a>` : ""; })()}
+        ${!gm && game.settings.get(MOD, "historicoJogadores") ? btn("historico", "fa-scroll", T("Histórico da campanha")) : ""}
+        ${btn("abrir", "fa-calendar-days", T("Abrir o calendário"))}
+        ${gm ? btn("compactar", compacto ? "fa-chevron-down" : "fa-chevron-up", compacto ? T("Mostrar controles") : T("Esconder controles")) : ""}
       </div>
       ${gm && !compacto ? `
       <div class="cm-controles">
         <div class="cm-grupo">
-          ${btn("avancar", "fa-backward-fast", "Voltar 1 dia", `data-un="d" data-q="-1"`)}
-          ${btn("avancar", "fa-backward", "Voltar 1 hora", `data-un="h" data-q="-1"`)}
-          ${btn("avancar", "fa-forward-step", "Avançar 10 minutos", `data-un="m" data-q="10"`)}
-          ${btn("avancar", "fa-forward", "Avançar 1 hora", `data-un="h" data-q="1"`)}
-          ${btn("avancar", "fa-forward-fast", "Avançar 1 dia", `data-un="d" data-q="1"`)}
+          ${btn("avancar", "fa-backward-fast", T("Voltar 1 dia"), `data-un="d" data-q="-1"`)}
+          ${btn("avancar", "fa-backward", T("Voltar 1 hora"), `data-un="h" data-q="-1"`)}
+          ${btn("avancar", "fa-forward-step", T("Avançar 10 minutos"), `data-un="m" data-q="10"`)}
+          ${btn("avancar", "fa-forward", T("Avançar 1 hora"), `data-un="h" data-q="1"`)}
+          ${btn("avancar", "fa-forward-fast", T("Avançar 1 dia"), `data-un="d" data-q="1"`)}
           ${DESFAZER.pilha.length ? btn("desfazer", "fa-rotate-left", T("Desfazer o último pulo (volta para {quando})", { quando: textoData(infoDia(diaTotalDe(DESFAZER.pilha.at(-1).antes)), { semana: false }) + " " + textoRelogio(segundoDoDia(DESFAZER.pilha.at(-1).antes)) })) : ""}
         </div>
         <div class="cm-grupo">
-          ${btn("amanhecer", "fa-cloud-sun", "Até o próximo amanhecer")}
-          ${btn("meiodia", "fa-sun", "Até o meio-dia")}
-          ${btn("anoitecer", "fa-cloud-moon", "Até o anoitecer")}
-          ${btn("meianoite", "fa-moon", "Até a meia-noite")}
-          ${btn("descanso", "fa-campground", "Descanso longo (8 horas)")}
+          ${btn("amanhecer", "fa-cloud-sun", T("Até o próximo amanhecer"))}
+          ${btn("meiodia", "fa-sun", T("Até o meio-dia"))}
+          ${btn("anoitecer", "fa-cloud-moon", T("Até o anoitecer"))}
+          ${btn("meianoite", "fa-moon", T("Até a meia-noite"))}
+          ${btn("descanso", "fa-campground", T("Descanso longo (8 horas)"))}
         </div>
         <div class="cm-grupo">
-          ${btn("relogio", relogioOn ? "fa-pause" : "fa-play", relogioOn ? "Pausar o relógio em tempo real" : "Ligar o relógio em tempo real", "", relogioOn ? "ativo" : "")}
-          ${Object.keys(listaCalendarios().lista).length > 1 ? btn("calCena", "fa-landmark", `Calendário desta cena: ${CFG.nome}`) : ""}
-          ${btn("cena", "fa-circle-half-stroke", cenaOn ? "Esta cena segue o dia/noite (clique para desligar)" : "Fazer esta cena seguir o dia/noite", "", cenaOn ? "ativo" : "")}
-          ${btn("editor", "fa-gear", "Editar o calendário")}
+          ${btn("relogio", relogioOn ? "fa-pause" : "fa-play", relogioOn ? T("Pausar o relógio em tempo real") : T("Ligar o relógio em tempo real"), "", relogioOn ? "ativo" : "")}
+          ${Object.keys(listaCalendarios().lista).length > 1 ? btn("calCena", "fa-landmark", `${T("Calendário desta cena: {0}", [CFG.nome])}`) : ""}
+          ${btn("cena", "fa-circle-half-stroke", cenaOn ? T("Esta cena segue o dia/noite (clique para desligar)") : T("Fazer esta cena seguir o dia/noite"), "", cenaOn ? "ativo" : "")}
+          ${btn("editor", "fa-gear", T("Editar o calendário"))}
         </div>
         <div class="cm-grupo">
-          ${btn("clima", "fa-cloud-sun-rain", "Clima da região")}
-          ${btn("viagem", "fa-route", viagemAtual() ? "Viagem em andamento" : "Viajar", "", viagemAtual() ? "ativo" : "")}
-          ${(() => { const n = contadores().filter((c) => !c.feito).length; return `<a class="cm-btn cm-badge" data-acao="contadores" data-tooltip="Contadores e prazos"><i class="fa-solid fa-hourglass-half"></i>${n ? `<b>${n}</b>` : ""}</a>`; })()}
-          ${btn("historico", "fa-scroll", "Histórico da campanha")}
+          ${btn("clima", "fa-cloud-sun-rain", T("Clima da região"))}
+          ${btn("viagem", "fa-route", viagemAtual() ? T("Viagem em andamento") : T("Viajar"), "", viagemAtual() ? "ativo" : "")}
+          ${(() => { const n = contadores().filter((c) => !c.feito).length; return `<a class="cm-btn cm-badge" data-acao="contadores" data-tooltip="${T("Contadores e prazos")}"><i class="fa-solid fa-hourglass-half"></i>${n ? `<b>${n}</b>` : ""}</a>`; })()}
+          ${btn("historico", "fa-scroll", T("Histórico da campanha"))}
         </div>
       </div>` : ""}`;
   }
@@ -1810,14 +1832,14 @@ function seletorCalendarios() {
   const cena = canvas?.scene;
   const daCena = cena?.getFlag(MOD, "calendario");
   const nome = (id) => esc(normalizar(lista[id]).nome);
-  const auto = daCena && lista[daCena] ? `Automático (cena: ${nome(daCena)})` : `Automático (${nome(principal)})`;
+  const auto = daCena && lista[daCena] ? `${T("Automático (cena: {0})", [nome(daCena)])}` : `${T("Automático ({0})", [nome(principal)])}`;
   return `<div class="cm-cals">
     <i class="fa-solid fa-landmark"></i>
-    <select class="cm-ver-como" data-tooltip="Qual calendário ver. Automático segue a cena; sem cena, o principal do mundo.">
+    <select class="cm-ver-como" data-tooltip="${T("Qual calendário ver. Automático segue a cena; sem cena, o principal do mundo.")}">
       <option value="" ${!visto ? "selected" : ""}>${auto}</option>
       ${ids.map((id) => `<option value="${id}" ${visto === id ? "selected" : ""}>${nome(id)}${id === principal ? " ★" : ""}</option>`).join("")}
     </select>
-    ${game.user.isGM && cena ? `<button type="button" data-action="usarNaCena" data-tooltip="Escolher o calendário desta cena (vale para todos)"><i class="fa-solid fa-map"></i> Calendário da cena</button>` : ""}
+    ${game.user.isGM && cena ? `<button type="button" data-action="usarNaCena" data-tooltip="${T("Escolher o calendário desta cena (vale para todos)")}"><i class="fa-solid fa-map"></i> ${T("Calendário da cena")}</button>` : ""}
   </div>`;
 }
 
@@ -1827,12 +1849,12 @@ async function escolherCalendarioDaCena() {
   const { principal, lista } = listaCalendarios();
   const atual = cena.getFlag(MOD, "calendario") ?? "";
   const escolha = await Dialogo().wait({
-    window: { title: `Calendário de "${cena.name}"`, icon: "fa-solid fa-landmark" },
-    content: `<div class="cm-form"><label>Calendário desta cena<select name="cal">
-      <option value="" ${!atual ? "selected" : ""}>Principal do mundo (${esc(normalizar(lista[principal]).nome)})</option>
+    window: { title: `${T("Calendário de \"{0}\"", [cena.name])}`, icon: "fa-solid fa-landmark" },
+    content: `<div class="cm-form"><label>${T("Calendário desta cena")}<select name="cal">
+      <option value="" ${!atual ? "selected" : ""}>${T("Principal do mundo ({0})", [esc(normalizar(lista[principal]).nome)])}</option>
       ${Object.keys(lista).map((id) => `<option value="${id}" ${atual === id ? "selected" : ""}>${esc(normalizar(lista[id]).nome)}</option>`).join("")}
-    </select></label><p class="cm-dica">Quem estiver nesta cena (no modo Automático) vê o calendário, a data e os eventos dele.</p></div>`,
-    buttons: [{ action: "ok", label: "Salvar", default: true, callback: (ev, btn) => btn.form.elements.cal.value }, { action: "cancelar", label: "Cancelar" }],
+    </select></label><p class="cm-dica">${T("Quem estiver nesta cena (no modo Automático) vê o calendário, a data e os eventos dele.")}</p></div>`,
+    buttons: [{ action: "ok", label: T("Salvar"), default: true, callback: (ev, btn) => btn.form.elements.cal.value }, { action: "cancelar", label: T("Cancelar") }],
     rejectClose: false
   });
   if (typeof escolha !== "string" || escolha === "cancelar") return;
@@ -1949,12 +1971,12 @@ class JanelaCalendario extends ApplicationV2 {
       <li class="cm-nota" draggable="${j.isOwner}" data-id="${j.id}">
         <i class="fa-solid ${n.icone}" style="color:${n.cor}"></i>
         <a class="cm-nota-nome" data-action="abrirNota" data-id="${j.id}">${esc(j.name)}</a>
-        <span class="cm-nota-info">${n.hora ? esc(n.hora) : ""}${n.repetir !== "nao" || n.duracao > 1 ? ` <i class="fa-solid fa-repeat" data-tooltip="${esc(descreverRepeticao(n))}"></i>` : ""}${n.duracao > 1 ? ` <span>dia ${this.sel - inicioQueCobre(n, this.sel) + 1}/${n.duracao}</span>` : ""}${gm && j.ownership.default === 0 ? ` <i class="fa-solid fa-eye-slash" data-tooltip="Só o mestre vê"></i>` : ""}</span>
+        <span class="cm-nota-info">${n.hora ? esc(n.hora) : ""}${n.repetir !== "nao" || n.duracao > 1 ? ` <i class="fa-solid fa-repeat" data-tooltip="${esc(descreverRepeticao(n))}"></i>` : ""}${n.duracao > 1 ? ` <span>${T("dia {0}/{1}", [this.sel - inicioQueCobre(n, this.sel) + 1, n.duracao])}</span>` : ""}${gm && j.ownership.default === 0 ? ` <i class="fa-solid fa-eye-slash" data-tooltip="${T("Só o mestre vê")}"></i>` : ""}</span>
         ${j.isOwner ? `<span class="cm-nota-acoes">
-          <a data-action="editarNota" data-id="${j.id}" data-tooltip="${notasNoJournal() ? "Editar no Journal da Mesa" : "Editar"}"><i class="fa-solid fa-pen"></i></a>
+          <a data-action="editarNota" data-id="${j.id}" data-tooltip="${notasNoJournal() ? T("Editar no Journal da Mesa") : T("Editar")}"><i class="fa-solid fa-pen"></i></a>
           ${gm ? `<a data-action="acoesNota" data-id="${j.id}" class="${acoesDaNota(j) ? "cm-com-acao" : ""}" data-tooltip="${esc(T("Ações quando chegar a hora (macro, som, cena)"))}"><i class="fa-solid fa-bolt"></i></a>` : ""}
-          <a data-action="tirarNota" data-id="${j.id}" data-tooltip="Tirar do calendário (mantém o Diário)"><i class="fa-solid fa-calendar-xmark"></i></a>
-          <a data-action="apagarNota" data-id="${j.id}" data-tooltip="Apagar"><i class="fa-solid fa-trash"></i></a>
+          <a data-action="tirarNota" data-id="${j.id}" data-tooltip="${T("Tirar do calendário (mantém o Diário)")}"><i class="fa-solid fa-calendar-xmark"></i></a>
+          <a data-action="apagarNota" data-id="${j.id}" data-tooltip="${T("Apagar")}"><i class="fa-solid fa-trash"></i></a>
         </span>` : ""}
       </li>`;
 
@@ -1973,27 +1995,27 @@ class JanelaCalendario extends ApplicationV2 {
       const v = visibilidadeLua(l, this.sel);
       if (!v.visivel) {
         if (!gm && !game.settings.get(MOD, "jogadoresVeemLuasOcultas")) return "";
-        return `<div class="cm-lua-linha cm-lua-oculta"><i class="fa-regular fa-eye-slash"></i> <span><b>${esc(l.nome)}</b> · fora do céu, volta em ${textoFalta(v)}</span></div>`;
+        return `<div class="cm-lua-linha cm-lua-oculta"><i class="fa-regular fa-eye-slash"></i> <span><b>${esc(l.nome)}</b> ${T("· fora do céu, volta em {0}", [textoFalta(v)])}</span></div>`;
       }
       const f = faseDe(l, this.sel);
-      return `<div class="cm-lua-linha">${luaSVG(f.p, l.cor, 18)} <span><b>${esc(l.nome)}</b> · ${esc(f.nome)}${v.sempre ? "" : ` <small>(some em ${textoFalta(v)})</small>`}</span></div>`;
+      return `<div class="cm-lua-linha">${luaSVG(f.p, l.cor, 18)} <span><b>${esc(l.nome)}</b> · ${esc(f.nome)}${v.sempre ? "" : ` <small>${T("(some em {0})", [textoFalta(v)])}</small>`}</span></div>`;
     }).join("");
 
     return `
       <div class="cm-raiz cm-tema-${tema()}">
         <section class="cm-mes">
           <header class="cm-cab">
-            <a data-action="ano" data-q="-1" data-tooltip="Ano anterior"><i class="fa-solid fa-angles-left"></i></a>
-            <a data-action="mes" data-q="-1" data-tooltip="Mês anterior"><i class="fa-solid fa-angle-left"></i></a>
+            <a data-action="ano" data-q="-1" data-tooltip="${T("Ano anterior")}"><i class="fa-solid fa-angles-left"></i></a>
+            <a data-action="mes" data-q="-1" data-tooltip="${T("Mês anterior")}"><i class="fa-solid fa-angle-left"></i></a>
             <h2>${esc(CFG.meses[this.mes].nome)} <small ${eraDoAno(this.ano) ? `data-tooltip="${esc(eraDoAno(this.ano).nome)}"` : ""}>${esc(textoAno(this.ano))}</small></h2>
-            <a data-action="mes" data-q="1" data-tooltip="Próximo mês"><i class="fa-solid fa-angle-right"></i></a>
-            <a data-action="ano" data-q="1" data-tooltip="Próximo ano"><i class="fa-solid fa-angles-right"></i></a>
-            <button type="button" data-action="hoje"><i class="fa-solid fa-location-crosshairs"></i> Hoje</button>
-            ${gm ? `<a data-action="editor" data-tooltip="Editar o calendário"><i class="fa-solid fa-gear"></i></a>` : ""}
+            <a data-action="mes" data-q="1" data-tooltip="${T("Próximo mês")}"><i class="fa-solid fa-angle-right"></i></a>
+            <a data-action="ano" data-q="1" data-tooltip="${T("Próximo ano")}"><i class="fa-solid fa-angles-right"></i></a>
+            <button type="button" data-action="hoje"><i class="fa-solid fa-location-crosshairs"></i> ${T("Hoje")}</button>
+            ${gm ? `<a data-action="editor" data-tooltip="${T("Editar o calendário")}"><i class="fa-solid fa-gear"></i></a>` : ""}
           </header>
           ${seletorCalendarios()}
           <div class="cm-grade" style="--w:${W}">${semanaHTML}${cel}</div>
-          ${gm ? `<p class="cm-dica">Arraste um Diário da barra lateral (ou uma nota da lista) para um dia para colocá-lo no calendário.</p>` : ""}
+          ${gm ? `<p class="cm-dica">${T("Arraste um Diário da barra lateral (ou uma nota da lista) para um dia para colocá-lo no calendário.")}</p>` : ""}
         </section>
         <aside class="cm-lado">
           <div class="cm-bloco">
@@ -2015,26 +2037,26 @@ class JanelaCalendario extends ApplicationV2 {
             })()}
           </div>
           <div class="cm-bloco">
-            <div class="cm-bloco-cab"><h4>Notas do dia</h4>
-              ${podeCriarNota() ? `<button type="button" data-action="novaNota" data-tooltip="${notasNoJournal() ? "Cria a nota e abre no Journal da Mesa para preencher" : "Criar uma nota neste dia"}"><i class="fa-solid fa-plus"></i> Nova nota</button>` : ""}
+            <div class="cm-bloco-cab"><h4>${T("Notas do dia")}</h4>
+              ${podeCriarNota() ? `<button type="button" data-action="novaNota" data-tooltip="${notasNoJournal() ? T("Cria a nota e abre no Journal da Mesa para preencher") : T("Criar uma nota neste dia")}"><i class="fa-solid fa-plus"></i> ${T("Nova nota")}</button>` : ""}
             </div>
-            ${doSel.length ? `<ul class="cm-notas">${doSel.map(notaHTML).join("")}</ul>` : `<p class="cm-vazio">Nada marcado neste dia.</p>`}
-            ${gm && this.sel !== a.td ? `<button type="button" class="cm-largo" data-action="irDia"><i class="fa-solid fa-calendar-check"></i> Tornar este o dia atual</button>` : ""}
+            ${doSel.length ? `<ul class="cm-notas">${doSel.map(notaHTML).join("")}</ul>` : `<p class="cm-vazio">${T("Nada marcado neste dia.")}</p>`}
+            ${gm && this.sel !== a.td ? `<button type="button" class="cm-largo" data-action="irDia"><i class="fa-solid fa-calendar-check"></i> ${T("Tornar este o dia atual")}</button>` : ""}
           </div>
           ${lojasHTML()}
           ${gm || game.settings.get(MOD, "historicoJogadores") ? `<div class="cm-bloco cm-ferramentas">
-            ${gm ? `<button type="button" data-action="diaSagrado"><i class="fa-solid fa-hands-praying"></i> Dia sagrado</button>
-            <button type="button" data-action="contadores"><i class="fa-solid fa-hourglass-half"></i> Contadores</button>` : ""}
-            <button type="button" data-action="historico"><i class="fa-solid fa-scroll"></i> Histórico</button>
+            ${gm ? `<button type="button" data-action="diaSagrado"><i class="fa-solid fa-hands-praying"></i> ${T("Dia sagrado")}</button>
+            <button type="button" data-action="contadores"><i class="fa-solid fa-hourglass-half"></i> ${T("Contadores")}</button>` : ""}
+            <button type="button" data-action="historico"><i class="fa-solid fa-scroll"></i> ${T("Histórico")}</button>
             ${linhaDoJournal() ? `<button type="button" data-action="linhaDoTempo" data-tooltip="${T("Abre a Linha do tempo do Journal da Mesa neste dia")}"><i class="fa-solid fa-timeline"></i> ${T("Linha do tempo")}</button>` : ""}
           </div>` : linhaDoJournal() ? `<div class="cm-bloco cm-ferramentas"><button type="button" data-action="linhaDoTempo" data-tooltip="${T("Abre a Linha do tempo do Journal da Mesa neste dia")}"><i class="fa-solid fa-timeline"></i> ${T("Linha do tempo")}</button></div>` : ""}
           <div class="cm-bloco">
-            <h4>Próximos 30 dias <small>(${proximos.length})</small></h4>
+            <h4>${T("Próximos 30 dias")} <small>(${proximos.length})</small></h4>
             ${proximos.length ? `<ul class="cm-proximos">${proximos.map((p) => `
               <li><i class="fa-solid ${p.n.icone}" style="color:${p.n.cor}"></i>
                 <a data-action="abrirNota" data-id="${p.j.id}">${esc(p.j.name)}</a>
-                <a class="cm-quando" data-action="dia" data-td="${p.td}">${p.td === a.td ? "hoje" : p.td === a.td + 1 ? "amanhã" : `em ${p.td - a.td} dias · ${esc(textoData(infoDia(p.td), { semana: false, ano: false }))}`}${p.n.hora ? ` · ${esc(p.n.hora)}` : ""}</a></li>`).join("")}</ul>`
-              : `<p class="cm-vazio">Nenhum evento nos próximos 30 dias.</p>`}
+                <a class="cm-quando" data-action="dia" data-td="${p.td}">${p.td === a.td ? T("hoje") : p.td === a.td + 1 ? T("amanhã") : `${T("em {0} dias · {1}", [p.td - a.td, esc(textoData(infoDia(p.td), { semana: false, ano: false }))])}`}${p.n.hora ? ` · ${esc(p.n.hora)}` : ""}</a></li>`).join("")}</ul>`
+              : `<p class="cm-vazio">${T("Nenhum evento nos próximos 30 dias.")}</p>`}
           </div>
         </aside>
       </div>`;
@@ -2136,7 +2158,7 @@ async function diarioHistorico() {
   let e = game.journal.find((j) => j.getFlag(MOD, "historico"));
   if (!e) {
     const pasta = await pastaCalendario();
-    e = await JournalEntry.create({ name: "Histórico da campanha", folder: pasta?.id ?? null, flags: { [MOD]: { historico: true } }, pages: [] });
+    e = await JournalEntry.create({ name: T("Histórico da campanha"), folder: pasta?.id ?? null, flags: { [MOD]: { historico: true } }, pages: [] });
   }
   return e;
 }
@@ -2149,7 +2171,7 @@ async function arquivarHistorico(antigos) {
     const pag = e.pages.find((p) => p.getFlag(MOD, "arquivo"));
     const html = historicoHTML(antigos);
     if (pag) await pag.update({ "text.content": (pag.text?.content ?? "") + html });
-    else await e.createEmbeddedDocuments("JournalEntryPage", [{ name: "Arquivo", type: "text", sort: 0, text: { content: html }, flags: { [MOD]: { arquivo: true } } }]);
+    else await e.createEmbeddedDocuments("JournalEntryPage", [{ name: T("Arquivo"), type: "text", sort: 0, text: { content: html }, flags: { [MOD]: { arquivo: true } } }]);
   } catch (err) { console.warn(`${MOD} | não consegui arquivar o histórico`, err); }
 }
 
@@ -2361,7 +2383,7 @@ function classeEfeitoTela() {
   if (CLASSE_TELA) return CLASSE_TELA;
   const P = globalThis.PIXI;
   if (!P?.Container || !P?.Mesh || !P?.Geometry || !P?.Shader) return null;
-  const Mix = foundry.canvas?.containers?.FullCanvasObjectMixin ?? globalThis.FullCanvasObjectMixin ?? ((B) => B);
+  const Mix = foundry.canvas.containers.FullCanvasObjectMixin;
   CLASSE_TELA = class EfeitoTela extends Mix(P.Container) {
     constructor(config = {}) {
       super();
@@ -2369,7 +2391,7 @@ function classeEfeitoTela() {
       this.eventMode = "none";
       try { this.#montar(this.config); } catch (err) {
         // se o shader não puder ser criado nesta máquina, o efeito fica vazio em vez de quebrar a camada de clima
-        avisoUmaVezCal("efeito-tela", `Calendário: o efeito de tela "${this.config.modo}" não pôde ser criado neste computador (${err?.message ?? err}).`);
+        avisoUmaVezCal("efeito-tela", `${T("Calendário: o efeito de tela \"{0}\" não pôde ser criado neste computador ({1}).", [this.config.modo, err?.message ?? err])}`);
         this.malha = null;
       }
       this.play();
@@ -2571,11 +2593,11 @@ async function aplicarFxNaCena(cena, ef) {
     let ativo = ok !== false;
     if (ativo && api.presets.listActive) { try { ativo = (api.presets.listActive({ scene: cena }) ?? []).includes(novo.nome); } catch { /* sem como conferir */ } }
     if (ativo) { await cena.setFlag(MOD, "fxPreset", novo); return true; }
-    avisoUmaVezCal(`fx-${novo.nome}`, `Calendário: o FXMaster não ligou o preset "${novo.nome}"; usando o efeito do Foundry no lugar.`);
+    avisoUmaVezCal(`fx-${novo.nome}`, `${T("Calendário: o FXMaster não ligou o preset \"{0}\"; usando o efeito do Foundry no lugar.", [novo.nome])}`);
     if (antes) await cena.unsetFlag(MOD, "fxPreset");
     return false;
   } catch (err) {
-    relatarErro("efeito do FXMaster", err, { avisar: false });
+    relatarErro(T("efeito do FXMaster"), err, { avisar: false });
     try { if (antes) await cena.unsetFlag(MOD, "fxPreset"); } catch { /* ignora */ }
     return false;
   }
@@ -2941,8 +2963,8 @@ async function atualizarClimaAgora({ forcar = false, avisar = true } = {}) {
   }
   const quem = game.settings.get(MOD, "climaChat");
   const linhas = novas.map((zona) => `<li><b>${esc(ZONAS[zona].nome)}</b>: ${textoClima(zona)}</li>`).join("");
-  if (avisar && quem !== "nenhum") await chat(`<i class="fa-solid fa-cloud-sun"></i> <b>Clima de hoje</b><ul>${linhas}</ul>`, quem === "mestre" ? idsGM() : []);
-  await registrar(`Clima: ${novas.map((zona) => `${ZONAS[zona].nome} — ${CLIMAS[hoje.zonas[zona].tipo]?.nome}`).join("; ")}`, { icone: "fa-cloud-sun" });
+  if (avisar && quem !== "nenhum") await chat(`<i class="fa-solid fa-cloud-sun"></i> <b>${T("Clima de hoje")}</b><ul>${linhas}</ul>`, quem === "mestre" ? idsGM() : []);
+  await registrar(`${T("Clima: {0}", [novas.map((zona) => `${ZONAS[zona].nome} — ${CLIMAS[hoje.zonas[zona].tipo]?.nome}`).join("; ")])}`, { icone: "fa-cloud-sun" });
   await aplicarClimaNasCenas();
 }
 
@@ -2950,10 +2972,10 @@ const temperaturaTexto = (c) => (game.settings.get(MOD, "climaUnidade") === "F" 
 
 function textoClima(zona) {
   const c = climaDe(zona);
-  if (!c) return "ainda não rolado";
+  if (!c) return T("ainda não rolado");
   const an = anomaliaDe(zona);
-  const faixa = c.min != null && c.max != null ? ` (mín. ${temperaturaTexto(c.min)}, máx. ${temperaturaTexto(c.max)})` : "";
-  const onda = c.onda ? ` · onda de ${c.onda}` : "";
+  const faixa = c.min != null && c.max != null ? ` ${T("(mín. {0}, máx. {1})", [temperaturaTexto(c.min), temperaturaTexto(c.max)])}` : "";
+  const onda = c.onda ? ` ${T("· onda de {0}", [T(c.onda)])}` : "";
   return `${esc(CLIMAS[c.tipo]?.nome ?? c.tipo)}, ${temperaturaTexto(c.temp)}${faixa}${onda}${an ? ` · <i>${esc(an.texto || ANOMALIAS[an.tipo].texto)}</i>` : ""}`;
 }
 
@@ -3085,12 +3107,12 @@ class ClimaRegiao extends (BaseComportamento ?? class {}) {
     const f = foundry.data.fields;
     return {
       zona: new f.StringField({
-        required: true, initial: "temperada", label: "Região do clima",
-        hint: "Clima que o grupo encontra enquanto estiver dentro desta área. As anomalias criadas na janela do clima também aparecem aqui (\"Anomalia: ...\"): a área usa a região base da anomalia com ela sempre ativa.",
+        required: true, initial: "temperada", label: chaveI18n("Região do clima"),
+        hint: chaveI18n("Clima que o grupo encontra enquanto estiver dentro desta área. As anomalias criadas na janela do clima também aparecem aqui (\"Anomalia: ...\"): a área usa a região base da anomalia com ela sempre ativa."),
         choices: () => Object.fromEntries(Object.entries(ZONAS).filter(([, v]) => !v.virtual || anomaliasLigadas()).map(([k, v]) => [k, v.nome]))
       }),
-      efeito: new f.BooleanField({ initial: true, label: "Mostrar o clima no mapa", hint: "Chuva, neve, neblina... nativos do Foundry enquanto o grupo estiver aqui." }),
-      aviso: new f.BooleanField({ initial: true, label: "Avisar no chat ao entrar e ao sair", hint: "Mostra o clima do dia quando o grupo entra nesta área e quando sai dela (com o clima do lugar para onde foi)." })
+      efeito: new f.BooleanField({ initial: true, label: chaveI18n("Mostrar o clima no mapa"), hint: chaveI18n("Chuva, neve, neblina... nativos do Foundry enquanto o grupo estiver aqui.") }),
+      aviso: new f.BooleanField({ initial: true, label: chaveI18n("Avisar no chat ao entrar e ao sair"), hint: chaveI18n("Mostra o clima do dia quando o grupo entra nesta área e quando sai dela (com o clima do lugar para onde foi).") })
     };
   }
 
@@ -3099,7 +3121,7 @@ class ClimaRegiao extends (BaseComportamento ?? class {}) {
     if (!souGMPrincipal()) return;
     const token = evento.data?.token;
     if (!token?.actor?.hasPlayerOwner) return;
-    return naFila("regiao", () => ClimaRegiao._entrarAgora.call(this, token)).catch((err) => relatarErro("região de clima (entrada)", err));
+    return naFila("regiao", () => ClimaRegiao._entrarAgora.call(this, token)).catch((err) => relatarErro(T("região de clima (entrada)"), err));
   }
 
   static async _entrarAgora(token) {
@@ -3114,7 +3136,7 @@ class ClimaRegiao extends (BaseComportamento ?? class {}) {
     if (this.aviso) {
       const quem = game.settings.get(MOD, "climaChat");
       const nome = this.region.name || ZONAS[this.zona].nome;
-      await chat(`<i class="fa-solid fa-map-location-dot"></i> O grupo entrou em <b>${esc(nome)}</b>${nome !== ZONAS[this.zona].nome ? ` (${esc(ZONAS[this.zona].nome)})` : ""}.<br>${mensagemClima(this.zona)}`, quem === "mestre" ? idsGM() : []);
+      await chat(`<i class="fa-solid fa-map-location-dot"></i> ${T("O grupo entrou em")} <b>${esc(nome)}</b>${nome !== ZONAS[this.zona].nome ? ` (${esc(ZONAS[this.zona].nome)})` : ""}.<br>${mensagemClima(this.zona)}`, quem === "mestre" ? idsGM() : []);
     }
     HUD.render();
   }
@@ -3123,7 +3145,7 @@ class ClimaRegiao extends (BaseComportamento ?? class {}) {
     if (!souGMPrincipal()) return;
     const token = evento.data?.token;
     if (!token?.actor?.hasPlayerOwner) return;
-    return naFila("regiao", () => ClimaRegiao._sairAgora.call(this, token)).catch((err) => relatarErro("região de clima (saída)", err));
+    return naFila("regiao", () => ClimaRegiao._sairAgora.call(this, token)).catch((err) => relatarErro(T("região de clima (saída)"), err));
   }
 
   static async _sairAgora(token) {
@@ -3143,9 +3165,9 @@ class ClimaRegiao extends (BaseComportamento ?? class {}) {
     await aplicarClimaNasCenas();
     if (this.aviso) {
       const quem = game.settings.get(MOD, "climaChat");
-      const nome = this.region.name || ZONAS[this.zona]?.nome || "a região";
-      const destino = b ? `Agora em <b>${esc(outra.name || ZONAS[b.system.zona].nome)}</b>` : `De volta ao clima de <b>${esc(ZONAS[zonaNova]?.nome ?? zonaNova)}</b>`;
-      await chat(`<i class="fa-solid fa-person-walking-arrow-right"></i> O grupo saiu de <b>${esc(nome)}</b>. ${destino}.<br>${mensagemClima(zonaNova)}`, quem === "mestre" ? idsGM() : []);
+      const nome = this.region.name || ZONAS[this.zona]?.nome || T("a região");
+      const destino = b ? `${T("Agora em")} <b>${esc(outra.name || ZONAS[b.system.zona].nome)}</b>` : `${T("De volta ao clima de")} <b>${esc(ZONAS[zonaNova]?.nome ?? zonaNova)}</b>`;
+      await chat(`<i class="fa-solid fa-person-walking-arrow-right"></i> ${T("O grupo saiu de")} <b>${esc(nome)}</b>. ${destino}.<br>${mensagemClima(zonaNova)}`, quem === "mestre" ? idsGM() : []);
     }
     HUD.render();
   }
@@ -3162,7 +3184,7 @@ function registrarRegiaoDeClima() {
   if (!BaseComportamento || !CONFIG.RegionBehavior) return;
   CONFIG.RegionBehavior.dataModels[TIPO_CLIMA] = ClimaRegiao;
   if (CONFIG.RegionBehavior.typeIcons) CONFIG.RegionBehavior.typeIcons[TIPO_CLIMA] = "fa-solid fa-cloud-sun";
-  if (CONFIG.RegionBehavior.typeLabels) CONFIG.RegionBehavior.typeLabels[TIPO_CLIMA] = "Clima (Calendário da Mesa)";
+  if (CONFIG.RegionBehavior.typeLabels) CONFIG.RegionBehavior.typeLabels[TIPO_CLIMA] = chaveI18n("Clima (Calendário da Mesa)");
 }
 
 /* ---------------- contadores e prazos ---------------- */
@@ -3193,8 +3215,8 @@ async function verificarContadores(antes, depois) {
   });
   // o aviso sai depois de gravar: se o mesmo prazo for checado de novo, ele já está "feito"
   for (const c of terminados) {
-    await chat(`<i class="fa-solid fa-hourglass-end"></i> <b>${esc(c.nome)}</b> terminou.`, c.aviso === "todos" ? [] : idsGM());
-    await registrar(`Prazo terminou: ${c.nome}`, { icone: "fa-hourglass-end", wt: c.fim });
+    await chat(`<i class="fa-solid fa-hourglass-end"></i> <b>${esc(c.nome)}</b> ${T("terminou.")}`, c.aviso === "todos" ? [] : idsGM());
+    await registrar(`${T("Prazo terminou: {0}", [c.nome])}`, { icone: "fa-hourglass-end", wt: c.fim });
   }
 }
 
@@ -3238,16 +3260,16 @@ const minutoParaHora = (m) => `${pad(Math.floor(m / 60))}:${pad(Math.round(m % 6
 function lojasHTML() {
   const lojas = game.journal.filter((e) => paginaDeLoja(e) && (game.user.isGM || e.testUserPermission(game.user, "LIMITED")));
   if (!lojas.length) return "";
-  const linhas = lojas.sort((a, b) => a.name.localeCompare(b.name, "pt-BR")).map((e) => {
+  const linhas = lojas.sort((a, b) => a.name.localeCompare(b.name, game.i18n.lang)).map((e) => {
     const h = horarioLoja(e), motivo = lojaFechadaPor(e), aberta = !motivo;
     const texto = !h.ativo ? "sempre aberta"
       : motivo === "folga" ? "folga hoje"
-      : aberta ? (h.abre === h.fecha ? "aberta" : `aberta até ${minutoParaHora(h.fecha)}`) : `fechada · abre ${minutoParaHora(h.abre)}`;
+      : aberta ? (h.abre === h.fecha ? "aberta" : `${T("aberta até {0}", [minutoParaHora(h.fecha)])}`) : `${T("fechada · abre {0}", [minutoParaHora(h.abre)])}`;
     return `<li class="${aberta ? "cm-aberta" : "cm-fechada"}"><i class="fa-solid fa-store"></i>
       <a data-action="abrirNota" data-id="${e.id}">${esc(e.name)}</a>
       <span>${texto}</span></li>`;
   }).join("");
-  return `<div class="cm-bloco"><h4>Lojas agora</h4><ul class="cm-lojas">${linhas}</ul></div>`;
+  return `<div class="cm-bloco"><h4>${T("Lojas agora")}</h4><ul class="cm-lojas">${linhas}</ul></div>`;
 }
 
 /* ---------------- datas nos textos: @Data[...] e @Hoje ---------------- */
@@ -3276,7 +3298,7 @@ function registrarEnrichers() {
       a.classList.add("cm-link-data");
       let td = null;
       try { td = CFG ? lerData(m[1]) : null; } catch {}
-      if (td == null) { a.classList.add("cm-link-ruim"); a.dataset.tooltip = "Data não encontrada no calendário"; }
+      if (td == null) { a.classList.add("cm-link-ruim"); a.dataset.tooltip = T("Data não encontrada no calendário"); }
       else a.dataset.td = td;
       a.innerHTML = `<i class="fa-solid fa-calendar-day"></i> ${esc(m[2] ?? m[1])}`;
       return a;
@@ -3288,7 +3310,7 @@ function registrarEnrichers() {
       const a = document.createElement("a");
       a.classList.add("cm-link-data");
       try { a.dataset.td = agora().td; a.innerHTML = `<i class="fa-solid fa-calendar-day"></i> ${esc(textoData(agora()))}`; }
-      catch { a.textContent = "hoje"; }
+      catch { a.textContent = T("hoje"); }
       return a;
     }
   });
@@ -3305,9 +3327,9 @@ function puloCinematografico(antes, depois) {
   const el = document.createElement("div");
   el.id = "cm-cinema";
   el.innerHTML = `<div class="cm-cin-caixa">
-    <div class="cm-cin-sub">${dias >= 0 ? "O tempo passa..." : "O tempo volta..."}</div>
+    <div class="cm-cin-sub">${dias >= 0 ? T("O tempo passa...") : T("O tempo volta...")}</div>
     <div class="cm-cin-data">${esc(textoData(infoDia(d0)))}</div>
-    <div class="cm-cin-conta">${dias ? `${Math.abs(dias)} dia${Math.abs(dias) > 1 ? "s" : ""}` : duracaoTexto(Math.abs(depois - antes))}</div>
+    <div class="cm-cin-conta">${dias ? (Math.abs(dias) > 1 ? T("{0} dias", [Math.abs(dias)]) : T("1 dia")) : duracaoTexto(Math.abs(depois - antes))}</div>
   </div>`;
   document.body.append(el);
   const dataEl = el.querySelector(".cm-cin-data");
@@ -3423,34 +3445,34 @@ const PainelVigia = {
     const grupos = gruposDaVigia(vg);
     const souParticipante = (vg.participantes ?? []).includes(game.user.id);
     const minha = vg.escolhas?.[game.user.id];
-    const nomes = (ids) => ids.length ? ids.map((id) => `<span class="cm-vg-nome">${esc(nomeDoJogador(id))}</span>`).join("") : `<span class="cm-vg-vazio">ninguém</span>`;
+    const nomes = (ids) => ids.length ? ids.map((id) => `<span class="cm-vg-nome">${esc(nomeDoJogador(id))}</span>`).join("") : `<span class="cm-vg-vazio">${T("ninguém")}</span>`;
     let corpo = "";
     if (v.fase === "escolha") {
       const faltam = (vg.participantes ?? []).filter((id) => vg.escolhas?.[id] == null);
-      corpo = `<div class="cm-vg-sub">${souParticipante ? "Escolha em qual vigia você fica." : "Os jogadores estão escolhendo as vigias."}</div>
+      corpo = `<div class="cm-vg-sub">${souParticipante ? T("Escolha em qual vigia você fica.") : T("Os jogadores estão escolhendo as vigias.")}</div>
         <ol class="cm-vg-lista">${grupos.map((ids, i) => `<li class="${minha === i ? "cm-vg-minha" : ""}">
-          <div class="cm-vg-cab"><b>${i + 1}ª vigia</b><small>${esc(horarioVigia(vg, i))}</small></div>
+          <div class="cm-vg-cab"><b>${T("{0}ª vigia", [i + 1])}</b><small>${esc(horarioVigia(vg, i))}</small></div>
           <div class="cm-vg-nomes">${nomes(ids)}</div>
           ${souParticipante ? (minha === i
-            ? `<button type="button" data-vigia-acao="sair" class="cm-vg-btn">Sair</button>`
-            : `<button type="button" data-vigia-acao="escolher" data-i="${i}" class="cm-vg-btn">Ficar nesta</button>`) : ""}
+            ? `<button type="button" data-vigia-acao="sair" class="cm-vg-btn">${T("Sair")}</button>`
+            : `<button type="button" data-vigia-acao="escolher" data-i="${i}" class="cm-vg-btn">${T("Ficar nesta")}</button>`) : ""}
         </li>`).join("")}</ol>
-        ${faltam.length ? `<div class="cm-vg-falta"><i class="fa-solid fa-hourglass-half"></i> Ainda não escolheram: ${faltam.map((id) => esc(nomeDoJogador(id))).join(", ")}</div>` : `<div class="cm-vg-falta pronto"><i class="fa-solid fa-check"></i> Todos escolheram.</div>`}
-        ${gm ? `<div class="cm-vg-gm"><button type="button" data-vigia-acao="comecarVigias"><i class="fa-solid fa-play"></i> Começar as vigias</button></div>` : ""}`;
+        ${faltam.length ? `<div class="cm-vg-falta"><i class="fa-solid fa-hourglass-half"></i> ${T("Ainda não escolheram: {0}", [faltam.map((id) => esc(nomeDoJogador(id))).join(", ")])}</div>` : `<div class="cm-vg-falta pronto"><i class="fa-solid fa-check"></i> ${T("Todos escolheram.")}</div>`}
+        ${gm ? `<div class="cm-vg-gm"><button type="button" data-vigia-acao="comecarVigias"><i class="fa-solid fa-play"></i> ${T("Começar as vigias")}</button></div>` : ""}`;
     } else {
       const i = num(vg.atual, 0);
       const ultima = i >= vg.n - 1;
       corpo = `<div class="cm-vg-agora">
-          <div class="cm-vg-num">${i + 1}ª vigia <small>de ${vg.n}</small></div>
+          <div class="cm-vg-num">${T("{0}ª vigia", [i + 1])} <small>${T("de {0}", [vg.n])}</small></div>
           <div class="cm-vg-hora"><i class="fa-solid fa-moon"></i> ${esc(horarioVigia(vg, i))}</div>
           <div class="cm-vg-nomes grande">${nomes(grupos[i] ?? [])}</div>
         </div>
-        ${!ultima ? `<div class="cm-vg-prox">Depois: ${(grupos[i + 1] ?? []).map((id) => esc(nomeDoJogador(id))).join(", ") || "ninguém"} (${esc(horarioVigia(vg, i + 1))})</div>` : ""}
-        ${gm ? `<div class="cm-vg-gm"><button type="button" data-vigia-acao="proximaVigia"><i class="fa-solid fa-forward"></i> ${ultima ? "Terminar a última vigia" : "Próxima vigia (+2 h)"}</button></div>` : ""}`;
+        ${!ultima ? `<div class="cm-vg-prox">${T("Depois: {0} ({1})", [(grupos[i + 1] ?? []).map((id) => esc(nomeDoJogador(id))).join(", ") || T("ninguém"), esc(horarioVigia(vg, i + 1))])}</div>` : ""}
+        ${gm ? `<div class="cm-vg-gm"><button type="button" data-vigia-acao="proximaVigia"><i class="fa-solid fa-forward"></i> ${ultima ? T("Terminar a última vigia") : T("Próxima vigia (+2 h)")}</button></div>` : ""}`;
     }
     this.el.className = `cm-tema-${tema()} ${this.min ? "cm-vg-min" : ""}`;
-    this.el.innerHTML = `<header><i class="fa-solid fa-campground"></i><span>Vigias${v.destino ? ` · a caminho de ${esc(v.destino)}` : ""} · dia ${num(v.dia, 1)}</span>
-        <a data-vigia-acao="minimizar" data-tooltip="${this.min ? "Mostrar" : "Minimizar"}"><i class="fa-solid ${this.min ? "fa-chevron-down" : "fa-chevron-up"}"></i></a></header>
+    this.el.innerHTML = `<header><i class="fa-solid fa-campground"></i><span>${T("Vigias{0} · dia {1}", [v.destino ? ` ${T("· a caminho de {0}", [esc(v.destino)])}` : "", num(v.dia, 1)])}</span>
+        <a data-vigia-acao="minimizar" data-tooltip="${this.min ? T("Mostrar") : T("Minimizar")}"><i class="fa-solid ${this.min ? "fa-chevron-down" : "fa-chevron-up"}"></i></a></header>
       ${this.min ? "" : corpo}`;
   }
 };
@@ -3511,6 +3533,7 @@ function rerenderJanelas() {
 }
 
 Hooks.once("init", () => {
+  Handlebars.registerHelper("cmT", (texto) => T(String(texto ?? "")));
   // As configurações mostradas na Central de Configurações saem da lista padrão do Foundry (config: false).
   // O registro continua o mesmo: id, escopo, tipo, padrão, opções e onChange não mudam, e os valores salvos ficam.
   const S = (k, o) => game.settings.register(MOD, k, CHAVES_CENTRAL.has(k) ? { ...o, config: false } : o);
@@ -3687,7 +3710,7 @@ Hooks.once("ready", () => {
     /** Liga ou desliga a anomalia (elemento drenado) de uma região do clima. tipo: "agua", "fogo", "terra", "ar" ou null. */
     anomalia: async (zona, tipo = null, texto = "") => {
       if (!game.user.isGM || !ZONAS[zona]) return false;
-      if (!anomaliaRegiaoInteira()) { avisoUmaVezCal("anomalia-inteira", "Calendário: um Nexus tentou ligar uma anomalia numa região inteira, mas a opção \"Anomalia cobrindo uma região inteira\" está desligada."); return false; }
+      if (!anomaliaRegiaoInteira()) { avisoUmaVezCal("anomalia-inteira", T("Calendário: um Nexus tentou ligar uma anomalia numa região inteira, mas a opção \"Anomalia cobrindo uma região inteira\" está desligada.")); return false; }
       const cfg = climaCfg();
       cfg.zonas[zona] = { ...(cfg.zonas[zona] ?? {}), anomalia: { tipo: tipo && ANOMALIAS[tipo] ? tipo : "nenhuma", texto: String(texto ?? "").trim() } };
       await game.settings.set(MOD, "climaZonas", cfg);
@@ -3743,7 +3766,7 @@ Hooks.once("ready", () => {
     JanelaCalendario.abrir(num(a.dataset.td));
   });
   if (souGMPrincipal()) {
-    registrar(`Sessão de jogo (${new Date().toLocaleDateString("pt-BR")})`, { icone: "fa-dice-d20" }).catch((err) => relatarErro("histórico", err));
+    registrar(`${T("Sessão de jogo ({0})", [new Date().toLocaleDateString(game.i18n.lang)])}`, { icone: "fa-dice-d20" }).catch((err) => relatarErro(T("histórico"), err));
     atualizarClima().catch((err) => relatarErro("clima", err));
   }
 });
@@ -3804,12 +3827,12 @@ for (const h of ["createJournalEntry", "updateJournalEntry", "deleteJournalEntry
 
 // botão no topo da aba de Diários
 Hooks.on("renderJournalDirectory", (app, html) => {
-  const root = html instanceof HTMLElement ? html : html?.[0];
+  const root = html;
   if (!root || root.querySelector(".cm-abrir")) return;
   const b = document.createElement("button");
   b.type = "button";
   b.className = "cm-abrir";
-  b.innerHTML = `<i class="fa-solid fa-calendar-days"></i> Calendário`;
+  b.innerHTML = `<i class="fa-solid fa-calendar-days"></i> ${T("Calendário")}`;
   b.addEventListener("click", () => JanelaCalendario.abrir());
   (root.querySelector(".header-actions") ?? root.querySelector(".directory-header") ?? root).append(b);
 });

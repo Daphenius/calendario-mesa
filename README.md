@@ -10,7 +10,7 @@ Se encontrar bugs ou tiver sugestões, abra uma [issue](https://github.com/Daphe
 
 ---
 
-**Versão 4.2.1** · Foundry VTT 14 · D&D 5e 6 · Português e English · Licença MIT · ✅ Testado e aprovado no Foundry
+**Versão 4.3.0** · Foundry VTT 14 · D&D 5e 6 · Português e English · Licença MIT · ✅ Testado e aprovado no Foundry
 
 ![Calendário da Mesa no Foundry VTT: janela do calendário](docs/screenshot.png)
 
@@ -45,10 +45,12 @@ Clique numa imagem para ver em tamanho maior.
 
 | | Mínimo | Testado |
 |---|---|---|
-| Foundry VTT | 13 | 14.369 |
+| Foundry VTT | 14 | 14.369 |
 | D&D 5e | — | 6.0.6 |
 
-**Testado e aprovado.** A versão 4.2.1 foi testada e aprovada pelo autor dentro do Foundry VTT, nas versões indicadas acima (Foundry 14.369 e D&D 5e 6.0.6), antes da publicação. Como em qualquer módulo, recomendamos fazer backup do mundo antes de atualizar.
+**Testado e aprovado.** A versão 4.3.0 foi testada e aprovada pelo autor dentro do Foundry VTT, nas versões indicadas acima (Foundry 14.369 e D&D 5e 6.0.6), antes da publicação. Como em qualquer módulo, recomendamos fazer backup do mundo antes de atualizar.
+
+**Foundry 13 não é mais suportado** a partir da 4.3.0. Quem ainda usa o Foundry 13 pode continuar na 4.2.1, disponível na [página de releases](https://github.com/Daphenius/calendario-mesa/releases).
 
 Com o D&D 5e, o calendário usa como base o calendário do próprio sistema (veja [D&D 5e 6 e Foundry 14](#dd-5e-6-e-foundry-14)). Em outros sistemas ele usa o calendário nativo do Foundry, mas só foi testado no D&D 5e.
 
@@ -460,8 +462,8 @@ Calendaria, Simple Calendar, Seasons & Stars, Fantasy-Calendar.com, FXMaster e M
 
 ## English summary
 
-**Calendário da Mesa** is a world calendar for Foundry VTT built on Foundry's native time: an HUD with clock and day/night bar, scene lighting by hour, seasons with sunrise and sunset, eras and leap years, months and moons that appear and disappear on cycles, moon phases and lunar events, weather by region (including native Scene Regions on a world map), countdowns, day-by-day travel with night watches, a campaign history, multiple calendars per world, and notes stored as native Journal Entries. It can import calendars from Simple Calendar, Seasons & Stars, Calendaria, Fantasy-Calendar.com and Foundry's own format, and it integrates with **Journal da Mesa** (shops, timeline, holy days and Nexus weather). This is an independent project, not affiliated with Calendaria. The interface is available in Portuguese and English.
+**Calendário da Mesa** is a world calendar for Foundry VTT 14 built on Foundry's native time: an HUD with clock and day/night bar, scene lighting by hour, seasons with sunrise and sunset, eras and leap years, months and moons that appear and disappear on cycles, moon phases and lunar events, weather by region (including native Scene Regions on a world map), countdowns, day-by-day travel with night watches, a campaign history, multiple calendars per world, and notes stored as native Journal Entries. It can import calendars from Simple Calendar, Seasons & Stars, Calendaria, Fantasy-Calendar.com and Foundry's own format, and it integrates with **Journal da Mesa** (shops, timeline, holy days and Nexus weather). This is an independent project, not affiliated with Calendaria. The interface is available in Portuguese and English.
 
-Version 4.2.1 was tested and approved by the author in Foundry VTT (14.369) with D&D 5e (6.0.6) before release. Install from Foundry with the manifest URL `https://github.com/Daphenius/calendario-mesa/releases/latest/download/module.json` (or extract the release ZIP into `Data/modules/calendario-mesa`) and enable it. Issues and suggestions: [GitHub Issues](https://github.com/Daphenius/calendario-mesa/issues). Licensed under MIT.
+Version 4.3.0 was tested and approved by the author in Foundry VTT (14.369) with D&D 5e (6.0.6) before release. Install from Foundry with the manifest URL `https://github.com/Daphenius/calendario-mesa/releases/latest/download/module.json` (or extract the release ZIP into `Data/modules/calendario-mesa`) and enable it. Issues and suggestions: [GitHub Issues](https://github.com/Daphenius/calendario-mesa/issues). Licensed under MIT.
 
 **How this module was made:** I know part of the community doesn't like AI-made modules, so I'd rather be transparent: this one was developed with the help of AI. I'm not a programmer. It started as a macro for my own table, grew as our games needed more, and ended up as a module. I use it in my own sessions and decided to share it in case it's useful to someone else. If you find bugs or have suggestions, please open an issue. All feedback is welcome.

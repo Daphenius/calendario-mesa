@@ -2,7 +2,7 @@
   "id": "calendario-mesa",
   "title": "Calendário da Mesa",
   "description": "Calendário próprio do mundo sobre o tempo nativo do Foundry (compatível com o calendário do D&D 5e 6): HUD com relógio, luz do mapa por hora, estações por dia e mês, eras, luas com fases, clima por região (inclusive pelas Regiões nativas do mapa), contadores, viagem dia a dia com vigias, histórico, vários calendários e notas como Diários nativos, integrado ao Journal da Mesa.",
-  "version": "4.2.1",
+  "version": "4.3.0",
   "authors": [
     {
       "name": "Daphenius",
@@ -11,13 +11,13 @@
   ],
   "url": "https://github.com/Daphenius/calendario-mesa",
   "manifest": "https://github.com/Daphenius/calendario-mesa/releases/latest/download/module.json",
-  "download": "https://github.com/Daphenius/calendario-mesa/releases/download/v4.2.1/calendario-mesa.zip",
+  "download": "https://github.com/Daphenius/calendario-mesa/releases/download/v4.3.0/calendario-mesa.zip",
   "license": "https://github.com/Daphenius/calendario-mesa/blob/main/LICENSE",
   "readme": "https://github.com/Daphenius/calendario-mesa/blob/main/README.md",
   "changelog": "https://github.com/Daphenius/calendario-mesa/blob/main/CHANGELOG.md",
   "bugs": "https://github.com/Daphenius/calendario-mesa/issues",
   "compatibility": {
-    "minimum": "13",
+    "minimum": "14",
     "verified": "14.369"
   },
   "relationships": {

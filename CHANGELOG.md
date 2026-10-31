@@ -1,5 +1,15 @@
 # Histórico de versões — Calendário da Mesa
 
+## 4.3.0
+
+- **Testada e aprovada pelo autor no Foundry VTT 14 e no D&D 5e** antes da publicação.
+- **Só Foundry 14**: a versão mínima passou de 13 para 14. Saíram os caminhos de reserva que só existiam para versões antigas (AudioHelper, FilePicker, saveDataToFile, FullCanvasObjectMixin e Scene globais, e o HTML em jQuery na aba de Diários); o módulo usa direto as APIs do Foundry 14. Quem está no Foundry 13 pode continuar na 4.2.1.
+- **Inglês completo**: antes, só as configurações e alguns avisos tinham tradução, e o resto aparecia em português para quem joga em inglês. Agora o HUD, a janela do calendário, o editor, a luz por hora, o clima (tempo de hoje, regiões, climas, efeitos e anomalias), a previsão, os contadores, a viagem e as vigias, o histórico, os dias sagrados, a importação, a Central de Configurações, os avisos no chat e as mensagens de erro passam pela tradução (cerca de 1.000 textos novos em `lang/en.json` e `lang/pt-BR.json`).
+  - Os textos de fábrica (climas, regiões, anomalias, fases da lua, ícones, o calendário de exemplo e os efeitos de clima do Calendário) aparecem no idioma de quem joga. O que o mestre criou ou editou fica como foi escrito.
+  - Datas, repetições ("A cada 2 semanas…"), prazos, durações e pulos de tempo agora são montados no idioma certo, e as listas são ordenadas pelo idioma do jogo.
+  - As pastas de notas que o módulo cria ("Calendário" e "Ano 1023") continuam com o mesmo nome em qualquer idioma, para os mundos não ganharem pastas duplicadas.
+- Nenhuma configuração, id ou valor salvo mudou.
+
 ## 4.2.1
 
 - **Testada e aprovada pelo autor no Foundry VTT e no D&D 5e** antes da publicação.

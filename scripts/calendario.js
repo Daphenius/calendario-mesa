@@ -447,7 +447,7 @@ const CACHE_CAL = new Map();
 /** Todos os calendários do mundo: { principal, lista: { id: config } }. */
 function listaCalendarios() {
   let c = {};
-  try { c = game.settings.get(MOD, "calendarios") ?? {}; } catch {}
+  try { c = game.settings.get(MOD, "calendarios") ?? {}; } catch (err) { console.warn(`${MOD} | lista de calendários (configuração ainda não registrada?)`, err); }
   const lista = c.lista && Object.keys(c.lista).length ? c.lista : { padrao: game.settings.get(MOD, "config") };
   const principal = lista[c.principal] ? c.principal : Object.keys(lista)[0];
   return { principal, lista };
@@ -457,10 +457,10 @@ function listaCalendarios() {
 function idAtivo() {
   const { principal, lista } = listaCalendarios();
   let visto = "";
-  try { visto = game.settings.get(MOD, "calendarioVisto"); } catch {}
+  try { visto = game.settings.get(MOD, "calendarioVisto"); } catch (err) { console.warn(`${MOD} | "ver como" (configuração ainda não registrada?)`, err); }
   if (visto && lista[visto]) return visto;
   let daCena = null;
-  try { daCena = (globalThis.canvas?.scene ?? game.scenes?.viewed)?.getFlag?.(MOD, "calendario"); } catch {}
+  try { daCena = (globalThis.canvas?.scene ?? game.scenes?.viewed)?.getFlag?.(MOD, "calendario"); } catch (err) { console.warn(`${MOD} | calendário da cena`, err); }
   if (daCena && lista[daCena]) return daCena;
   return principal;
 }
@@ -541,7 +541,8 @@ const diaTotalDe = (wt) => Math.floor(wt / segDia());
 const segundoDoDia = (wt) => mod(wt, segDia());
 
 let CACHE = new Map();
-function limparCache() { CACHE = new Map(); }
+/** Esvazia os caches que dependem do calendário em uso: dias, eventos das luas e fim das séries de notas. */
+function limparCache() { CACHE = new Map(); CACHE_LUAS.clear(); CACHE_FIM.clear(); }
 
 /** Informações de um dia (índice absoluto de dias desde o tempo 0). */
 function infoDia(td) {
@@ -607,7 +608,8 @@ function textoRelogio(seg) {
   return `${pad(h)}:${pad(m)}:${pad(sg)}`;
 }
 let ULT_TEMPO = 0;   // quando o tempo do mundo mudou pela última vez (para o relógio contar os segundos entre um passo e outro)
-function textoHoraDec(hd) { const h = Math.floor(hd); return textoHora(h, Math.round((hd - h) * CFG.minutosHora) % CFG.minutosHora); }
+/** Hora decimal → "HH:MM". Arredonda para o minuto antes de separar as horas (6,999 h → 07:00, não 06:00). */
+function textoHoraDec(hd) { const tot = Math.round(hd * CFG.minutosHora); return textoHora(Math.floor(tot / CFG.minutosHora), tot % CFG.minutosHora); }
 
 /* ---------------- estações, sol e luas ---------------- */
 
@@ -795,7 +797,7 @@ function ultimoInicio(n) {
   if (n.repetir === "nao") return n.td;
   if (n.fim.tipo === "data") return n.fim.td;
   if (n.fim.tipo !== "vezes") return Infinity;
-  const chave = JSON.stringify([n.td, n.repetir, n.cada, n.diasSemana, n.modoMes, n.fim.vezes, CFG.nome, CFG.meses.length]);
+  const chave = JSON.stringify([CAL_ID, n.td, n.repetir, n.cada, n.diasSemana, n.modoMes, n.fim.vezes, CFG.nome, CFG.meses.length]);
   if (CACHE_FIM.has(chave)) return CACHE_FIM.get(chave);
   let cont = 0, ult = n.td;
   for (let td = n.td; td < n.td + 200000 && cont < n.fim.vezes; td++) if (bateRegra(n, td)) { cont++; ult = td; }
@@ -1093,7 +1095,7 @@ async function aplicarLuz(estado, ms = 2000, cenas = cenasDiaNoite(), limiar = 0
   const updates = [];
   for (const s of cenas) {
     const env = s.environment ?? {};
-    if (env.darknessLevelLock) continue;
+    if (env.darknessLock) continue;   // escuridão travada pelo mestre na configuração da cena
     const upd = {};
     if (Math.abs(num(env.darknessLevel, -1) - estado.escuridao) >= limiar) upd["environment.darknessLevel"] = estado.escuridao;
     if (Math.abs(num(env.dark?.hue, -1) - estado.hue) > 0.004) upd["environment.dark.hue"] = estado.hue;
@@ -1188,7 +1190,9 @@ async function processarMudancaDeTempo(antes, wt, delta) {
   if (delta > 0) {
     await avisarNotas(antes, wt);
     await dispararAcoesDasNotas(antes, wt);
-    await expirarEfeitos(wt);
+    // efeitos vencidos: não a cada tique de 5 s do relógio em tempo real; só quando o minuto do jogo muda
+    // (um pulo de dia ou de hora sempre muda o minuto). Com a opção em "Não mexer", a própria função sai na hora.
+    if (Math.floor(antes / segMinuto()) !== Math.floor(wt / segMinuto())) await expirarEfeitos(wt);
   }
 }
 
@@ -1329,9 +1333,11 @@ function eventosLuasDoDia(td) {
     // dia em que a posição no ciclo passa pelo ponto exato (0 = nova, 0,5 = cheia)
     const pos = mod(td - l.deslocamento, l.ciclo);
     const ciclo = Math.floor((td - l.deslocamento) / l.ciclo);
-    if (pos < 1 && chance && sorteioFixo(l.nome, i, ciclo, "sol") < chance) ev.push({ tipo: "eclipseSolar", luas: [l.nome], icone: "fa-circle-half-stroke", cor: l.cor });
+    // o sorteio usa o id da lua quando ela tem um (renomear não muda os eclipses); sem id, o nome, como sempre foi
+    const semente = l.id ?? l.nome;
+    if (pos < 1 && chance && sorteioFixo(semente, i, ciclo, "sol") < chance) ev.push({ tipo: "eclipseSolar", luas: [l.nome], icone: "fa-circle-half-stroke", cor: l.cor });
     const metade = l.ciclo / 2;
-    if (pos >= metade - 0.5 && pos < metade + 0.5 && chance && sorteioFixo(l.nome, i, ciclo, "lua") < chance) ev.push({ tipo: "eclipseLunar", luas: [l.nome], icone: "fa-moon", cor: "#c0392b" });
+    if (pos >= metade - 0.5 && pos < metade + 0.5 && chance && sorteioFixo(semente, i, ciclo, "lua") < chance) ev.push({ tipo: "eclipseLunar", luas: [l.nome], icone: "fa-moon", cor: "#c0392b" });
   }
   const cheias = visiveis.filter(({ f }) => f.cheia);
   if (cheias.length >= 2) ev.push({ tipo: "cheiasJuntas", luas: cheias.map(({ l }) => l.nome), icone: "fa-circle", cor: "#f1e3a6" });
@@ -1704,7 +1710,7 @@ class HUD {
       case "relogio": await game.settings.set(MOD, "relogioAtivo", !game.settings.get(MOD, "relogioAtivo")); return;
       case "cena": {
         const s = canvas?.scene;
-        if (!s) return ui.notifications.warn("Nenhuma cena aberta.");
+        if (!s) return ui.notifications.warn(T("Nenhuma cena aberta."));
         const ligado = !s.getFlag(MOD, "diaNoite");
         await s.setFlag(MOD, "diaNoite", ligado);
         ui.notifications.info(ligado ? `${T("\"{0}\" agora segue o dia e a noite do calendário.", [s.name])}` : `${T("\"{0}\" não segue mais o dia e a noite.", [s.name])}`);
@@ -1757,7 +1763,7 @@ class HUD {
 
     this.el.className = `cm-tema-${tema()} ${compacto ? "cm-compacto" : ""}`;
     this.el.innerHTML = `
-      <div class="cm-ceu ${gm ? "cm-ceu-gm" : ""}" style="--n:${pct(nascer)}%;--p:${pct(por)}%;--agora:${pct(a.horaDec)}%" ${gm ? `data-tooltip="Arraste o sol/lua para mudar a hora"` : ""}>
+      <div class="cm-ceu ${gm ? "cm-ceu-gm" : ""}" style="--n:${pct(nascer)}%;--p:${pct(por)}%;--agora:${pct(a.horaDec)}%" ${gm ? `data-tooltip="${esc(T("Arraste o sol/lua para mudar a hora"))}"` : ""}>
         <span class="cm-astro ${luzDoSol(a.wt) > 0.4 ? "sol" : "lua"}"></span>
       </div>
       <div class="cm-linha">
@@ -1766,7 +1772,7 @@ class HUD {
           <div class="cm-data-sem">${esc(CFG.semana[a.sem]?.nome ?? "")}${Object.keys(listaCalendarios().lista).length > 1 ? ` · <span class="cm-cal-nome">${esc(CFG.nome)}</span>` : ""}</div>
           <div class="cm-data-txt">${esc(textoData(a, { semana: false }))}</div>
         </div>
-        <div class="cm-hora ${gm ? "cm-clicavel" : ""}" ${gm ? `data-acao="hora" data-tooltip="Definir a hora"` : ""}>
+        <div class="cm-hora ${gm ? "cm-clicavel" : ""}" ${gm ? `data-acao="hora" data-tooltip="${esc(T("Definir a hora"))}"` : ""}>
           ${mostrarHora ? `<span class="cm-hora-txt">${textoRelogio(segundoDoDia(a.wt))}</span>` : `<i class="fa-solid ${periodo.icone}"></i> ${periodo.nome}`}
         </div>
         <div class="cm-extras">
@@ -1828,7 +1834,7 @@ function seletorCalendarios() {
   const ids = Object.keys(lista);
   if (ids.length < 2) return "";
   let visto = "";
-  try { visto = game.settings.get(MOD, "calendarioVisto"); } catch {}
+  try { visto = game.settings.get(MOD, "calendarioVisto"); } catch (err) { console.warn(`${MOD} | "ver como" (configuração ainda não registrada?)`, err); }
   const cena = canvas?.scene;
   const daCena = cena?.getFlag(MOD, "calendario");
   const nome = (id) => esc(normalizar(lista[id]).nome);
@@ -1898,6 +1904,9 @@ class JanelaCalendario extends ApplicationV2 {
       editor() { abrirFerramenta("EditorCalendario"); }
     }
   };
+
+  /** O título passa pela tradução na hora de abrir (as opções da classe são lidas antes de o Foundry carregar lang/). */
+  get title() { return T("Calendário"); }
 
   static abrir(td = null) {
     let app = foundry.applications.instances.get("cm-calendario");
@@ -2086,7 +2095,7 @@ class JanelaCalendario extends ApplicationV2 {
     else if (d?.type === "JournalEntry") j = await fromUuid(d.uuid);
     else if (d?.type === "JournalEntryPage") j = (await fromUuid(d.uuid))?.parent ?? null;
     if (!j || j.documentName !== "JournalEntry") return;
-    if (!j.isOwner) return ui.notifications.warn("Você não pode mudar esse Diário.");
+    if (!j.isOwner) return ui.notifications.warn(T("Você não pode mudar esse Diário."));
     if (j.getFlag(MOD, "nota")) await j.update({ [`flags.${MOD}.nota.td`]: td });
     else await j.update({ [`flags.${MOD}.nota`]: notaNova(td, { icone: "fa-scroll" }) });
     this.sel = td;
@@ -2817,19 +2826,26 @@ async function ligarRegiaoDaAnomalia(id, ligar = true) {
 
 const ehDeFabrica = (grupo, id) => !!({ zonas: ZONAS_PADRAO, anomalias: ANOMALIAS_PADRAO, climas: CLIMAS_PADRAO }[grupo] ?? {})[id];
 
-/** Primavera, verão, outono ou inverno da estação atual (pelo nome ou ícone). */
+/** Primavera, verão, outono ou inverno da estação atual (pelo nome ou ícone). Se o nome e o ícone não
+ *  lembram nenhuma das quatro (ex.: "Época das Chuvas"), vale a posição da estação no ano: a primeira
+ *  quarta parte das estações é primavera, depois verão, outono e inverno. Uma estação só continua primavera. */
 function tipoEstacao(est) {
   const t = `${est?.nome ?? ""} ${est?.icone ?? ""}`.toLowerCase();
   if (/inverno|winter|frio|neve|snow/.test(t)) return "inverno";
   if (/ver[aã]o|summer|calor|fa-sun/.test(t)) return "verao";
   if (/outono|autumn|fall|colheita|fa-leaf/.test(t)) return "outono";
-  return "primavera";
+  if (/primavera|spring|fa-seedling/.test(t)) return "primavera";
+  const i = CFG?.estacoes?.indexOf(est) ?? -1;
+  const ord = i >= 0 ? estacoesOrdenadas(CFG) : [];
+  const pos = ord.findIndex((o) => o.i === i);
+  if (pos < 0 || ord.length < 2) return "primavera";
+  return ESTACOES_CLIMA[Math.min(3, Math.floor(((pos + 0.5) * 4) / ord.length))];
 }
 
 const climaCfg = () => foundry.utils.mergeObject({ zonas: {} }, game.settings.get(MOD, "climaZonas") ?? {}, { inplace: false });
-/** Região do clima de uma cena: a Região do mapa onde o grupo está > a escolhida para a cena > a padrão do mundo. */
 /** Região padrão do mundo; se ela foi apagada, volta para a Temperada. */
 const zonaPadraoValida = () => { const p = game.settings.get(MOD, "zonaPadrao"); return ZONAS[p] ? p : (ZONAS.temperada ? "temperada" : Object.keys(ZONAS)[0]); };
+/** Região do clima de uma cena: a Região do mapa onde o grupo está > a escolhida para a cena > a padrão do mundo. */
 const zonaDaCena = (cena = canvas?.scene) => {
   const ativa = cena?.getFlag(MOD, "zonaAtiva")?.zona;
   if (ZONAS[ativa]) return ativa;
@@ -2865,7 +2881,6 @@ function sortearPeso(pesos) {
   return Object.keys(pesos)[0];
 }
 
-/** Rola o clima de uma zona para o dia de hoje. */
 /** Ruído com forma de sino (soma de 3 sorteios): perto de 0 é comum, os extremos são raros. Vai de −1 a 1. */
 const ruido = () => (Math.random() + Math.random() + Math.random() - 1.5) / 1.5;
 const FORA_DE_EPOCA = 0.1; // chance de a temperatura puxar para a de outra estação
@@ -2924,7 +2939,6 @@ function rolarTemperatura(zona, tipo, td = null) {
 const climaHoje = () => { const c = game.settings.get(MOD, "climaAtual"); return c?.td === agora().td ? c : { td: agora().td, zonas: {} }; };
 const climaDe = (zona) => climaHoje().zonas?.[zona] ?? null;
 
-/** Zonas em uso: a padrão e a de cada cena que escolheu uma. */
 /** Zonas em uso: a padrão, a de cada cena que escolheu uma e as das Regiões de clima desenhadas nos mapas. */
 const zonasEmUso = () => {
   const z = new Set([zonaPadraoValida()]);
@@ -3262,9 +3276,9 @@ function lojasHTML() {
   if (!lojas.length) return "";
   const linhas = lojas.sort((a, b) => a.name.localeCompare(b.name, game.i18n.lang)).map((e) => {
     const h = horarioLoja(e), motivo = lojaFechadaPor(e), aberta = !motivo;
-    const texto = !h.ativo ? "sempre aberta"
-      : motivo === "folga" ? "folga hoje"
-      : aberta ? (h.abre === h.fecha ? "aberta" : `${T("aberta até {0}", [minutoParaHora(h.fecha)])}`) : `${T("fechada · abre {0}", [minutoParaHora(h.abre)])}`;
+    const texto = !h.ativo ? T("sempre aberta")
+      : motivo === "folga" ? T("folga hoje")
+      : aberta ? (h.abre === h.fecha ? T("aberta") : `${T("aberta até {0}", [minutoParaHora(h.fecha)])}`) : `${T("fechada · abre {0}", [minutoParaHora(h.abre)])}`;
     return `<li class="${aberta ? "cm-aberta" : "cm-fechada"}"><i class="fa-solid fa-store"></i>
       <a data-action="abrirNota" data-id="${e.id}">${esc(e.name)}</a>
       <span>${texto}</span></li>`;
@@ -3297,7 +3311,7 @@ function registrarEnrichers() {
       const a = document.createElement("a");
       a.classList.add("cm-link-data");
       let td = null;
-      try { td = CFG ? lerData(m[1]) : null; } catch {}
+      try { td = CFG ? lerData(m[1]) : null; } catch (err) { console.warn(`${MOD} | @Data[${m[1]}]: não consegui ler a data`, err); }
       if (td == null) { a.classList.add("cm-link-ruim"); a.dataset.tooltip = T("Data não encontrada no calendário"); }
       else a.dataset.td = td;
       a.innerHTML = `<i class="fa-solid fa-calendar-day"></i> ${esc(m[2] ?? m[1])}`;
@@ -3414,7 +3428,7 @@ function escolherVigia(userId, indice) {
 /** Jogador (ou mestre) clicou numa vigia no painel. */
 function pedirVigia(indice) {
   if (game.user.isGM && souGMPrincipal()) return escolherVigia(game.user.id, indice);
-  if (!game.users.activeGM) return ui.notifications.warn("O mestre precisa estar online para isso.");
+  if (!game.users.activeGM) return ui.notifications.warn(T("O mestre precisa estar online para isso."));
   game.socket.emit(`module.${MOD}`, { acao: "vigiaEscolher", userId: game.user.id, vigia: indice });
 }
 
@@ -3489,7 +3503,7 @@ const ferramentas = () => (_ferramentas ??= import(new URL(`./ferramentas.js?v=$
   .catch((err) => {
     _ferramentas = null;
     console.error(`${MOD} | não consegui carregar ferramentas.js`, err);
-    ui.notifications.error("Calendário: não consegui abrir esta ferramenta. Confira se o arquivo ferramentas.js está na pasta do módulo e recarregue (F5). O resto do calendário continua funcionando.");
+    ui.notifications.error(T("Calendário: não consegui abrir esta ferramenta. Confira se o arquivo ferramentas.js está na pasta do módulo e recarregue (F5). O resto do calendário continua funcionando."));
     throw err;
   }));
 /* A falha ao carregar o arquivo já é avisada em ferramentas(); aqui só se relata erro de dentro da ferramenta. */
@@ -3581,6 +3595,8 @@ Hooks.once("init", () => {
     icon: "fa-solid fa-sun", type: MenuLuz, restricted: true
   });
   S("historico", { scope: "world", config: false, type: Object, default: { itens: [] }, onChange: () => foundry.applications.instances.get("cm-historico")?.render() });
+  // quando (hora real, em ms) a última "Sessão de jogo" entrou no histórico: um F5 no meio da sessão não registra outra
+  S("ultimaSessao", { scope: "world", config: false, type: Number, default: 0 });
   S("historicoJogadores", { name: "Jogadores veem o histórico", hint: "Libera o botão do histórico da campanha para os jogadores.", scope: "world", config: true, type: Boolean, default: false, onChange: rerenderJanelas });
   S("climaZonas", { scope: "world", config: false, type: Object, default: { zonas: {} }, onChange: () => HUD.render() });
   S("climaAtual", { scope: "world", config: false, type: Object, default: {}, onChange: () => HUD.render() });
@@ -3609,10 +3625,10 @@ Hooks.once("init", () => {
     icon: "fa-solid fa-table-list", type: MenuTabelas, restricted: true
   });
   S("efeitosVencidos", { name: K("Efeitos com duração vencidos"), hint: K("Quando o tempo passa, o que fazer com os efeitos ativos dos personagens cuja duração acabou (magias, venenos...). Usa o início e a duração que o próprio Foundry guarda em cada efeito."), scope: "world", config: true, type: String,
-    choices: { remover: K("Remover da ficha"), desativar: K("Desativar (fica na ficha, desligado)"), nao: K("Não mexer") }, default: "remover" });
+    choices: { remover: K("Remover da ficha"), desativar: K("Desativar (fica na ficha, desligado)"), nao: K("Não mexer") }, default: "nao" });
   S("efeitosAviso", { name: K("Avisar o mestre quando efeitos acabarem"), scope: "world", config: true, type: Boolean, default: true });
   S("luasAviso", { name: K("Eventos das luas no chat"), hint: K("Luas cheias juntas, eclipses e noites sem luas, no dia em que acontecem."), scope: "world", config: true, type: String, choices: { nenhum: K("Não avisar"), mestre: K("Só o mestre"), todos: K("Todos") }, default: "todos" });
-  S("eclipseChance", { name: K("Chance de eclipse por ciclo lunar (%)"), hint: K("A cada lua nova (eclipse solar) e a cada lua cheia (eclipse lunar), a chance de acontecer um eclipse. O sorteio é fixo: os eclipses caem sempre nos mesmos dias."), scope: "world", config: true, type: Number, range: { min: 0, max: 100, step: 1 }, default: 15, onChange: () => { CACHE_LUAS.clear(); rerenderJanelas(); } });
+  S("eclipseChance", { name: K("Chance de eclipse por ciclo lunar (%)"), hint: K("A cada lua nova (eclipse solar) e a cada lua cheia (eclipse lunar), a chance de acontecer um eclipse. O sorteio é fixo: os eclipses caem sempre nos mesmos dias."), scope: "world", config: true, type: Number, range: { min: 0, max: 100, step: 1 }, default: 15, onChange: () => { limparCache(); rerenderJanelas(); } });
   S("eclipseMudaClima", { name: K("Eclipse solar muda o clima do dia"), hint: K("No dia de um eclipse solar, o clima das regiões vira \"Eclipse\"."), scope: "world", config: true, type: Boolean, default: false });
   S("climaPrevisao", { scope: "world", config: false, type: Object, default: { dias: {} }, onChange: () => foundry.applications.instances.get("cm-clima")?.render() });
   S("previsaoDias", { name: K("Dias de previsão do tempo"), hint: K("Quantos dias à frente o mestre vê e ajusta na aba Previsão da janela do clima."), scope: "world", config: true, type: Number, range: { min: 3, max: 7, step: 1 }, default: 5 });
@@ -3643,7 +3659,7 @@ Hooks.once("init", () => {
 Hooks.once("setup", () => {
   registrarEfeitosPersonalizados();
   const atual = CONFIG.time.worldCalendarConfig;
-  if (atual && atual.description !== "Calendário da Mesa") { try { CAL_ANTERIOR = foundry.utils.deepClone(atual); } catch {} }
+  if (atual && atual.description !== "Calendário da Mesa") { try { CAL_ANTERIOR = foundry.utils.deepClone(atual); } catch (err) { console.warn(`${MOD} | não consegui guardar o calendário anterior (para "Importar do mundo")`, err); } }
   aplicarCalendario();
   // D&D 5e: o HUD do sistema é criado no "ready"; desligar aqui evita dois relógios na tela
   if (CONFIG.DND5E?.calendar && game.settings.get(MOD, "hudDnd5e") === "esconder") CONFIG.DND5E.calendar.application = null;
@@ -3766,10 +3782,21 @@ Hooks.once("ready", () => {
     JanelaCalendario.abrir(num(a.dataset.td));
   });
   if (souGMPrincipal()) {
-    registrar(`${T("Sessão de jogo ({0})", [new Date().toLocaleDateString(game.i18n.lang)])}`, { icone: "fa-dice-d20" }).catch((err) => relatarErro(T("histórico"), err));
+    registrarSessao().catch((err) => relatarErro(T("histórico"), err));
     atualizarClima().catch((err) => relatarErro("clima", err));
   }
 });
+
+/** "Sessão de jogo" no histórico: só quando a última registrada tem mais de 6 h de tempo real ou é de outro dia
+ *  real — recarregar a página (F5) no meio da sessão não registra outra. */
+async function registrarSessao() {
+  const agoraMs = Date.now();
+  const ultima = num(game.settings.get(MOD, "ultimaSessao"), 0);
+  const outroDia = new Date(ultima).toDateString() !== new Date(agoraMs).toDateString();
+  if (ultima > 0 && agoraMs - ultima < 6 * 3600 * 1000 && !outroDia) return;
+  await game.settings.set(MOD, "ultimaSessao", agoraMs);
+  await registrar(`${T("Sessão de jogo ({0})", [new Date(agoraMs).toLocaleDateString(game.i18n.lang)])}`, { icone: "fa-dice-d20" });
+}
 
 Hooks.on("updateWorldTime", (wt, delta, options) => {
   ULT_TEMPO = performance.now();

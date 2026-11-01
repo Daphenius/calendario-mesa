@@ -134,7 +134,6 @@
 
 /* editor */
 .cm-editor { padding: 12px 14px; }
-.cm-ed-topo { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; color: var(--cm-suave); }
 .cm-esp { flex: 1; }
 .cm-editor fieldset { border: 1px solid var(--cm-borda); border-radius: 10px; padding: 8px 10px 10px; margin: 0 0 10px; background: var(--cm-fundo2); }
 .cm-editor legend { font-weight: 700; padding: 0 6px; }
@@ -212,8 +211,6 @@
 /* ===================== v1.3: repetição ===================== */
 .cm-rep { border: 1px solid var(--color-border-light-2, #8884); border-radius: 8px; padding: 6px 10px 8px; margin: 0; display: flex; flex-direction: column; gap: 6px; }
 .cm-rep legend { font-weight: 700; font-size: 12px; padding: 0 4px; }
-.cm-rep-linha { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 12px; }
-.cm-rep-linha select { width: auto; }
 .cm-rep [hidden] { display: none !important; }
 .cm-form .cm-chip { flex-direction: row; align-items: center; gap: 3px; font-weight: 500; padding: 1px 6px; border: 1px solid var(--color-border-light-2, #8884); border-radius: 12px; }
 .cm-form .cm-chip input { margin: 0; }
@@ -546,7 +543,6 @@
 .cm-clima-raiz .cm-ce-x { width: 28px; height: 28px; padding: 0; border-radius: 8px; border: 1px solid var(--cm-borda); background: transparent; color: var(--cm-suave); }
 .cm-clima-raiz .cm-ce-x:hover { color: #c0392b; border-color: #c0392b; box-shadow: none; }
 .cm-clima-raiz .cm-ce-mais { width: auto; margin-top: 6px; border-radius: 9px; border: 1px dashed var(--cm-borda); background: transparent; color: var(--cm-acento); font-weight: 600; padding: 2px 12px; line-height: 24px; }
-.cm-clima-raiz .cm-ce-meio { align-self: end; margin: 0 0 6px; }
 @media (max-width: 640px) { .cm-clima-raiz .cm-ce-temps.cinco { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 
 /* 2.10.0: efeitos, climas da anomalia, região da anomalia */

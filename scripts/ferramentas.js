@@ -702,7 +702,7 @@ class EditorCalendario extends ApplicationV2 {
       async apagarCal() {
         const { principal, lista } = listaCalendarios();
         if (!lista[this.calId]) { this.calId = principal; this.dados = normalizar(lista[principal]); return this.render(); }
-        if (Object.keys(lista).length < 2) return ui.notifications.warn("O mundo precisa de pelo menos um calendário.");
+        if (Object.keys(lista).length < 2) return ui.notifications.warn(T("O mundo precisa de pelo menos um calendário."));
         const ok = await Dialogo().confirm({
           window: { title: T("Apagar calendário"), icon: "fa-solid fa-trash" },
           content: `<p>${T("Apagar o calendário")} <b>${esc(this.dados.nome)}</b>?</p><p class="cm-dica">${T("As notas dele não são apagadas: passam para o calendário principal. Cenas que usavam ele voltam para o principal.")}</p>`
@@ -717,7 +717,7 @@ class EditorCalendario extends ApplicationV2 {
       },
       async principalCal() {
         const { lista } = listaCalendarios();
-        if (!lista[this.calId]) return ui.notifications.warn("Salve o calendário antes de torná-lo o principal.");
+        if (!lista[this.calId]) return ui.notifications.warn(T("Salve o calendário antes de torná-lo o principal."));
         await game.settings.set(MOD, "calendarios", { principal: this.calId, lista });
         await game.settings.set(MOD, "config", lista[this.calId]);
         ui.notifications.info(`${T("\"{0}\" agora é o calendário principal do mundo.", [this.dados.nome])}`);
@@ -1018,7 +1018,7 @@ class EditorCalendario extends ApplicationV2 {
     if (!arq) return;
     let obj;
     try { obj = JSON.parse(await arq.text()); }
-    catch { return ui.notifications.error("Esse arquivo não é um JSON válido."); }
+    catch { return ui.notifications.error(T("Esse arquivo não é um JSON válido.")); }
     this.calId = foundry.utils.randomID();
     this.carregar(obj);
   }
@@ -1036,16 +1036,16 @@ class EditorCalendario extends ApplicationV2 {
       });
     } catch (err) {
       console.error(`${MOD} | importação`, err);
-      ui.notifications.error(`Não consegui importar: ${err.message}`);
+      ui.notifications.error(T("Não consegui importar: {0}", [err.message]));
     }
   }
 
   async importarDoMundo() {
     const fontes = fontesDoMundo();
-    if (!fontes.length) return ui.notifications.warn("Não achei outro calendário neste mundo. Exporte o JSON no outro módulo e use Importar arquivo.");
+    if (!fontes.length) return ui.notifications.warn(T("Não achei outro calendário neste mundo. Exporte o JSON no outro módulo e use Importar arquivo."));
     const escolha = await Dialogo().wait({
       window: { title: T("Importar do mundo"), icon: "fa-solid fa-globe" },
-      content: `<div class="cm-form"><label>Calendário<select name="fonte">${fontes.map((f, i) => `<option value="${i}">${esc(f.rotulo)}</option>`).join("")}</select></label></div>`,
+      content: `<div class="cm-form"><label>${T("Calendário")}<select name="fonte">${fontes.map((f, i) => `<option value="${i}">${esc(f.rotulo)}</option>`).join("")}</select></label></div>`,
       buttons: [{ action: "ok", label: T("Importar"), default: true, callback: (ev, btn) => btn.form.elements.fonte.value }, { action: "cancelar", label: T("Cancelar") }],
       rejectClose: false
     });
@@ -1509,7 +1509,7 @@ class JanelaClima extends ApplicationV2 {
           <span class="cm-clima-cartao-ico"><i class="fa-solid ${c.icone}"></i></span>
           <span class="cm-clima-cartao-nome">${esc(c.nome)}</span>
           <span class="cm-clima-chance"><span style="width:${Math.round((pesos[k] ?? 0) / maxPeso * 100)}%"></span></span>
-          <small>${pct ? `${T("{0}% nesta estação", [pct])}` : "raro aqui"}</small>
+          <small>${pct ? `${T("{0}% nesta estação", [pct])}` : T("raro aqui")}</small>
         </button>`;
       }).join("") || `<p class="cm-vazio">${T("Nenhum tempo deste grupo acontece nesta estação.")}</p>`;
     const avancado = `<details class="cm-clima-avancado" ${this.avancadoAberto ? "open" : ""}>
@@ -1784,7 +1784,7 @@ class JanelaClima extends ApplicationV2 {
     const aj2 = e.base2 ? N.ajustesDoEfeito(e.base2) : null;
     const uso = st.novo ? [] : this.usoDoEfeito(st.id);
     const desl = (ok) => (ok ? "" : "disabled");
-    const dica = (ok) => (ok ? "" : ` data-tooltip="Esta base não tem esse ajuste"`);
+    const dica = (ok) => (ok ? "" : ` data-tooltip="${esc(T("Esta base não tem esse ajuste"))}"`);
     const faixa = (nome, rot, min, max, passo, valor, ok, sufixo = "×") => `<label class="cm-ce-faixa ${ok ? "" : "off"}"${dica(ok)}>${rot}
       <span><input type="range" name="${nome}" min="${min}" max="${max}" step="${passo}" value="${valor}" ${desl(ok)}><output data-saida="${nome}">${valor}${sufixo}</output></span></label>`;
     const testando = this.testando ? `<button type="button" data-action="pararTeste"><i class="fa-solid fa-stop"></i> ${T("Parar de ver")}</button>` : `<button type="button" data-action="testarEfeito" ${canvas?.scene ? "" : "disabled"} data-tooltip="${T("Mostra este efeito só para você, na cena aberta, sem salvar")}"><i class="fa-solid fa-eye"></i> ${T("Ver nesta cena")}</button>`;
@@ -1895,7 +1895,7 @@ class JanelaClima extends ApplicationV2 {
     const zona = a.zona ?? ZONAS[a.base] ?? ZONAS.temperada;
     const situacao = [
       a.regiao ? (st.novo || st.alterado ? `${T("Ao salvar, vira a região \"{0}\"", [a.nome])}` : `${T("É a região \"{0}\"{1}", [a.nome, usoRegiao.cenas || usoRegiao.regioes ? `${T(", usada em {0}", [[usoRegiao.cenas ? T("{0} cena(s)", [usoRegiao.cenas]) : "", usoRegiao.regioes ? `${T("{0} Região(ões) do mapa", [usoRegiao.regioes])}` : ""].filter(Boolean).join(T(" e "))])}` : ""])}`) : T("Não é uma região"),
-      ativas.length ? `cobre: ${ativas.join(", ")}` : ""
+      ativas.length ? T("cobre: {0}", [ativas.join(", ")]) : ""
     ].filter(Boolean).join(" · ");
     const regioesModelo = Object.entries(ZONAS).filter(([, z]) => !z.virtual).map(([k, z]) => `<option value="${k}" ${(a.base ?? "temperada") === k ? "selected" : ""}>${esc(z.nome)}</option>`).join("");
     return `<div class="cm-ce">
@@ -1996,7 +1996,7 @@ class JanelaClima extends ApplicationV2 {
     const pesos = grupo === "zonas" ? dados.pesos : grupo === "anomalias" && dados.regiao && dados.zona ? dados.zona.pesos : null;
     if (pesos) {
       const vazias = N.ESTACOES_CLIMA.filter((e) => !Object.keys(pesos[e] ?? {}).length);
-      if (vazias.length) return ui.notifications.warn(`Dê chance a pelo menos um clima em: ${vazias.map((e) => NOMES_ESTACAO[e]).join(", ")}.`);
+      if (vazias.length) return ui.notifications.warn(T("Dê chance a pelo menos um clima em: {0}.", [vazias.map((e) => NOMES_ESTACAO[e]).join(", ")]));
     }
     if (grupo === "anomalias" && dados.regiao && !dados.zona) {
       const m = ZONAS[dados.base] ?? ZONAS.temperada;
@@ -2006,7 +2006,7 @@ class JanelaClima extends ApplicationV2 {
     if (grupo === "efeitos") N.pararPreviaEfeito();
     await N.salvarTipoDeClima(grupo, id, dados);
     delete this.rascunhos[`${grupo}:${id}`];
-    ui.notifications.info(`"${dados.nome}" salvo.`);
+    ui.notifications.info(T("\"{0}\" salvo.", [dados.nome]));
     this.render();
   }
 
@@ -2045,7 +2045,6 @@ class JanelaClima extends ApplicationV2 {
     this.render();
   }
 
-  /** Mostra o efeito em edição só para este usuário, na cena aberta, sem salvar nada. */
   /** Mostra o efeito em edição só para este usuário, na cena aberta, sem gravar nada na cena. */
   testarEfeito() {
     if (!canvas?.scene) return;
@@ -2117,7 +2116,7 @@ class JanelaClima extends ApplicationV2 {
       const e = el.dataset.estacao;
       const soma = [...content.querySelectorAll(`.cm-ce-tabela input[data-estacao="${e}"]`)].reduce((x, i) => x + Math.max(0, num(i.value, 0)), 0);
       const alvo = content.querySelector(`[data-soma="${e}"]`);
-      if (alvo) { alvo.textContent = `soma ${soma}`; alvo.classList.toggle("zero", !soma); }
+      if (alvo) { alvo.textContent = T("soma {0}", [soma]); alvo.classList.toggle("zero", !soma); }
     }));
   }
 
@@ -2359,7 +2358,7 @@ class JanelaTabelas extends ApplicationV2 {
   contar() {
     const el = this.element.querySelector("[data-contagem]");
     const n = this.element.querySelectorAll(".cm-tab-item input:checked").length;
-    if (el) el.textContent = n ? `${n} marcada(s)` : "nenhuma marcada: todas aparecem";
+    if (el) el.textContent = n ? T("{0} marcada(s)", [n]) : T("nenhuma marcada: todas aparecem");
   }
 
   _replaceHTML(html, content) {
@@ -2462,7 +2461,7 @@ function proximoHorario(desde, horaDec) {
 const hhmm = (t) => textoRelogio(segundoDoDia(t)).slice(0, 5);
 
 async function iniciarViagemSeparada(p) {
-  if (viagemAtual()) return ui.notifications.warn("Já há uma viagem em andamento.");
+  if (viagemAtual()) return ui.notifications.warn(T("Já há uma viagem em andamento."));
   const wt = game.time.worldTime;
   const diasTotal = Math.max(1, Math.ceil(p.horas / p.hd - 1e-9));
   const estado = {
@@ -2499,7 +2498,7 @@ async function dialogoVigias() {
   const v = viagemAtual();
   if (!v || !game.user.isGM) return;
   const jogadores = game.users.filter((u) => !u.isGM);
-  if (!jogadores.length) return ui.notifications.warn("Não há jogadores cadastrados no mundo.");
+  if (!jogadores.length) return ui.notifications.warn(T("Não há jogadores cadastrados no mundo."));
   const r = await Dialogo().wait({
     window: { title: T("Vigias da noite"), icon: "fa-solid fa-campground" },
     position: { width: 440 },
@@ -2513,7 +2512,7 @@ async function dialogoVigias() {
   });
   if (!r || typeof r !== "object") return;
   const participantes = jogadores.filter((u) => r[`u-${u.id}`]).map((u) => u.id);
-  if (!participantes.length) return ui.notifications.warn("Escolha pelo menos um jogador para as vigias.");
+  if (!participantes.length) return ui.notifications.warn(T("Escolha pelo menos um jogador para as vigias."));
   const n = Math.min(12, Math.max(1, Math.trunc(num(r.n, 4))));
   await alterarViagem((x) => {
     if (!x.ativa) return false;
@@ -2534,7 +2533,7 @@ async function acaoViagem(acao, dado = null) {
     case "meiaHora": return avancar(segHora() / 2);
     case "acampamento": return v.alvoAcampamento > agoraT ? avancarPara(v.alvoAcampamento) : null;
     case "vigias":
-      if (agoraT < v.alvoAcampamento) return ui.notifications.warn(`As vigias liberam às ${hhmm(v.alvoAcampamento)}.`);
+      if (agoraT < v.alvoAcampamento) return ui.notifications.warn(T("As vigias liberam às {0}.", [hhmm(v.alvoAcampamento)]));
       return dialogoVigias();
     case "atribuir": return N.escolherVigia(dado?.userId, dado?.vigia);
     case "cancelarVigias": return alterarViagem((x) => { x.fase = "viajando"; x.vigias = null; });
@@ -2564,7 +2563,7 @@ async function acaoViagem(acao, dado = null) {
       await alterarViagem((x) => { x.dia += 1; x.fase = "viajando"; x.vigias = null; x.alvoAcampamento = proximoHorario(alvo, x.acampamento); });
       await avancarPara(alvo);
       const nv = viagemAtual();
-      await chat(`<i class="fa-solid fa-sun"></i> <b>${T("Dia {0} de viagem", [nv.dia])}</b>${T("{0}. O grupo levanta acampamento.", [nv.destino ? ` rumo a ${esc(nv.destino)}` : ""])}`);
+      await chat(`<i class="fa-solid fa-sun"></i> <b>${T("Dia {0} de viagem", [nv.dia])}</b>${T("{0}. O grupo levanta acampamento.", [nv.destino ? T(" rumo a {0}", [esc(nv.destino)]) : ""])}`);
       return rolarEncontroDoDia();
     }
     case "chegar": {
@@ -2713,7 +2712,7 @@ async function dialogoDiaSagrado() {
   });
   if (!r || typeof r !== "object") return;
   const deus = r.deus ? game.journal.get(r.deus) : null;
-  const nomeDeus = deus?.name ?? (String(r.outra ?? "").trim() || "divindade");
+  const nomeDeus = deus?.name ?? (String(r.outra ?? "").trim() || T("divindade"));
   const nome = String(r.nome ?? "").trim() || `${T("Dia sagrado de {0}", [nomeDeus])}`;
   const mes = Math.min(Math.max(0, num(r.mes)), N.CFG.meses.length - 1);
   const ano = mesExiste(a.ano, mes) ? a.ano : a.ano + 1;

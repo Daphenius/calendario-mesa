@@ -10,7 +10,7 @@ Se encontrar bugs ou tiver sugestões, abra uma [issue](https://github.com/Daphe
 
 ---
 
-**Versão 4.3.0** · Foundry VTT 14 · D&D 5e 6 · Português e English · Licença MIT · ✅ Testado e aprovado no Foundry
+**Versão 4.3.1** · Foundry VTT 14 · D&D 5e 6 · Português e English · Licença MIT · ✅ Testado e aprovado no Foundry
 
 ![Calendário da Mesa no Foundry VTT: janela do calendário](docs/screenshot.png)
 
@@ -48,7 +48,7 @@ Clique numa imagem para ver em tamanho maior.
 | Foundry VTT | 14 | 14.369 |
 | D&D 5e | — | 6.0.6 |
 
-**Testado e aprovado.** A versão 4.3.0 foi testada e aprovada pelo autor dentro do Foundry VTT, nas versões indicadas acima (Foundry 14.369 e D&D 5e 6.0.6), antes da publicação. Como em qualquer módulo, recomendamos fazer backup do mundo antes de atualizar.
+**Testado e aprovado.** A versão 4.3.1 foi testada e aprovada pelo autor dentro do Foundry VTT, nas versões indicadas acima (Foundry 14.369 e D&D 5e 6.0.6), antes da publicação. Como em qualquer módulo, recomendamos fazer backup do mundo antes de atualizar.
 
 **Foundry 13 não é mais suportado** a partir da 4.3.0. Quem ainda usa o Foundry 13 pode continuar na 4.2.1, disponível na [página de releases](https://github.com/Daphenius/calendario-mesa/releases).
 
@@ -152,6 +152,8 @@ Ao salvar mudanças num calendário (mais dias num mês, meses a mais ou a menos
 
 Cada estação tem o **dia e o mês em que começa** (ex.: inverno em 5 de Geada). Ela termina sozinha no dia antes de a próxima começar (primavera em 21 de Renascer → o inverno vai até 20 de Renascer); a coluna **Termina** mostra isso. Pode virar o ano. O nascer e o pôr do sol de cada estação valem para a luz do mapa, o HUD e o D&D 5e.
 
+Para o clima, cada estação precisa ser entendida como primavera, verão, outono ou inverno: o módulo olha o nome e o ícone (em português ou inglês, ex.: "Winter", "Colheita", floco de neve); se não reconhecer, usa a posição da estação no ano (a primeira quarta parte das estações é primavera, depois verão, outono e inverno), então uma "Época das Chuvas" como 2ª de 4 estações conta como verão nas tabelas de clima.
+
 ## Luas que aparecem e somem
 
 Em cada lua do editor, a linha 👁 define um ciclo de aparição:
@@ -210,36 +212,9 @@ Configurações do módulo → **Luz por hora**. Usa a escuridão nativa da cena
 - Com o Journal da Mesa ativo, clicar numa nota abre ela no Journal da Mesa.
 - Notas criadas no calendário já nascem como **Anotação do Journal da Mesa**, no mesmo formato que o "Evento do calendário" de lá. Editar a nota pelo calendário só mexe em hora, duração, ícone, cor, aviso, quem vê e pasta; a repetição gravada pelo Journal da Mesa nunca é sobrescrita.
 
-## Novidades da 4.2.0
+## Novidades de cada versão
 
-- **Nexus do Journal da Mesa mudando o clima no padrão**: o limiar do Nexus liga e desliga o "Usar como região" da anomalia (não precisa mais de "Anomalia cobrindo uma região inteira"). Marque as Regiões do mapa ou as cenas com a região da anomalia; quando o Nexus cai, elas ficam com o clima drenado.
-- **Linha do tempo** no painel do dia: abre a Linha do tempo do Journal da Mesa naquele dia.
-- Novas funções na API para o Journal da Mesa: `anomaliaRegiao`, `modoAnomalias`, `contadores`, `notas.calendario` e ano com era em `datas.partes`.
-
-## Novidades da 4.1.1
-
-- Cenas sem região própria e sem Region desenhada voltam a receber o clima da **região padrão** (opção "Clima nas cenas sem região própria"; escolha "Só as cenas marcadas" para o jeito antigo).
-- A Central de Configurações carrega o próprio visual mesmo sem reiniciar o mundo.
-
-## Novidades da 4.1.0
-
-- **Central de Configurações**: todas as opções em abas (Geral, Tempo, Clima, Anomalias, Astronomia e luz, Eventos e diários, Ferramentas), com Salvar e Cancelar. Abra pelo botão "Abrir Central de Configurações" nas configurações do módulo.
-
-## Novidades da 4.0.1
-
-- Correção do clima nas cenas: o clima não some mais ao salvar nos editores, a prévia de efeito não passa para outro mapa, pedidos simultâneos não se atropelam e mapas com Regiões de clima se atualizam todo dia.
-- Caixa "Mostrar o efeito do clima nesta cena" na janela do clima.
-- Som ambiente removido.
-
-## Novidades da 4.0.0
-
-- **Efeitos com duração** acabam quando o tempo passa (removidos ou desativados da ficha).
-- **Notas com ações**: macro, som, troca de cena e mensagem quando a hora chega (botão de raio na nota).
-- **Eventos das luas**: luas cheias juntas, eclipses e noites sem luas, na grade e no chat.
-- **Previsão do tempo** (aba Previsão): veja e ajuste os próximos dias antes de revelar.
-- **Desfazer** o último pulo de tempo (botão no HUD).
-- **Recarregar** sozinho ao mudar configurações de módulos.
-- Base de tradução (pt-BR e inglês) para a publicação.
+O que mudou em cada versão (4.3.1, 4.3.0, 4.2.0, 4.1.x, 4.0.x…) está no [CHANGELOG.md](CHANGELOG.md), em linguagem simples.
 
 ## Novidades da 2.10.1
 
@@ -299,6 +274,10 @@ Para o mapa-múndi:
 - Não há nada rodando o tempo todo: só reage quando um token do grupo entra ou sai de uma área.
 - Dá para combinar com o comportamento nativo **Suprimir clima** (ex.: dentro de uma caverna ou casa).
 - Cada área pode desligar o efeito visual ou o aviso no chat.
+
+## Efeitos com duração
+
+O Foundry guarda em cada efeito ativo quando ele começou e quanto dura. Com a opção **Efeitos com duração vencidos** (Central › Tempo), o calendário remove ou desativa da ficha os efeitos que acabaram quando o tempo passa. **Desde a 4.3.1 o padrão é "Não mexer"**: quem quer que o calendário cuide disso liga a opção. A checagem acontece quando o minuto do jogo muda (não a cada tique do relógio em tempo real).
 
 ## Contadores e prazos
 
@@ -464,6 +443,6 @@ Calendaria, Simple Calendar, Seasons & Stars, Fantasy-Calendar.com, FXMaster e M
 
 **Calendário da Mesa** is a world calendar for Foundry VTT 14 built on Foundry's native time: an HUD with clock and day/night bar, scene lighting by hour, seasons with sunrise and sunset, eras and leap years, months and moons that appear and disappear on cycles, moon phases and lunar events, weather by region (including native Scene Regions on a world map), countdowns, day-by-day travel with night watches, a campaign history, multiple calendars per world, and notes stored as native Journal Entries. It can import calendars from Simple Calendar, Seasons & Stars, Calendaria, Fantasy-Calendar.com and Foundry's own format, and it integrates with **Journal da Mesa** (shops, timeline, holy days and Nexus weather). This is an independent project, not affiliated with Calendaria. The interface is available in Portuguese and English.
 
-Version 4.3.0 was tested and approved by the author in Foundry VTT (14.369) with D&D 5e (6.0.6) before release. Install from Foundry with the manifest URL `https://github.com/Daphenius/calendario-mesa/releases/latest/download/module.json` (or extract the release ZIP into `Data/modules/calendario-mesa`) and enable it. Issues and suggestions: [GitHub Issues](https://github.com/Daphenius/calendario-mesa/issues). Licensed under MIT.
+Version 4.3.1 was tested and approved by the author in Foundry VTT (14.369) with D&D 5e (6.0.6) before release. Install from Foundry with the manifest URL `https://github.com/Daphenius/calendario-mesa/releases/latest/download/module.json` (or extract the release ZIP into `Data/modules/calendario-mesa`) and enable it. Issues and suggestions: [GitHub Issues](https://github.com/Daphenius/calendario-mesa/issues). Licensed under MIT.
 
 **How this module was made:** I know part of the community doesn't like AI-made modules, so I'd rather be transparent: this one was developed with the help of AI. I'm not a programmer. It started as a macro for my own table, grew as our games needed more, and ended up as a module. I use it in my own sessions and decided to share it in case it's useful to someone else. If you find bugs or have suggestions, please open an issue. All feedback is welcome.

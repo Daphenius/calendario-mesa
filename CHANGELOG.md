@@ -1,5 +1,20 @@
 # Histórico de versões — Calendário da Mesa
 
+## 4.3.1
+
+- **Testada e aprovada pelo autor no Foundry VTT 14 e no D&D 5e** antes da publicação.
+- **Efeitos com duração vencidos: o padrão agora é "Não mexer".** Antes, o módulo vinha removendo da ficha os efeitos (magias, venenos…) cuja duração acabou, sem ninguém pedir. Quem quer que o calendário cuide disso escolhe "Remover da ficha" ou "Desativar" na Central › Tempo. Quem já tinha a opção salva não muda nada. A checagem também ficou mais leve: acontece quando o minuto do jogo muda, não a cada tique de 5 s do relógio em tempo real.
+- **"Sessão de jogo" no histórico só uma vez por sessão**: recarregar a página (F5) não registra outra. Uma nova sessão entra quando a última tem mais de 6 horas de tempo real ou é de outro dia.
+- **Escuridão travada na cena respeitada**: o módulo conferia um campo com o nome errado, então mexia na luz de cenas com a escuridão travada pelo mestre.
+- **Estações com nomes próprios no clima**: uma estação cujo nome e ícone não lembram primavera, verão, outono ou inverno (ex.: "Época das Chuvas") deixava o clima sempre em "primavera". Agora vale a posição dela no ano (explicado no README, seção Estações).
+- **Nascer e pôr do sol arredondados certo**: 6,999 h aparecia como 06:00; agora 07:00.
+- **Vários calendários**: ao trocar de calendário ou mudar as luas, os cálculos guardados das luas (eclipses, luas cheias juntas) e do fim das séries de notas são refeitos, em vez de reaproveitar os do calendário anterior.
+- **Eclipses**: o sorteio usa o id da lua quando ela tem um; sem id, continua pelo nome, então os eclipses já vistos não mudam de lugar.
+- **Tradução**: 26 textos que ainda apareciam em português para quem joga em inglês (avisos como "Nenhuma cena aberta", "sempre aberta"/"folga hoje" nas lojas, dicas do HUD, título da janela do calendário, avisos da viagem, das vigias, da importação e dos editores do clima) agora passam pela tradução.
+- Erros engolidos em silêncio agora aparecem no console (F12) com um aviso curto; comentários repetidos e estilos sem uso foram tirados.
+- README: as seções "Novidades da 4.x" (que repetiam este arquivo) saíram; ficou só o link. O ZIP da release não leva mais a pasta `docs` (as imagens só servem ao README no GitHub).
+- Nenhum id ou valor salvo mudou; só o padrão de "Efeitos com duração vencidos" para quem nunca mexeu nele.
+
 ## 4.3.0
 
 - **Testada e aprovada pelo autor no Foundry VTT 14 e no D&D 5e** antes da publicação.

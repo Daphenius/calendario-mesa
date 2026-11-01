@@ -26,7 +26,7 @@ jobs:
           grep -q "releases/download/v${VER}/calendario-mesa.zip" module.json || { echo "O link de download do module.json não aponta para v${VER}."; exit 1; }
 
       - name: Montar o ZIP (module.json na raiz)
-        run: zip -r calendario-mesa.zip module.json scripts styles templates lang docs README.md CHANGELOG.md LICENSE
+        run: zip -r calendario-mesa.zip module.json scripts styles templates lang README.md CHANGELOG.md LICENSE
 
       - name: Anexar na release
         uses: softprops/action-gh-release@v2

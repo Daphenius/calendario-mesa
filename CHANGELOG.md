@@ -1,5 +1,62 @@
 # Histórico de versões — Calendário da Mesa
 
+## 4.8.0
+
+- **Testada e aprovada pelo autor no Foundry VTT 14 e no D&D 5e** antes da publicação.
+- **README reescrito**: saíram as seções "Novidades da 2.x" e outras notas de versões antigas (o histórico fica só neste arquivo). O README descreve como o módulo é hoje e documenta a **API inteira** (antes eram 5 chamadas; agora todas as 56, com o que cada uma recebe e devolve, e os hooks `calendarioMesa.novoDia` e `calendarioMesa.novaSemana`).
+- **API: `luas()` corrigida.** O campo `nome` vinha com o nome da *fase* (a fase sobrescrevia o nome da lua). Agora `nome` é o nome da lua e a fase vem num campo novo, `fase`. Quem tinha macro lendo a fase em `nome` deve trocar para `fase`. O Journal da Mesa não usa essa chamada.
+- **CSS conferido**: todas as classes dos estilos são usadas (as três que sobravam já tinham saído na 4.3.1). Um teste novo avisa se alguma regra ficar sem uso no futuro.
+
+## 4.7.0
+
+- **Testada e aprovada pelo autor no Foundry VTT 14 e no D&D 5e** antes da publicação.
+- **Integração com o D&D 5e num arquivo só** (`scripts/compat-dnd5e.js`), usando só o que o sistema documenta para módulos de calendário:
+  - o calendário continua tendo como base o calendário do D&D 5e (o HUD do sistema e a recuperação "ao amanhecer / ao anoitecer" usam o nosso nascer e pôr do sol);
+  - o sistema **não carrega mais o calendário dele** antes do nosso (hook oficial `dnd5e.setupCalendar`). O calendário escolhido nas configurações do D&D continua aparecendo em "Importar do mundo";
+  - o HUD do D&D 5e é escondido pelo campo oficial do sistema, e a correção da contagem de meias-noites, amanheceres e anoiteceres usa o ponto que o sistema reserva para os módulos ajustarem essas contas;
+  - se uma versão nova do D&D 5e mudar alguma dessas peças, o módulo **avisa no console (F12)** com a versão do sistema e segue funcionando sem aquela parte, em vez de dar erro.
+- A contagem de tempo do D&D 5e passa a usar sempre o calendário principal do mundo (o mesmo que o sistema usa), mesmo que o mestre esteja vendo outro calendário.
+
+## 4.6.0
+
+- **Testada e aprovada pelo autor no Foundry VTT 14 e no D&D 5e** antes da publicação.
+- **Luz das cenas com bem menos gravações no servidor.** Antes, um pulo de várias horas ou dias passava a luz de 15 em 15 minutos, gravando todas as cenas de dia/noite a cada passo. Agora:
+  - pulos de até 6 horas com "passar aos poucos" passam hora a hora (no máximo 6 gravações);
+  - pulos maiores calculam só a luz final e gravam **uma vez**, com a escuridão animada até ela (num teste, um pulo de 12 horas caiu de 16 gravações para 1, e um de 3 dias de 28 para 1);
+  - com o relógio em tempo real, a luz grava no máximo a cada 30 segundos reais (a não ser que mude muito de uma vez), em vez de a cada tique de 5 s; nada se perde, porque o tique seguinte leva a cena ao ponto certo.
+- **"Ver como" e o calendário da cena não mexem mais no tempo do Foundry.** Antes, escolher outro calendário trocava o calendário do próprio Foundry naquele computador, e o mestre e os jogadores podiam ficar com contas de tempo diferentes (inclusive as do D&D 5e). Agora o Foundry usa sempre o **calendário principal**, igual para todos; "ver como" e o calendário da cena só mudam o que o módulo mostra naquele computador.
+- **A luz segue sempre o calendário principal do mundo.** Com "ver como" num calendário de dia mais longo, a luz do mestre saía da curva; agora a curva de luz, o ícone de sol/lua do HUD e a janela "Luz por hora" usam o calendário principal.
+- **Notas que terminam "depois de N vezes" sem contas longas.** Para achar a última vez, o módulo olhava dia por dia (até 200.000 dias). Agora olha só os dias, semanas ou meses em que a regra pode cair, e confere cada um com a mesma regra de antes: 750 séries sorteadas deram o mesmo resultado, de 13 a 28 vezes mais rápido.
+- A dica de "Passar aos poucos ao pular horas" (janela Luz por hora) foi atualizada nos dois idiomas.
+- Teste novo: "ver como" não muda o `game.time` e a luz não muda com ele.
+
+## 4.5.0
+
+- **Testada e aprovada pelo autor no Foundry VTT 14 e no D&D 5e** antes da publicação.
+- **O código foi dividido por assunto.** O `calendario.js` tinha 4.100 linhas e exportava 276 nomes para o resto do módulo; o `ferramentas.js` tinha 2.800. Agora cada assunto tem o seu arquivo, e nenhum passa de ~900 linhas:
+  - `nucleo.js` (tradução, configuração do calendário, vários calendários), `datas.js`, `luas.js`, `notas.js`, `luz.js`, `relogio.js`, `clima.js`, `clima-efeitos.js`, `clima-cenas.js`, `historico.js`, `contadores.js`, `lojas.js`, `viagem.js`, `janela.js` (HUD e janela do calendário), `socket.js` e `api.js`;
+  - o `calendario.js` ficou só com o registro das configurações e dos menus e os hooks do Foundry;
+  - as ferramentas foram para a pasta `scripts/ferramentas/` (editor, importação, janela do clima, janela da viagem, histórico/contadores/dias sagrados, diálogos das notas) e continuam carregando só quando alguém abre uma delas.
+  - Cada arquivo exporta só o que outro arquivo usa, e importa só o que usa. A divisão foi feita por um script que lê o código e calcula quem usa o quê, e conferida contra a 4.4.0: as respostas da API, o HTML de todas as janelas (inclusive as 7 abas do clima) e o que é gravado e mandado ao chat quando o tempo passa saíram idênticos.
+- **Fim do endereço global** `globalThis.__calendarioMesaURL`, que as ferramentas e a Central usavam para achar o núcleo. Agora elas importam direto os arquivos de que precisam.
+- **Menus das configurações abrem as janelas de verdade.** "Central de Configurações", "Luz por hora" e "Tabelas de encontro" apontavam para classes vazias que só chamavam a janela certa. Agora apontam direto para ela. A Central não abre duas vezes: pedir de novo traz a que já está aberta, sem perder o que ainda não foi salvo.
+- **Sem o carregamento manual do `central.css`**: o arquivo já está nos `styles` do `module.json`. Depois de atualizar o módulo, **feche e abra o mundo de novo** (não basta F5), como em qualquer módulo.
+- **Socket com validação**: o pedido de escolha de vigia só é atendido se vier no formato certo, de um usuário que existe, e um jogador só pode pedir por si mesmo (o mestre pode por qualquer um).
+- **API documentada no código** (`scripts/api.js`): cada chamada tem a descrição do que recebe e devolve. Nenhum nome mudou; o Journal da Mesa continua usando tudo como antes.
+- Saíram dois trechos que nada usava (`salvarContadores` e uma lista de tempos repetida na janela do clima).
+- Novos testes no repositório (não vão no ZIP): `tests/estrutura.test.mjs` (todo import existe do outro lado, nenhum export sobrando, nenhum arquivo gigante) e `tests/carga.test.mjs` (o módulo carrega num Foundry simulado, roda init/setup/ready, os menus abrem janelas e a API tem tudo o que o Journal usa). Rodam com `node --test`.
+- Nenhuma configuração, id, valor salvo ou nome da API mudou.
+
+## 4.4.0
+
+- **Testada e aprovada pelo autor no Foundry VTT 14 e no D&D 5e** antes da publicação.
+- **Chaves de tradução legíveis.** Até a 4.3.1, cada texto era identificado nos arquivos `lang/pt-BR.json` e `lang/en.json` por um código calculado do texto em português (`CALMESA.t9e4djx`): quem fosse traduzir não sabia o que cada código era, e corrigir uma vírgula no texto em português perdia a tradução em inglês sem aviso. Agora cada texto tem uma chave com nome, agrupada por área (`CALMESA.Luz.luz_do_mapa_por_hora`, `CALMESA.Clima.chuva`, `CALMESA.Config.dias_de_previsao_do_tempo`…), e os dois arquivos ficam lado a lado por área. São 1.193 textos em 23 áreas.
+  - As configurações, os menus, os títulos das janelas e os campos da Região de clima passaram a usar a tradução nativa do Foundry (chave direto no registro), então sumiram `K()` e a troca de textos depois do registro (`traduzirConfiguracoes`). O mesmo vale para o rótulo do comportamento de Região "Clima (Calendário da Mesa)".
+  - `T()` recebe a chave em vez do texto em português; o que não é chave (nomes criados pelo mestre) continua voltando como foi escrito.
+  - Corrigido no caminho: a frase das vigias em inglês ("{0} watch(es) of {2} hours") estava sem o parâmetro `{1}`; os avisos de erro ("falha em …") e as ondas de calor e frio também ganharam tradução.
+  - Novo no repositório (não vai no ZIP): `tools/i18n-migrar.mjs`, o script que fez a migração, e `tests/i18n.test.mjs`, que confere (`node --test`) se os dois idiomas têm as mesmas chaves, se toda chave usada existe, se nenhuma sobra e se os `{parâmetros}` batem.
+- Nenhuma configuração, id ou valor salvo mudou; para quem joga, nada muda de lugar. A API para macros e para o Journal da Mesa é a mesma (só `K`, `chaveI18n` e `traduzirConfiguracoes`, que eram internos, saíram das exportações).
+
 ## 4.3.1
 
 - **Testada e aprovada pelo autor no Foundry VTT 14 e no D&D 5e** antes da publicação.

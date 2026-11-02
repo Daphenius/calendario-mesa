@@ -1,29 +1,29 @@
 <div class="cm-raiz cm-editor cm-tema-{{tema}}">
   {{#if gm}}
   <div class="cm-ed-cals-linha">
-    <button type="button" data-action="novo"><i class="fa-solid fa-plus"></i> {{cmT "Novo contador"}}</button>
-    <button type="button" data-action="limpar"><i class="fa-solid fa-broom"></i> {{cmT "Tirar os terminados"}}</button>
+    <button type="button" data-action="novo"><i class="fa-solid fa-plus"></i> {{cmT "Contadores.novo_contador"}}</button>
+    <button type="button" data-action="limpar"><i class="fa-solid fa-broom"></i> {{cmT "Contadores.tirar_os_terminados"}}</button>
   </div>
   {{/if}}
   {{#if itens.length}}
   <ul class="cm-conts">
     {{#each itens}}
     <li class="cm-cont {{#if feito}}cm-feito{{/if}}">
-      <div class="cm-cont-topo"><b>{{nome}}</b>{{#unless visivel}} <i class="fa-solid fa-eye-slash" data-tooltip="{{cmT "Só o mestre vê"}}"></i>{{/unless}}
+      <div class="cm-cont-topo"><b>{{nome}}</b>{{#unless visivel}} <i class="fa-solid fa-eye-slash" data-tooltip="{{cmT "Comum.so_o_mestre_ve"}}"></i>{{/unless}}
         <span>{{estado}}</span></div>
       <div class="cm-barra"><span style="width:{{pct}}%"></span></div>
-      <small>{{cmT "termina em"}} {{termina}}</small>
+      <small>{{cmT "Contadores.termina_em"}} {{termina}}</small>
       {{#if @root.gm}}
       <span class="cm-cont-acoes">
-        <a data-action="somar" data-id="{{id}}" data-s="{{@root.segHora}}" data-tooltip="{{cmT "+1 hora"}}">+1h</a>
-        <a data-action="somar" data-id="{{id}}" data-s="{{@root.segDia}}" data-tooltip="{{cmT "+1 dia"}}">+1d</a>
-        <a data-action="apagar" data-id="{{id}}" data-tooltip="{{cmT "Apagar"}}"><i class="fa-solid fa-trash"></i></a>
+        <a data-action="somar" data-id="{{id}}" data-s="{{@root.segHora}}" data-tooltip="{{cmT "Comum.1_hora"}}">+1h</a>
+        <a data-action="somar" data-id="{{id}}" data-s="{{@root.segDia}}" data-tooltip="{{cmT "Contadores.1_dia"}}">+1d</a>
+        <a data-action="apagar" data-id="{{id}}" data-tooltip="{{cmT "Comum.apagar"}}"><i class="fa-solid fa-trash"></i></a>
       </span>
       {{/if}}
     </li>
     {{/each}}
   </ul>
   {{else}}
-  <p class="cm-vazio">{{cmT 'Nenhum contador. Ex.: "O ritual se completa", "Efeito da poção", "Veneno age".'}}</p>
+  <p class="cm-vazio">{{cmT "Contadores.nenhum_contador_ex_o_ritual_se"}}</p>
   {{/if}}
 </div>

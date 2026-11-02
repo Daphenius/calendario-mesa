@@ -11,10 +11,13 @@
  * antes de sobrescrever.
  * ========================================================= */
 
-const N = await import(globalThis.__calendarioMesaURL ?? "./calendario.js");
-const { ABAS_CENTRAL, CHAVES_CENTRAL } = await import(new URL("./central-mapa.js", import.meta.url).href);
-const { MOD, T, tema } = N;
-const { ApplicationV2, HandlebarsApplicationMixin, DialogV2 } = foundry.applications.api;
+import { ABAS_CENTRAL, CHAVES_CENTRAL } from "./central-mapa.js";
+import { diagnosticoClima } from "./clima-cenas.js";
+import { JanelaCalendario } from "./janela.js";
+import { MOD, T, tema } from "./nucleo.js";
+import { abrirFerramenta, ferramentas } from "./sob-demanda.js";
+
+const { ApplicationV2, DialogV2, HandlebarsApplicationMixin } = foundry.applications.api;
 
 const RAIZ = `modules/${MOD}/templates/central`;
 const igual = (a, b) => JSON.stringify(a) === JSON.stringify(b);
@@ -27,7 +30,7 @@ const podeEditar = (def) => def?.scope !== "world" || game.user.isGM || !!game.u
 
 const INTEGRACOES = {
   fxmaster: () => ({ ok: !!game.modules.get("fxmaster")?.active, rotulo: "FXMaster" }),
-  journal: () => ({ ok: !!game.modules.get("journal-mesa")?.active, rotulo: "Journal da Mesa" }),
+  journal: () => ({ ok: !!game.modules.get("journal-mesa")?.active, rotulo: "Central.journal_da_mesa" }),
   dnd5e: () => ({ ok: game.system?.id === "dnd5e", rotulo: "D&D 5e" })
 };
 
@@ -36,7 +39,7 @@ export class CentralConfig extends HandlebarsApplicationMixin(ApplicationV2) {
     id: "cm-central",
     classes: ["cm-janela", "cm-central-app"],
     tag: "div",
-    window: { title: T("Calendário da Mesa — Central de Configurações"), icon: "fa-solid fa-star-and-crescent", resizable: true },
+    window: { title: "CALMESA.Central.calendario_da_mesa_central_de_configuracoes", icon: "fa-solid fa-star-and-crescent", resizable: true },
     position: { width: 880, height: 660 },
     actions: {
       aba: CentralConfig.#aba,
@@ -59,7 +62,15 @@ export class CentralConfig extends HandlebarsApplicationMixin(ApplicationV2) {
   #ganchos = [];
   #salvando = false;
 
-  get title() { return T("Calendário da Mesa — Central de Configurações"); }
+  /** Só uma Central por vez: aberta de novo (pelo HUD, pela API ou pelo menu das configurações do Foundry, que
+   *  cria a janela com new), devolve a que já está aberta, sem perder o que ainda não foi salvo. */
+  constructor(options = {}) {
+    const aberta = foundry.applications.instances.get("cm-central");
+    if (aberta instanceof CentralConfig) return aberta;
+    super(options);
+  }
+
+  get title() { return T("Central.calendario_da_mesa_central_de_configuracoes"); }
 
   /* ---------- dados ---------- */
 
@@ -97,12 +108,12 @@ export class CentralConfig extends HandlebarsApplicationMixin(ApplicationV2) {
       booleano: tipo === "booleano", lista: tipo === "lista", faixa: tipo === "faixa", numero: tipo === "numero", texto: tipo === "texto",
       opcoes: tipo === "lista" ? Object.entries(choices).map(([k, r]) => ({ valor: k, rotulo: localizar(r), selecionado: String(valor) === k })) : [],
       min: def.range?.min ?? item.minimo, max: def.range?.max, passo: def.range?.step ?? "any",
-      escopo: def.scope, escopoRotulo: def.scope === "world" ? T("Mundo") : T("Só você"),
-      escopoDica: def.scope === "world" ? T("Vale para todos; só o mestre muda") : T("Preferência deste usuário, neste computador"),
+      escopo: def.scope, escopoRotulo: def.scope === "world" ? T("Central.mundo") : T("Central.so_voce"),
+      escopoDica: def.scope === "world" ? T("Central.vale_para_todos_so_o_mestre") : T("Central.preferencia_deste_usuario_neste_computador"),
       alterado: this.pendentes.has(item.chave),
       desligado: !editavel || (dep && !dep.ok),
       depende: dep && !dep.ok ? dep.texto : "",
-      integracao: integ ? { ok: integ.ok, texto: integ.ok ? T("{nome} ativo", { nome: integ.rotulo }) : T("{nome} não está ativo neste mundo", { nome: integ.rotulo }) } : null,
+      integracao: integ ? { ok: integ.ok, texto: integ.ok ? T("Central.nome_ativo", { nome: integ.rotulo }) : T("Central.nome_nao_esta_ativo_neste_mundo", { nome: integ.rotulo }) } : null,
       recarrega: !!def.requiresReload
     };
   }
@@ -128,7 +139,6 @@ export class CentralConfig extends HandlebarsApplicationMixin(ApplicationV2) {
   }
 
   async _prepareContext(options) {
-    garantirEstilo();
     if (!this.originais.size) this.#carregarOriginais();
     const abas = this.#abasVisiveis();
     if (!abas.some((a) => a.id === this.aba)) this.aba = abas[0]?.id ?? "geral";
@@ -144,10 +154,10 @@ export class CentralConfig extends HandlebarsApplicationMixin(ApplicationV2) {
       pendentes: this.pendentes.size,
       salvando: this.#salvando,
       textos: {
-        salvar: T("Salvar alterações"), cancelar: T("Cancelar"), abrir: T("Abrir"),
-        semMudancas: T("Nenhuma alteração"), mudancas: T("{n} alteração(ões) não salva(s)", { n: this.pendentes.size }),
-        alterado: T("alterado"), recarrega: T("Pede recarregar a página"), ferramentas: T("Janelas e ferramentas"),
-        jogador: T("Aqui ficam as suas preferências pessoais. As do mundo só o mestre muda.")
+        salvar: T("Central.salvar_alteracoes"), cancelar: T("Comum.cancelar"), abrir: T("Central.abrir"),
+        semMudancas: T("Central.nenhuma_alteracao"), mudancas: T("Central.n_alteracao_oes_nao_salva_s", { n: this.pendentes.size }),
+        alterado: T("Central.alterado"), recarrega: T("Central.pede_recarregar_a_pagina"), ferramentas: T("Central.janelas_e_ferramentas"),
+        jogador: T("Central.aqui_ficam_as_suas_preferencias_pessoais")
       }
     };
   }
@@ -221,17 +231,17 @@ export class CentralConfig extends HandlebarsApplicationMixin(ApplicationV2) {
   /** Confere o valor contra o registro (tipo, opções, faixa). Devolve a mensagem de erro ou "". */
   static validar(chave, valor, item) {
     const def = registro(chave);
-    if (!def) return T("{chave}: configuração não encontrada", { chave });
+    if (!def) return T("Central.chave_configuracao_nao_encontrada", { chave });
     const nome = localizar(def.name) || chave;
-    if (def.type === Boolean && typeof valor !== "boolean") return T("{nome}: valor inválido", { nome });
+    if (def.type === Boolean && typeof valor !== "boolean") return T("Central.nome_valor_invalido", { nome });
     if (def.type === Number) {
-      if (!Number.isFinite(valor)) return T("{nome}: digite um número", { nome });
+      if (!Number.isFinite(valor)) return T("Central.nome_digite_um_numero", { nome });
       const min = def.range?.min ?? item?.minimo, max = def.range?.max;
-      if (min != null && valor < min) return T("{nome}: o mínimo é {min}", { nome, min });
-      if (max != null && valor > max) return T("{nome}: o máximo é {max}", { nome, max });
+      if (min != null && valor < min) return T("Central.nome_o_minimo_e_min", { nome, min });
+      if (max != null && valor > max) return T("Central.nome_o_maximo_e_max", { nome, max });
     }
     const choices = typeof def.choices === "function" ? def.choices() : def.choices;
-    if (choices && Object.keys(choices).length && !(String(valor) in choices)) return T("{nome}: opção inválida", { nome });
+    if (choices && Object.keys(choices).length && !(String(valor) in choices)) return T("Central.nome_opcao_invalida", { nome });
     return "";
   }
 
@@ -260,8 +270,8 @@ export class CentralConfig extends HandlebarsApplicationMixin(ApplicationV2) {
     if (conflitos.length) {
       const nomes = conflitos.map((k) => localizar(registro(k)?.name) || k);
       const sobrescrever = await DialogV2.confirm({
-        window: { title: T("Configurações mudaram enquanto a Central estava aberta") },
-        content: `<p>${T("Estas configurações foram mudadas por outra pessoa ou outra janela:")}</p><ul>${nomes.map((n) => `<li>${foundry.utils.escapeHTML(n)}</li>`).join("")}</ul><p>${T("Gravar os seus valores por cima? (Não = manter os valores novos e salvar só o resto.)")}</p>`
+        window: { title: "CALMESA.Central.configuracoes_mudaram_enquanto_a_central_estava" },
+        content: `<p>${T("Central.estas_configuracoes_foram_mudadas_por_outra")}</p><ul>${nomes.map((n) => `<li>${foundry.utils.escapeHTML(n)}</li>`).join("")}</ul><p>${T("Central.gravar_os_seus_valores_por_cima")}</p>`
       });
       if (!sobrescrever) pular = new Set(conflitos);
     }
@@ -277,8 +287,8 @@ export class CentralConfig extends HandlebarsApplicationMixin(ApplicationV2) {
     for (const k of gravadas) this.pendentes.delete(k);
     for (const k of pular) { this.pendentes.delete(k); try { this.originais.set(k, foundry.utils.deepClone(game.settings.get(MOD, k))); } catch { /* ignora */ } }
     this.#salvando = false;
-    if (falhas.length) ui.notifications.error(T("Não consegui gravar: {lista}. As outras foram salvas.", { lista: falhas.join(", ") }));
-    else if (gravadas.length) ui.notifications.info(T("{n} configuração(ões) salva(s).", { n: gravadas.length }));
+    if (falhas.length) ui.notifications.error(T("Central.nao_consegui_gravar_lista_as_outras", { lista: falhas.join(", ") }));
+    else if (gravadas.length) ui.notifications.info(T("Central.n_configuracao_oes_salva_s", { n: gravadas.length }));
     this.render({ parts: ["abas", "corpo", "rodape"] });
     if (gravadas.length) await CentralConfig.recarregarSePreciso(gravadas);
   }
@@ -293,7 +303,7 @@ export class CentralConfig extends HandlebarsApplicationMixin(ApplicationV2) {
     const mundo = defs.some((d) => d.scope === "world");
     if (modo !== "nao") {
       const todos = mundo && game.user.isGM;
-      ui.notifications.info(todos ? T("{n} opção(ões) mudada(s): recarregando para todos...", { n: chaves.length }) : T("{n} opção(ões) mudada(s): recarregando...", { n: chaves.length }));
+      ui.notifications.info(todos ? T("Comum.n_opcao_oes_mudada_s_recarregando", { n: chaves.length }) : T("Comum.n_opcao_oes_mudada_s_recarregando_2", { n: chaves.length }));
       setTimeout(() => {
         try { if (todos) game.socket.emit("reload"); } catch (err) { console.warn(`${MOD} | recarregar jogadores`, err); }
         (foundry.utils.debouncedReload ?? (() => window.location.reload()))();
@@ -303,7 +313,7 @@ export class CentralConfig extends HandlebarsApplicationMixin(ApplicationV2) {
     if (defs.some((d) => d.requiresReload)) {
       const Config = foundry.applications?.settings?.SettingsConfig;
       if (typeof Config?.reloadConfirm === "function") await Config.reloadConfirm({ world: mundo });
-      else if (await DialogV2.confirm({ window: { title: T("Recarregar") }, content: `<p>${T("Esta mudança só vale depois de recarregar a página. Recarregar agora?")}</p>` })) window.location.reload();
+      else if (await DialogV2.confirm({ window: { title: "CALMESA.Central.recarregar" }, content: `<p>${T("Central.esta_mudanca_so_vale_depois_de")}</p>` })) window.location.reload();
       return "perguntou";
     }
     return "";
@@ -311,7 +321,7 @@ export class CentralConfig extends HandlebarsApplicationMixin(ApplicationV2) {
 
   static async #ferramenta(ev, alvo) {
     if (!game.user.isGM) return;
-    const F = await N.ferramentas().catch(() => null);
+    const F = await ferramentas().catch(() => null);
     const abrirClima = (aba, sub) => {
       if (!F) return;
       const app = foundry.applications.instances.get("cm-clima") ?? new F.JanelaClima();
@@ -323,13 +333,13 @@ export class CentralConfig extends HandlebarsApplicationMixin(ApplicationV2) {
       case "abrirClima": return abrirClima("tempo");
       case "abrirEfeitos": return abrirClima("climas", "efeitos");
       case "abrirAnomalias": return abrirClima("anomalias");
-      case "diagnostico": N.diagnosticoClima(); return ui.notifications.info(T("Diagnóstico do clima no console (F12)."));
-      case "abrirLuz": return N.abrirFerramenta("JanelaLuz");
-      case "abrirEditor": return N.abrirFerramenta("EditorCalendario");
-      case "abrirHistorico": return N.abrirFerramenta("JanelaHistorico");
-      case "abrirContadores": return N.abrirFerramenta("JanelaContadores");
-      case "abrirTabelas": return N.abrirFerramenta("JanelaTabelas");
-      case "abrirCalendario": return N.JanelaCalendario.abrir();
+      case "diagnostico": diagnosticoClima(); return ui.notifications.info(T("Central.diagnostico_do_clima_no_console_f12"));
+      case "abrirLuz": return abrirFerramenta("JanelaLuz");
+      case "abrirEditor": return abrirFerramenta("EditorCalendario");
+      case "abrirHistorico": return abrirFerramenta("JanelaHistorico");
+      case "abrirContadores": return abrirFerramenta("JanelaContadores");
+      case "abrirTabelas": return abrirFerramenta("JanelaTabelas");
+      case "abrirCalendario": return JanelaCalendario.abrir();
     }
   }
 
@@ -337,8 +347,8 @@ export class CentralConfig extends HandlebarsApplicationMixin(ApplicationV2) {
   async close(options = {}) {
     if (this.pendentes.size && !options.force && !this.#salvando) {
       const ok = await DialogV2.confirm({
-        window: { title: T("Alterações não salvas") },
-        content: `<p>${T("Há {n} alteração(ões) não salva(s) na Central. Fechar e descartar?", { n: this.pendentes.size })}</p>`
+        window: { title: "CALMESA.Central.alteracoes_nao_salvas" },
+        content: `<p>${T("Central.ha_n_alteracao_oes_nao_salva", { n: this.pendentes.size })}</p>`
       });
       if (!ok) return this;
       this.pendentes.clear();
@@ -348,25 +358,8 @@ export class CentralConfig extends HandlebarsApplicationMixin(ApplicationV2) {
 }
 
 /** Abre (ou traz para a frente) a Central. */
-/** O Foundry só lê os "styles" do module.json ao iniciar o mundo; quem atualizou o módulo e só recarregou
- * a página fica sem central.css. Nesse caso, a própria Central acrescenta o arquivo (uma vez). */
-function garantirEstilo() {
-  try { garantirEstiloAgora(); } catch (e) { console.warn("calendario-mesa | não consegui carregar central.css", e); }
-}
-function garantirEstiloAgora() {
-  const url = new URL("../styles/central.css", import.meta.url);
-  const ja = [...document.querySelectorAll('link[rel="stylesheet"]')].some((l) => {
-    try { return new URL(l.href, location.href).pathname.endsWith("/calendario-mesa/styles/central.css"); } catch { return false; }
-  });
-  if (ja) return;
-  const link = document.createElement("link");
-  link.rel = "stylesheet"; link.href = url.href; link.dataset.cmCentral = "1";
-  document.head.appendChild(link);
-}
-
 export function abrirCentral() {
-  garantirEstilo();
-  const app = foundry.applications.instances.get("cm-central") ?? new CentralConfig();
+  const app = new CentralConfig();
   app.render({ force: true });
   return app;
 }

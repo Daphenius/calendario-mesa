@@ -16,133 +16,133 @@
 
 export const ABAS_CENTRAL = [
   {
-    id: "geral", rotulo: "Geral", icone: "fa-compass",
-    lema: "Aparência do calendário, HUD e o que os jogadores enxergam.",
+    id: "geral", rotulo: "Comum.geral", icone: "fa-compass",
+    lema: "Central.aparencia_do_calendario_hud_e_o",
     secoes: [
-      { id: "aparencia", titulo: "Aparência", icone: "fa-palette", campos: [
+      { id: "aparencia", titulo: "Central.aparencia", icone: "fa-palette", campos: [
         { chave: "tema" },
-        { chave: "mostrarHud", dica: "Liga ou desliga o HUD no topo da tela, só para você." }
+        { chave: "mostrarHud", dica: "Central.liga_ou_desliga_o_hud_no" }
       ] },
-      { id: "dnd5e", titulo: "HUD do D&D 5e", icone: "fa-dragon", campos: [
+      { id: "dnd5e", titulo: "Central.hud_do_d_d_5e", icone: "fa-dragon", campos: [
         { chave: "hudDnd5e", integracao: "dnd5e" }
       ] },
-      { id: "jogadores", titulo: "O que os jogadores veem", icone: "fa-users", campos: [
+      { id: "jogadores", titulo: "Central.o_que_os_jogadores_veem", icone: "fa-users", campos: [
         { chave: "jogadoresVeemHora" }
       ] }
     ]
   },
   {
-    id: "tempo", rotulo: "Tempo", icone: "fa-hourglass-half",
-    lema: "Relógio, passagem do tempo e efeitos com duração.",
+    id: "tempo", rotulo: "Comum.tempo", icone: "fa-hourglass-half",
+    lema: "Central.relogio_passagem_do_tempo_e_efeitos",
     secoes: [
-      { id: "relogio", titulo: "Relógio em tempo real", icone: "fa-clock", campos: [
+      { id: "relogio", titulo: "Central.relogio_em_tempo_real", icone: "fa-clock", campos: [
         { chave: "relogioTaxa", minimo: 0 },
-        { chave: "pausaJogo", dica: "Enquanto o jogo está pausado, o relógio em tempo real não anda." },
+        { chave: "pausaJogo", dica: "Central.enquanto_o_jogo_esta_pausado_o" },
         { chave: "pausaCombate" }
       ] },
-      { id: "passagem", titulo: "Passagem de tempo", icone: "fa-forward", campos: [
+      { id: "passagem", titulo: "Central.passagem_de_tempo", icone: "fa-forward", campos: [
         { chave: "cinemaMundo" },
-        { chave: "cinemaHoras", minimo: 0, dica: "Pulos de tempo a partir deste número de horas mostram a animação.", depende: { chave: "cinemaMundo", quando: (v) => v === true, texto: "Precisa de \"Animação ao pular muito tempo\" ligada" } },
+        { chave: "cinemaHoras", minimo: 0, dica: "Central.pulos_de_tempo_a_partir_deste", depende: { chave: "cinemaMundo", quando: (v) => v === true, texto: "Central.precisa_de_animacao_ao_pular_muito" } },
         { chave: "cinema" }
       ] },
-      { id: "efeitos", titulo: "Efeitos com duração", icone: "fa-flask", campos: [
+      { id: "efeitos", titulo: "Central.efeitos_com_duracao", icone: "fa-flask", campos: [
         { chave: "efeitosVencidos" },
-        { chave: "efeitosAviso", dica: "Mensagem no chat (só para o mestre) com os efeitos que acabaram.", depende: { chave: "efeitosVencidos", quando: (v) => v !== "nao", texto: "Não vale com \"Não mexer\" acima" } }
+        { chave: "efeitosAviso", dica: "Central.mensagem_no_chat_so_para_o", depende: { chave: "efeitosVencidos", quando: (v) => v !== "nao", texto: "Central.nao_vale_com_nao_mexer_acima" } }
       ] }
     ]
   },
   {
-    id: "clima", rotulo: "Clima", icone: "fa-cloud-sun-rain",
-    lema: "Regiões, temperatura, previsão e efeitos na cena.",
+    id: "clima", rotulo: "Comum.clima", icone: "fa-cloud-sun-rain",
+    lema: "Central.regioes_temperatura_previsao_e_efeitos_na",
     secoes: [
-      { id: "regioes", titulo: "Regiões e temperatura", icone: "fa-earth-americas", campos: [
+      { id: "regioes", titulo: "Central.regioes_e_temperatura", icone: "fa-earth-americas", campos: [
         { chave: "zonaPadrao" },
         { chave: "climaVariacao" },
-        { chave: "climaUnidade", dica: "Unidade em que as temperaturas aparecem para todos." }
+        { chave: "climaUnidade", dica: "Central.unidade_em_que_as_temperaturas_aparecem" }
       ] },
-      { id: "previsao", titulo: "Previsão e avisos", icone: "fa-calendar-week", campos: [
+      { id: "previsao", titulo: "Central.previsao_e_avisos", icone: "fa-calendar-week", campos: [
         { chave: "previsaoDias" },
-        { chave: "climaChat", dica: "Quem recebe no chat o clima de cada dia." }
+        { chave: "climaChat", dica: "Central.quem_recebe_no_chat_o_clima" }
       ] },
-      { id: "visual", titulo: "Efeitos visuais", icone: "fa-cloud-showers-heavy", campos: [
+      { id: "visual", titulo: "Central.efeitos_visuais", icone: "fa-cloud-showers-heavy", campos: [
         { chave: "climaVisual" },
-        { chave: "climaCenasSemRegiao", depende: { chave: "climaVisual", quando: (v) => v === true, texto: "Precisa de \"Efeito de clima nas cenas\" ligado" } },
-        { chave: "usarFXMaster", integracao: "fxmaster", depende: { chave: "climaVisual", quando: (v) => v === true, texto: "Precisa de \"Efeito de clima nas cenas\" ligado" } }
+        { chave: "climaCenasSemRegiao", depende: { chave: "climaVisual", quando: (v) => v === true, texto: "Central.precisa_de_efeito_de_clima_nas" } },
+        { chave: "usarFXMaster", integracao: "fxmaster", depende: { chave: "climaVisual", quando: (v) => v === true, texto: "Central.precisa_de_efeito_de_clima_nas" } }
       ] }
     ],
     botoes: [
-      { acao: "abrirClima", rotulo: "Janela do clima", icone: "fa-cloud-sun", dica: "Tempo de hoje, previsão, climas e regiões" },
-      { acao: "abrirEfeitos", rotulo: "Editor de efeitos", icone: "fa-wand-magic-sparkles", dica: "Aba Climas › Efeitos da janela do clima" },
-      { acao: "diagnostico", rotulo: "Diagnóstico do clima", icone: "fa-stethoscope", dica: "Mostra no console (F12) o clima de cada cena e o motivo" }
+      { acao: "abrirClima", rotulo: "Central.janela_do_clima", icone: "fa-cloud-sun", dica: "Central.tempo_de_hoje_previsao_climas_e" },
+      { acao: "abrirEfeitos", rotulo: "Central.editor_de_efeitos", icone: "fa-wand-magic-sparkles", dica: "Central.aba_climas_efeitos_da_janela_do" },
+      { acao: "diagnostico", rotulo: "Central.diagnostico_do_clima", icone: "fa-stethoscope", dica: "Central.mostra_no_console_f12_o_clima" }
     ]
   },
   {
-    id: "anomalias", rotulo: "Anomalias", icone: "fa-skull",
-    lema: "A barra de Anomalias e como elas valem no mundo.",
+    id: "anomalias", rotulo: "Comum.anomalias", icone: "fa-skull",
+    lema: "Central.a_barra_de_anomalias_e_como",
     secoes: [
-      { id: "barra", titulo: "Barra de Anomalias", icone: "fa-toggle-on", campos: [
+      { id: "barra", titulo: "Central.barra_de_anomalias", icone: "fa-toggle-on", campos: [
         { chave: "anomaliasAtivas" },
-        { chave: "anomaliaRegiaoInteira", depende: { chave: "anomaliasAtivas", quando: (v) => v === true, texto: "Precisa da barra de Anomalias ligada" } }
+        { chave: "anomaliaRegiaoInteira", depende: { chave: "anomaliasAtivas", quando: (v) => v === true, texto: "Central.precisa_da_barra_de_anomalias_ligada" } }
       ] }
     ],
     botoes: [
-      { acao: "abrirAnomalias", rotulo: "Editar anomalias", icone: "fa-skull", dica: "Regiões anômalas e climas exclusivos de cada anomalia", depende: { chave: "anomaliasAtivas", quando: (v) => v === true } }
+      { acao: "abrirAnomalias", rotulo: "Central.editar_anomalias", icone: "fa-skull", dica: "Central.regioes_anomalas_e_climas_exclusivos_de", depende: { chave: "anomaliasAtivas", quando: (v) => v === true } }
     ]
   },
   {
-    id: "astronomia", rotulo: "Astronomia e luz", icone: "fa-moon",
-    lema: "Luas, eclipses, luz das cenas e névoa de guerra.",
+    id: "astronomia", rotulo: "Central.astronomia_e_luz", icone: "fa-moon",
+    lema: "Central.luas_eclipses_luz_das_cenas_e",
     secoes: [
-      { id: "luas", titulo: "Luas e eclipses", icone: "fa-circle-half-stroke", campos: [
+      { id: "luas", titulo: "Central.luas_e_eclipses", icone: "fa-circle-half-stroke", campos: [
         { chave: "luasAviso" },
         { chave: "eclipseChance" },
-        { chave: "eclipseMudaClima", depende: { chave: "eclipseChance", quando: (v) => Number(v) > 0, texto: "Com chance de eclipse 0, nunca acontece" } },
+        { chave: "eclipseMudaClima", depende: { chave: "eclipseChance", quando: (v) => Number(v) > 0, texto: "Central.com_chance_de_eclipse_0_nunca" } },
         { chave: "jogadoresVeemLuasOcultas" }
       ] },
-      { id: "luz", titulo: "Luz e névoa de guerra", icone: "fa-sun", campos: [
+      { id: "luz", titulo: "Central.luz_e_nevoa_de_guerra", icone: "fa-sun", campos: [
         { chave: "visaoDiaNoite" },
-        { chave: "visaoLimite", depende: { chave: "visaoDiaNoite", quando: (v) => v === true, texto: "Precisa de \"Névoa de guerra com o dia e a noite\" ligada" } }
+        { chave: "visaoLimite", depende: { chave: "visaoDiaNoite", quando: (v) => v === true, texto: "Central.precisa_de_nevoa_de_guerra_com" } }
       ] }
     ],
     botoes: [
-      { acao: "abrirLuz", rotulo: "Luz por hora", icone: "fa-sun", dica: "Nível de luz de cada hora, luz das luas e cor da noite" },
-      { acao: "abrirEditor", rotulo: "Editor do calendário", icone: "fa-gear", dica: "Meses, semanas, estações, luas e eras" }
+      { acao: "abrirLuz", rotulo: "Comum.luz_por_hora", icone: "fa-sun", dica: "Central.nivel_de_luz_de_cada_hora" },
+      { acao: "abrirEditor", rotulo: "Central.editor_do_calendario", icone: "fa-gear", dica: "Central.meses_semanas_estacoes_luas_e_eras" }
     ]
   },
   {
-    id: "eventos", rotulo: "Eventos e diários", icone: "fa-book-open",
-    lema: "Notas do calendário, histórico e ligação com o Journal da Mesa.",
+    id: "eventos", rotulo: "Central.eventos_e_diarios", icone: "fa-book-open",
+    lema: "Central.notas_do_calendario_historico_e_ligacao",
     secoes: [
-      { id: "notas", titulo: "Notas e eventos", icone: "fa-calendar-day", campos: [
+      { id: "notas", titulo: "Central.notas_e_eventos", icone: "fa-calendar-day", campos: [
         { chave: "editorNotas", integracao: "journal" },
         { chave: "abrirNoJournal", integracao: "journal" },
         { chave: "pastaPorAno" }
       ] },
-      { id: "historico", titulo: "Histórico", icone: "fa-scroll", campos: [
+      { id: "historico", titulo: "Comum.historico", icone: "fa-scroll", campos: [
         { chave: "historicoJogadores" }
       ] },
-      { id: "journal", titulo: "Journal da Mesa", icone: "fa-store", campos: [
+      { id: "journal", titulo: "Central.journal_da_mesa", icone: "fa-store", campos: [
         { chave: "integrarJournal", integracao: "journal" },
         { chave: "avisoSemana" }
       ] }
     ],
     botoes: [
-      { acao: "abrirHistorico", rotulo: "Histórico da campanha", icone: "fa-scroll" },
-      { acao: "abrirCalendario", rotulo: "Janela do calendário", icone: "fa-calendar-days" }
+      { acao: "abrirHistorico", rotulo: "Comum.historico_da_campanha", icone: "fa-scroll" },
+      { acao: "abrirCalendario", rotulo: "Central.janela_do_calendario", icone: "fa-calendar-days" }
     ]
   },
   {
-    id: "ferramentas", rotulo: "Ferramentas", icone: "fa-toolbox",
-    lema: "Viagem, encontros e manutenção.",
+    id: "ferramentas", rotulo: "Central.ferramentas", icone: "fa-toolbox",
+    lema: "Central.viagem_encontros_e_manutencao",
     secoes: [
-      { id: "manutencao", titulo: "Manutenção", icone: "fa-screwdriver-wrench", campos: [
+      { id: "manutencao", titulo: "Central.manutencao", icone: "fa-screwdriver-wrench", campos: [
         { chave: "recarregarAoMudar" }
       ] }
     ],
     botoes: [
-      { acao: "abrirTabelas", rotulo: "Tabelas de encontro da viagem", icone: "fa-table-list", dica: "Quais tabelas aparecem na janela de viagem" },
-      { acao: "abrirContadores", rotulo: "Contadores e prazos", icone: "fa-hourglass-half" },
-      { acao: "diagnostico", rotulo: "Diagnóstico do clima", icone: "fa-stethoscope", dica: "Mostra no console (F12) o clima de cada cena e o motivo" }
+      { acao: "abrirTabelas", rotulo: "Comum.tabelas_de_encontro_da_viagem", icone: "fa-table-list", dica: "Central.quais_tabelas_aparecem_na_janela_de" },
+      { acao: "abrirContadores", rotulo: "Comum.contadores_e_prazos", icone: "fa-hourglass-half" },
+      { acao: "diagnostico", rotulo: "Central.diagnostico_do_clima", icone: "fa-stethoscope", dica: "Central.mostra_no_console_f12_o_clima" }
     ]
   }
 ];

@@ -10,7 +10,7 @@ Se encontrar bugs ou tiver sugestões, abra uma [issue](https://github.com/Daphe
 
 ---
 
-**Versão 4.8.1** · Foundry VTT 14 · D&D 5e 6 · Português e English · Licença MIT · ✅ Testado no Foundry VTT e no D&D 5e
+**Versão 4.8.2** · Foundry VTT 14 · D&D 5e 6 · Português e English · Licença MIT · ✅ Testado no Foundry VTT e no D&D 5e
 
 ![Calendário da Mesa no Foundry VTT: janela do calendário](docs/screenshot.png)
 

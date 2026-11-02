@@ -82,7 +82,7 @@ export function montar(R, { lang = "en", gm = true } = {}) {
     time: { worldTime: 400 * 86400 + 13 * 3600, calendar: null, initializeCalendar() { this.calendar = new CONFIG.time.worldCalendarClass(CONFIG.time.worldCalendarConfig); }, get components() { return this.calendar.timeToComponents(this.worldTime); }, advance: async (s) => { game.time.worldTime += s; }, set: async (t) => { game.time.worldTime = t; } },
     journal: Object.assign([], { get: (id) => game.journal.find((j) => j.id === id) ?? null, getName: () => null, contents: [] }), scenes: Object.assign([], { get: () => null, contents: [] }), folders: [], tables: [], actors: [],
     socket: { on: (c, f) => (socketOuvintes[c] ??= []).push(f), emit: (c, d) => (globalThis.__socket ??= []).push([c, d]) },
-    macros: { get: (id) => ({ id, execute: async (dados) => { macrosRodadas.push({ id, td: dados.td }); } }) },
+    macros: { get: (id) => ({ id, execute: async (dados) => { macrosRodadas.push({ id, td: dados.td, data: dados.data }); } }) },
     paused: false, ready: false, combat: null
   };
   CONFIG.time.worldCalendarClass = CalendarData;

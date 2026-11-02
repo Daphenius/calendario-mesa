@@ -347,6 +347,9 @@ function acoesDaNota(j) {
 
 async function executarAcoes(j, a, td) {
   const nome = j.name;
+  // a data entregue à macro é a do calendário da nota (td conta os dias desse calendário); calculada aqui,
+  // dentro do comCal (que só aceita função síncrona), e a macro roda depois, fora dele
+  const data = comCal(calDaNota(j.getFlag(MOD, "nota")), () => infoDia(td));
   if (a.chat) await chat(`<i class="fa-solid fa-bell"></i> <b>${esc(nome)}</b><br>${esc(a.chat)}`, a.chatPara === "mestre" ? idsGM() : []);
   if (a.som) {
     try {
@@ -359,7 +362,7 @@ async function executarAcoes(j, a, td) {
   }
   if (a.macro) {
     const m = game.macros?.get(a.macro) ?? (await fromUuid(a.macro).catch(() => null));
-    if (m) { try { await m.execute({ nota: j, td, data: infoDia(td) }); } catch (err) { relatarErro(T("Notas.macro_da_nota_nome", { nome }), err); } }
+    if (m) { try { await m.execute({ nota: j, td, data }); } catch (err) { relatarErro(T("Notas.macro_da_nota_nome", { nome }), err); } }
     else relatarErro(T("Notas.macro_da_nota_nome", { nome }), new Error(T("Notas.macro_nao_encontrada")));
   }
 }

@@ -2,7 +2,7 @@
  * Cada teste monta a situação, faz o tempo passar como o Foundry faria e confere o resultado gravado:
  * - "ver como" um calendário de dia mais curto não muda a contagem de dias do mundo (dia do Journal, clima);
  * - "Desfazer" depois de dois avanços rápidos restaura o estado certo;
- * - ações de notas de um calendário secundário disparam na hora dele;
+ * - ações de notas de um calendário secundário disparam na hora dele, e a macro recebe a data nesse calendário;
  * - contador com aviso "nenhum" não manda mensagem (mas entra no histórico);
  * - as mensagens saem com o nome do remetente traduzido;
  * - efeitos vencidos expiram num avanço de segundos (fora do relógio em tempo real);
@@ -88,6 +88,22 @@ test("ação de nota de um calendário secundário dispara na hora dele", async 
   await irPara(26 * 3600);
   assert.ok(chat().some((c) => /Sino/.test(c)), "o aviso sai");
   assert.deepEqual(F.macrosRodadas.map((m) => m.id), ["m1"], "a macro roda");
+  await limpar();
+});
+
+test("a macro de uma nota recebe a data no calendário da nota", async () => {
+  await limpar();
+  // "b": mesmas horas, mas o primeiro mês tem só 2 dias → o dia 2 é o 1º dia do 2º mês (no principal, o 3º do 1º)
+  const p = principal();
+  const b = structuredClone(p); b.nome = "Meses curtos"; b.meses[0].dias = 2; b.meses[0].diasBissexto = 2;
+  await set("calendarios", { principal: "a", lista: { a: p, b } });
+  game.journal.push(F.diario({ id: "n2", name: "Festa", nota: { td: 2, hora: "01:00", repetir: "nao", cal: "b" }, acoes: { macro: "m2" } }));
+  game.time.worldTime = 2 * 86400;
+  await irPara(2 * 86400 + 2 * 3600);
+  assert.equal(F.macrosRodadas.length, 1, "a macro roda");
+  const { td, data } = F.macrosRodadas[0];
+  assert.equal(td, 2);
+  assert.deepEqual({ mes: data.mes, dia: data.dia }, { mes: 1, dia: 0 }, "1º dia do 2º mês do calendário da nota");
   await limpar();
 });
 

@@ -1,5 +1,10 @@
 # Histórico de versões — Calendário da Mesa
 
+## 4.8.2
+
+- **Testada e aprovada pelo autor no Foundry VTT 14 e no D&D 5e** antes da publicação.
+- **A macro de uma nota recebia a data no calendário errado.** Numa nota de outro calendário (outra civilização), a macro disparava na hora certa, mas o parâmetro `data` vinha calculado pelo calendário em uso no mestre (ex.: "3º dia do 1º mês" em vez de "1º dia do 2º mês"). Agora `data` sai no calendário da nota, tanto no disparo automático quanto no botão "Testar" do diálogo da nota. Achado numa revisão externa; ganhou um teste em `tests/comportamento.test.mjs`.
+
 ## 4.8.1
 
 - **Testada e aprovada pelo autor no Foundry VTT 14 e no D&D 5e** antes da publicação.

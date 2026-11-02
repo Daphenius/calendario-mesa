@@ -5,12 +5,11 @@
 
 import { aplicarClimaNasCenas, planoClimaCena, TIPO_CLIMA } from "../clima-cenas.js";
 import { ajustesDoEfeito, apiFx, efeitoCena, iniciarPreviaEfeito, pararPreviaEfeito, PREFIXO_EFEITO, PRESETS_FX_CONHECIDOS, presetsFx, previaAtiva } from "../clima-efeitos.js";
-import { anomaliaDe, anomaliaRegiaoInteira, ANOMALIAS, anomaliasLigadas, climaCfg, climaDe, climaHoje, CLIMAS, definirPrevisao, ehDeFabrica, ESTACOES_CLIMA, gerarPrevisao, GRUPOS_CLIMA, idClimaAnomalia, PREFIXO_ANOM, previsao, rolarClima, rolarTemperatura, salvarTipoDeClima, temperaturaTexto, tempoComAnomalia, tipoEstacao, zonaDaCena, zonaPadraoValida, ZONAS, zonasEmUso } from "../clima.js";
-import { agora, estacaoDe, infoDia, textoData } from "../datas.js";
+import { anomaliaDe, anomaliaRegiaoInteira, ANOMALIAS, anomaliasLigadas, climaCfg, climaDe, climaHoje, CLIMAS, dataNoMundo, definirPrevisao, ehDeFabrica, estacaoNoMundo, ESTACOES_CLIMA, gerarPrevisao, GRUPOS_CLIMA, hojeNoMundo, idClimaAnomalia, PREFIXO_ANOM, previsao, rolarClima, rolarTemperatura, salvarTipoDeClima, temperaturaTexto, tempoComAnomalia, zonaDaCena, zonaPadraoValida, ZONAS, zonasEmUso } from "../clima.js";
 import { registrar } from "../historico.js";
 import { HUD } from "../janela.js";
 import { eventosLuasDoDia, textoEventoLua } from "../luas.js";
-import { chat, Dialogo, esc, MOD, num, opcoes, T, tema } from "../nucleo.js";
+import { chat, Dialogo, esc, MOD, noMundo, num, opcoes, T, tema } from "../nucleo.js";
 
 const { ApplicationV2 } = foundry.applications.api;
 
@@ -110,7 +109,7 @@ class JanelaClima extends ApplicationV2 {
   /** Região, estação e tabela de chances da cena atual. */
   contexto() {
     const zona = zonaDaCena();
-    const est = tipoEstacao(estacaoDe(agora().mes, agora().dia));
+    const est = estacaoNoMundo();
     const pesos = ZONAS[zona]?.pesos?.[est] ?? {};
     const soma = Object.values(pesos).reduce((x, y) => x + y, 0) || 1;
     return { zona, est, pesos, soma, atual: climaDe(zona), base: ZONAS[zona]?.temp?.[est] ?? 15 };
@@ -157,7 +156,7 @@ class JanelaClima extends ApplicationV2 {
     if (!ZONAS[this.zonaPrev]) this.zonaPrev = zonaDaCena();
     const zona = this.zonaPrev;
     const dias = num(game.settings.get(MOD, "previsaoDias"), 5);
-    const hoje = agora().td;
+    const hoje = hojeNoMundo();   // a previsão é do mundo (calendário principal)
     const p = previsao();
     const climasZona = Object.entries(CLIMAS).filter(([, c]) => !c.daAnomalia || c.daAnomalia === ZONAS[zona]?.anomaliaFixa);
     const opTipo = (atual) => Object.entries(GRUPOS_CLIMA).map(([g, rot]) => `<optgroup label="${esc(T(rot))}">${climasZona.filter(([, c]) => c.grupo === g).map(([k, c]) => `<option value="${k}" ${atual === k ? "selected" : ""}>${esc(T(c.nome))}</option>`).join("")}</optgroup>`).join("");
@@ -166,10 +165,10 @@ class JanelaClima extends ApplicationV2 {
     for (let td = hoje + 1; td <= hoje + dias; td++) {
       const c = p.dias?.[td]?.[zona];
       const info = c ? CLIMAS[c.tipo] : null;
-      const ev = eventosLuasDoDia(td);
+      const ev = noMundo(() => eventosLuasDoDia(td));
       if (!c) faltam++;
       linhas.push(`<div class="cm-prev-dia ${c ? `g-${info?.grupo ?? "ceu"}` : "vazio"}" data-td="${td}">
-        <div class="cm-prev-data"><b>${td === hoje + 1 ? T("Clima.amanha") : esc(textoData(infoDia(td), { ano: false, semana: true }))}</b><small>${T("Comum.em_n_dias", { n: td - hoje })}${ev.length ? ` · ${ev.map((e) => `<i class="fa-solid ${e.icone}" style="color:${e.cor}" data-tooltip="${esc(textoEventoLua(e))}"></i>`).join(" ")}` : ""}</small></div>
+        <div class="cm-prev-data"><b>${td === hoje + 1 ? T("Clima.amanha") : esc(dataNoMundo(td, { ano: false, semana: true }))}</b><small>${T("Comum.em_n_dias", { n: td - hoje })}${ev.length ? ` · ${ev.map((e) => `<i class="fa-solid ${e.icone}" style="color:${e.cor}" data-tooltip="${esc(textoEventoLua(e))}"></i>`).join(" ")}` : ""}</small></div>
         ${c ? `<span class="cm-prev-ico"><i class="fa-solid ${info?.icone ?? "fa-cloud"}"></i></span>
           <select name="prevTipo" data-td="${td}">${opTipo(c.tipo)}</select>
           <label class="cm-prev-temp"><input type="number" name="prevTemp" data-td="${td}" value="${this.paraTela(c.temp)}"><span>${this.un}</span></label>
@@ -198,12 +197,12 @@ class JanelaClima extends ApplicationV2 {
   async mostrarPrevisao() {
     const zona = this.zonaPrev ?? zonaDaCena();
     const p = previsao();
-    const hoje = agora().td;
+    const hoje = hojeNoMundo();
     const dias = num(game.settings.get(MOD, "previsaoDias"), 5);
     const linhas = [];
     for (let td = hoje + 1; td <= hoje + dias; td++) {
       const c = p.dias?.[td]?.[zona];
-      if (c) linhas.push(`<li><b>${esc(textoData(infoDia(td), { ano: false }))}</b>: <i class="fa-solid ${CLIMAS[c.tipo]?.icone ?? "fa-cloud"}"></i> ${esc(T(CLIMAS[c.tipo]?.nome ?? c.tipo))}, ${temperaturaTexto(c.temp)}</li>`);
+      if (c) linhas.push(`<li><b>${esc(dataNoMundo(td, { ano: false }))}</b>: <i class="fa-solid ${CLIMAS[c.tipo]?.icone ?? "fa-cloud"}"></i> ${esc(T(CLIMAS[c.tipo]?.nome ?? c.tipo))}, ${temperaturaTexto(c.temp)}</li>`);
     }
     if (!linhas.length) return ui.notifications.warn(T("Clima.nao_ha_previsao_para_mostrar_preencha"));
     await chat(`<i class="fa-solid fa-calendar-week"></i> <b>${T("Clima.previsao_do_tempo_regiao", { regiao: esc(T(ZONAS[zona].nome)) })}</b><ul>${linhas.join("")}</ul>`);

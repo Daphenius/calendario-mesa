@@ -12,8 +12,8 @@ import { alterarHistorico, historico, registrarVarios } from "./historico.js";
 import { HUD, JanelaCalendario } from "./janela.js";
 import { avisarEventosLuas } from "./luas.js";
 import { atualizarLuz } from "./luz.js";
-import { avisarNotas, comecaEm, dispararAcoesDasNotas, integrarJournal, notas, segundosDaHora } from "./notas.js";
-import { chat, Dialogo, diaTotalDe, esc, idsGM, JOURNAL, MOD, naFila, num, relatarErro, segDia, segHora, segMinuto, segundoDoDia, souGMPrincipal, T } from "./nucleo.js";
+import { avisarNotas, dispararAcoesDasNotas, integrarJournal, notasQueComecaram, segundosDaHora } from "./notas.js";
+import { chat, Dialogo, diaTotalDe, esc, idsGM, JOURNAL, MOD, naFila, noMundo, num, relatarErro, segDia, segHora, segMinuto, segundoDoDia, souGMPrincipal, T } from "./nucleo.js";
 let ULT_TEMPO = 0;   // quando o tempo do mundo mudou pela última vez (para o relógio contar os segundos entre um passo e outro)
 /** Marca o instante (relógio real) em que o tempo do mundo mudou. */
 function marcarTempo() { ULT_TEMPO = performance.now(); }
@@ -32,41 +32,47 @@ async function aoMudarTempo(wt, delta) {
   atualizarLuz(antes, wt).catch((err) => relatarErro("Erros.luz_das_cenas", err));
   // desfazer: o tempo voltou para trás de propósito; nada de clima, histórico ou avisos novos
   if (desfazendo) { DESFAZER.alvo = null; return naFila("tempo", () => restaurarDesfazer()); }
-  // guarda como estava antes deste pulo (para o botão Desfazer)
-  guardarParaDesfazer(antes, wt);
-  // o resto roda em ordem: dois cliques rápidos não avisam o mesmo prazo duas vezes
-  return naFila("tempo", () => processarMudancaDeTempo(antes, wt, delta));
+  const tique = TIQUES.delete(wt);   // passo do relógio em tempo real (não entra no Desfazer)
+  // o resto roda em ordem: dois cliques rápidos não avisam o mesmo prazo duas vezes. A cópia para o Desfazer
+  // é tirada aqui dentro, depois que a mudança anterior terminou de gravar (contadores, histórico, clima)
+  return naFila("tempo", async () => {
+    if (!tique) guardarParaDesfazer(antes, wt);
+    await processarMudancaDeTempo(antes, wt, delta, { tique });
+  });
 }
 
-async function processarMudancaDeTempo(antes, wt, delta) {
-  const d0 = diaTotalDe(antes), d1 = diaTotalDe(wt);
+async function processarMudancaDeTempo(antes, wt, delta, { tique = false } = {}) {
   await verificarContadores(antes, wt);
-
-  if (d0 !== d1) {
+  // a passagem dos dias vale para o mundo todo: conta pelo calendário principal, não pelo que o mestre está vendo
+  // ("ver como" ou calendário da cena), senão um calendário de dia mais curto contaria dias que o mundo não viveu
+  const m = noMundo(() => {
+    const d0 = diaTotalDe(antes), d1 = diaTotalDe(wt);
     let semanas = 0;
     if (d1 > d0) for (let td = d0 + 1; td <= Math.min(d1, d0 + 400); td++) if (infoDia(td).sem === 0) semanas++;
-    Hooks.callAll("calendarioMesa.novoDia", infoDia(d1), d1 - d0);
-    if (semanas) Hooks.callAll("calendarioMesa.novaSemana", infoDia(d1), semanas);
+    return { d0, d1, semanas, dia: infoDia(d1) };
+  });
+  const { d0, d1, semanas } = m;
+  if (d0 !== d1) {
+    Hooks.callAll("calendarioMesa.novoDia", m.dia, d1 - d0);
+    if (semanas) Hooks.callAll("calendarioMesa.novaSemana", m.dia, semanas);
     await integrarJournal(d1 - d0, semanas);
-    // histórico: eventos que começaram e saltos grandes
-    const reg = [];
-    if (Math.abs(d1 - d0) > 1) reg.push({ texto: d1 > d0 ? T("Luz.passaram_0_dias", [Math.abs(d1 - d0)]) : T("Luz.voltaram_0_dias", [Math.abs(d1 - d0)]), icone: "fa-forward" });
-    if (d1 > d0) {
-      const lista = notas({ todas: true });
-      for (let td = Math.max(d0 + 1, d1 - 60); td <= d1; td++) {
-        for (const { j, n } of lista.filter((x) => comecaEm(x.n, td))) reg.push({ texto: j.name, icone: n.icone === "fa-hands-praying" ? "fa-hands-praying" : "fa-star", wt: td * segDia() });
-      }
-    }
-    await registrarVarios(reg);
+  }
+  // histórico: saltos grandes e eventos que começaram (de todos os calendários, cada um no seu dia: num
+  // calendário de dia mais curto, um evento pode começar sem o dia do mundo mudar)
+  const reg = [];
+  if (Math.abs(d1 - d0) > 1) reg.push({ texto: d1 > d0 ? T("Luz.passaram_0_dias", [Math.abs(d1 - d0)]) : T("Luz.voltaram_0_dias", [Math.abs(d1 - d0)]), icone: "fa-forward" });
+  if (delta > 0) reg.push(...notasQueComecaram(antes, wt));
+  if (reg.length) await registrarVarios(reg);
+  if (d0 !== d1) {
     await atualizarClima();
     if (d1 > d0) await avisarEventosLuas(d0 + 1, d1);
   }
   if (delta > 0) {
     await avisarNotas(antes, wt);
     await dispararAcoesDasNotas(antes, wt);
-    // efeitos vencidos: não a cada tique de 5 s do relógio em tempo real; só quando o minuto do jogo muda
-    // (um pulo de dia ou de hora sempre muda o minuto). Com a opção em "Não mexer", a própria função sai na hora.
-    if (Math.floor(antes / segMinuto()) !== Math.floor(wt / segMinuto())) await expirarEfeitos(wt);
+    // efeitos vencidos: a cada mudança de tempo; no relógio em tempo real (um passo a cada 5 s), só quando o minuto
+    // do jogo muda. Com a opção em "Não mexer", a própria função sai na hora.
+    if (!tique || Math.floor(antes / segMinuto()) !== Math.floor(wt / segMinuto())) await expirarEfeitos(wt);
   }
 }
 
@@ -122,17 +128,20 @@ async function expirarEfeitos(wt) {
 /* ---------------- desfazer o último pulo de tempo ----------------
  * Antes de cada mudança de tempo feita pelo mestre, guarda como estavam o tempo, o clima, o histórico,
  * os contadores e o dia do Journal. Desfazer volta o tempo sem rolar clima nem avisar nada e restaura o resto. */
-const DESFAZER = { pilha: [], alvo: null, restaurar: null, tique: null };
+const DESFAZER = { pilha: [], alvo: null, restaurar: null };
+/** Tempos de destino dos passos do relógio em tempo real ainda não processados (não entram no Desfazer e só
+ *  conferem efeitos vencidos quando o minuto muda). Um conjunto, e não um valor só, porque um passo pode chegar
+ *  depois de o relógio já ter mandado o seguinte. */
+const TIQUES = new Set();
 function guardarParaDesfazer(antes, depois) {
   if (!souGMPrincipal() || antes === depois) return;
-  if (DESFAZER.tique != null && depois === DESFAZER.tique) { DESFAZER.tique = null; return; }
   try {
     DESFAZER.pilha.push({
       antes, depois,
       clima: foundry.utils.deepClone(game.settings.get(MOD, "climaAtual") ?? {}),
       historicoIds: new Set(historico().map((h) => h.id)),
       contadores: foundry.utils.deepClone(game.settings.get(MOD, "contadores") ?? { lista: [] }),
-      dias: diaTotalDe(depois) - diaTotalDe(antes)
+      dias: noMundo(() => diaTotalDe(depois) - diaTotalDe(antes))   // dias do mundo (o que o Journal contou)
     });
     if (DESFAZER.pilha.length > 5) DESFAZER.pilha.shift();
   } catch (err) { console.warn(`${MOD} | desfazer`, err); }
@@ -227,7 +236,8 @@ function iniciarRelogio() {
     const seg = Math.floor(RELOGIO_RESTO);
     if (seg < 1) return;
     RELOGIO_RESTO -= seg;
-    DESFAZER.tique = game.time.worldTime + seg;   // tique do relógio não entra no Desfazer
+    TIQUES.add(game.time.worldTime + seg);   // passo do relógio: não entra no Desfazer
+    if (TIQUES.size > 50) TIQUES.delete(TIQUES.values().next().value);
     game.time.advance(seg).catch((err) => relatarErro(T("Tempo.relogio_em_tempo_real"), err));
   }, PASSO * 1000);
 }

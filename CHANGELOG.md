@@ -1,5 +1,17 @@
 # Histórico de versões — Calendário da Mesa
 
+## 4.8.1
+
+- **Testada e aprovada pelo autor no Foundry VTT 14 e no D&D 5e** antes da publicação.
+- Correções de uma revisão externa da 4.8.0. Cada uma ganhou um teste que reproduz o problema (`tests/comportamento.test.mjs`):
+  - **"Ver como" um calendário de dia mais curto contava dias que o mundo não viveu.** Com o mestre vendo um calendário de 12 horas, ir das 11h às 13h somava um dia no Journal da Mesa. Agora a virada do dia (dia das lojas, semana nova, hooks `calendarioMesa.novoDia`/`novaSemana`), o clima do dia, a previsão e os eventos das luas contam pelo **calendário principal**, seja qual for o calendário na tela do mestre. Com isso, o clima de hoje também aparece igual para quem vê outro calendário.
+  - **Desfazer depois de dois avanços rápidos podia restaurar o estado errado.** A cópia para o Desfazer era tirada antes de o avanço anterior terminar de gravar; um contador que já tinha terminado voltava a "não terminado" e sumia do histórico. Agora a cópia é tirada na mesma fila, depois do avanço anterior.
+  - **Ações de notas de um calendário secundário podiam não disparar.** A macro, o som ou a cena de uma nota de um calendário com outro tamanho de dia eram procurados nos dias do calendário errado (o aviso saía, a ação não). Agora cada calendário conta os próprios dias. O mesmo vale para o registro no histórico das notas que começaram, que antes olhava só o calendário na tela do mestre.
+  - **Contador com aviso "nenhum" mandava mensagem assim mesmo** (a API documenta essa opção). Agora não manda; o término continua no histórico.
+  - **O remetente das mensagens do calendário aparecia como "Comum.calendario"** em vez de "Calendário"/"Calendar", e o selo do Journal da Mesa na Central aparecia como "Central.journal_da_mesa ativo". Eram textos trocados pela chave na migração das traduções (4.4.0) sem passar pela tradução. Conferi todas as outras chaves usadas fora de `T()`: as demais já são traduzidas onde aparecem.
+- **Efeitos com duração vencidos mais precisos**: um avanço de segundos (ex.: +12 s) agora confere os efeitos na hora. Só o relógio em tempo real, que anda a cada 5 s, continua conferindo uma vez por minuto do jogo, por desempenho (está no README).
+- Teste do socket reforçado: além de não dar erro, ele confere que pedidos inválidos ou de outro jogador não mudam a escolha de vigia, e que o pedido certo muda.
+
 ## 4.8.0
 
 - **Testada e aprovada pelo autor no Foundry VTT 14 e no D&D 5e** antes da publicação.

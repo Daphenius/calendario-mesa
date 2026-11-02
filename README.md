@@ -10,7 +10,7 @@ Se encontrar bugs ou tiver sugestões, abra uma [issue](https://github.com/Daphe
 
 ---
 
-**Versão 4.8.0** · Foundry VTT 14 · D&D 5e 6 · Português e English · Licença MIT · ✅ Testado no Foundry VTT e no D&D 5e
+**Versão 4.8.1** · Foundry VTT 14 · D&D 5e 6 · Português e English · Licença MIT · ✅ Testado no Foundry VTT e no D&D 5e
 
 ![Calendário da Mesa no Foundry VTT: janela do calendário](docs/screenshot.png)
 
@@ -140,7 +140,7 @@ Para o clima, cada estação é entendida como primavera, verão, outono ou inve
 - Cada calendário tem meses, semana, estações, luas e **eventos próprios**. O tempo do mundo é um só; cada civilização só conta ele do seu jeito (o mesmo dia pode ser "14 de Brasa de 1023" num e "3 de B5 de 523" no outro).
 - **Calendário da cena**: botão 🏛 no HUD ou "Calendário da cena" na janela. Quem está naquela cena vê o calendário, a data e os eventos dela.
 - **Ver como**: na janela do calendário, cada pessoa pode escolher outro calendário ou deixar no Automático (segue a cena; sem escolha na cena, o principal).
-- O Foundry (e o sistema) contam o tempo sempre pelo **calendário principal**, igual para todos; "ver como" e o calendário da cena só mudam o que o módulo mostra naquele computador. A luz do mapa também segue o principal.
+- O Foundry (e o sistema) contam o tempo sempre pelo **calendário principal**, igual para todos; "ver como" e o calendário da cena só mudam o que o módulo mostra naquele computador. O que vale para o mundo todo também segue o principal: a luz do mapa, o clima do dia e a previsão, a virada do dia (dia das lojas do Journal, semana nova) e os eventos das luas. Avisos e ações das notas seguem o calendário de cada nota.
 - Notas novas ficam no calendário que estava aberto. Notas sem calendário (ou de um calendário apagado) ficam no principal.
 
 ### Quando o calendário muda
@@ -211,7 +211,7 @@ Tokens de NPC não mudam o clima; nada roda o tempo todo (só reage quando um to
 
 Botão ⏳ no HUD: "O ritual se completa daqui a 3 dias", "Efeito da poção: 8 horas"... Cada contador mostra quanto falta; ao terminar, avisa no chat (só o mestre ou todos) e entra no histórico. Pode ser visível para os jogadores ou só para o mestre; +1h e +1d para estender.
 
-**Efeitos com duração vencidos** (Central › Tempo): quando o tempo passa, o calendário pode remover ou desativar da ficha os efeitos ativos (magias, venenos…) cuja duração acabou. O padrão é "Não mexer".
+**Efeitos com duração vencidos** (Central › Tempo): quando o tempo passa, o calendário pode remover ou desativar da ficha os efeitos ativos (magias, venenos…) cuja duração acabou. O padrão é "Não mexer". A conferência acontece a cada mudança de tempo; com o relógio em tempo real andando, uma vez por minuto do jogo (o relógio avança a cada 5 s).
 
 ## Viagem
 

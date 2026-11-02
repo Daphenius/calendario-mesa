@@ -369,13 +369,15 @@ async function dispararAcoesDasNotas(antes, depois) {
   if (!souGMPrincipal()) return [];
   const comAcoes = game.journal.filter((j) => j.getFlag(MOD, "nota") && acoesDaNota(j));
   if (!comAcoes.length) return [];
-  const d0 = diaTotalDe(antes), d1 = diaTotalDe(depois);
-  if (d1 - d0 > 60) return [];   // salto grande: não dispara dezenas de ações de uma vez
   const disparos = [];
   const { lista: cals } = listaCalendarios();
   for (const id of Object.keys(cals)) {
     comCal(id, () => {
       const lista = notas({ todas: true, id }).filter(({ j }) => comAcoes.includes(j));
+      if (!lista.length) return;
+      // os dias contam pelo calendário da nota (cada um pode ter um tamanho de dia)
+      const d0 = diaTotalDe(antes), d1 = diaTotalDe(depois);
+      if (d1 - d0 > 60) return;   // salto grande: não dispara dezenas de ações de uma vez
       for (let td = d0; td <= d1; td++) {
         for (const { j, n } of lista.filter((x) => comecaEm(x.n, td))) {
           const gatilho = td * segDia() + segundosDaHora(n.hora);
@@ -388,6 +390,24 @@ async function dispararAcoesDasNotas(antes, depois) {
   disparos.sort((x, y) => x.gatilho - y.gatilho);
   for (const d of disparos) await executarAcoes(d.j, d.a, d.td);
   return disparos;
+}
+
+/** Notas que começaram entre "antes" e "depois" (todos os calendários, cada um no seu dia), para o histórico.
+ *  Olha no máximo os últimos 60 dias de cada calendário. */
+function notasQueComecaram(antes, depois) {
+  const reg = [];
+  const { lista: cals } = listaCalendarios();
+  for (const id of Object.keys(cals)) {
+    comCal(id, () => {
+      const lista = notas({ todas: true, id });
+      if (!lista.length) return;
+      const d0 = diaTotalDe(antes), d1 = diaTotalDe(depois);
+      for (let td = Math.max(d0 + 1, d1 - 60); td <= d1; td++) {
+        for (const { j, n } of lista.filter((x) => comecaEm(x.n, td))) reg.push({ texto: j.name, icone: n.icone === "fa-hands-praying" ? "fa-hands-praying" : "fa-star", wt: td * segDia() });
+      }
+    });
+  }
+  return reg.sort((x, y) => x.wt - y.wt);
 }
 
 export {
@@ -411,6 +431,7 @@ export {
   linhaDoJournal,
   MODOS_CENA,
   normalizarNota,
+  notasQueComecaram,
   notaNova,
   notas,
   notasDoDia,

@@ -62,9 +62,10 @@ export function montar(R, { lang = "en", gm = true } = {}) {
   const erros = [];
   globalThis.ui = { notifications: { error: (m) => erros.push(m), info() {}, warn() {} } };
   const settings = new Map(), menus = new Map(), valores = new Map();
-  const users = [{ id: "u1", isGM: gm, name: "Mestre" }];
+  const users = [{ id: "u1", isGM: gm, name: "Mestre", active: true }, { id: "u2", isGM: false, name: "Jogadora", active: true }];
   users.get = (id) => users.find((u) => u.id === id); users.activeGM = users[0];
   const socketOuvintes = {};
+  const diasJournal = [], macrosRodadas = [];
   globalThis.game = {
     i18n: { lang, has: (k) => k in EN, localize: (k) => EN[k] ?? k, format: (k) => EN[k] ?? k },
     settings: {
@@ -74,14 +75,23 @@ export function montar(R, { lang = "en", gm = true } = {}) {
       get: (m, k) => valores.has(`${m}.${k}`) ? valores.get(`${m}.${k}`) : foundry.utils.deepClone(settings.get(`${m}.${k}`)?.default),
       set: async (m, k, v) => { valores.set(`${m}.${k}`, v); settings.get(`${m}.${k}`)?.onChange?.(v); return v; }
     },
-    modules: new Map([["calendario-mesa", { id: "calendario-mesa", active: true, version: "4.5.0" }]]),
+    modules: new Map([["calendario-mesa", { id: "calendario-mesa", active: true, version: "4.8.1" }],
+      // Journal da Mesa: só o que o calendário chama (dia das lojas); os pedidos ficam em diasJournal
+      ["journal-mesa", { id: "journal-mesa", active: true, api: { dia: { somar: async (n) => { diasJournal.push(n); } } } }]]),
     user: users[0], users, system: { id: "dnd5e" },
-    time: { worldTime: 400 * 86400 + 13 * 3600, calendar: null, initializeCalendar() { this.calendar = new CONFIG.time.worldCalendarClass(CONFIG.time.worldCalendarConfig); }, get components() { return this.calendar.timeToComponents(this.worldTime); }, advance: async (s) => { game.time.worldTime += s; } },
-    journal: Object.assign([], { get: () => null, getName: () => null, contents: [] }), scenes: Object.assign([], { get: () => null, contents: [] }), folders: [], tables: [], actors: [],
+    time: { worldTime: 400 * 86400 + 13 * 3600, calendar: null, initializeCalendar() { this.calendar = new CONFIG.time.worldCalendarClass(CONFIG.time.worldCalendarConfig); }, get components() { return this.calendar.timeToComponents(this.worldTime); }, advance: async (s) => { game.time.worldTime += s; }, set: async (t) => { game.time.worldTime = t; } },
+    journal: Object.assign([], { get: (id) => game.journal.find((j) => j.id === id) ?? null, getName: () => null, contents: [] }), scenes: Object.assign([], { get: () => null, contents: [] }), folders: [], tables: [], actors: [],
     socket: { on: (c, f) => (socketOuvintes[c] ??= []).push(f), emit: (c, d) => (globalThis.__socket ??= []).push([c, d]) },
+    macros: { get: (id) => ({ id, execute: async (dados) => { macrosRodadas.push({ id, td: dados.td }); } }) },
     paused: false, ready: false, combat: null
   };
   CONFIG.time.worldCalendarClass = CalendarData;
   globalThis.dnd5e = { dataModels: { calendar: { CalendarData5e: CalendarData } } };
-  return { hooks, settings, menus, socketOuvintes, valores, erros, async rodar(n, ...a) { for (const f of hooks[n] ?? []) await f(...a); } };
+  /** Diário falso com as flags do calendário (nota e ações). */
+  const diario = ({ id = foundry.utils.randomID(), name = "Nota", nota, acoes } = {}) => ({
+    id, name, uuid: `JournalEntry.${id}`, flags: { "calendario-mesa": { nota, acoes } },
+    getFlag: (m, k) => (m === "calendario-mesa" ? (k === "nota" ? nota : k === "acoes" ? acoes : undefined) : undefined),
+    testUserPermission: () => true
+  });
+  return { hooks, settings, menus, socketOuvintes, valores, erros, diasJournal, macrosRodadas, diario, async rodar(n, ...a) { for (const f of hooks[n] ?? []) await f(...a); } };
 }

@@ -33,7 +33,8 @@ async function verificarContadores(antes, depois) {
   });
   // o aviso sai depois de gravar: se o mesmo prazo for checado de novo, ele já está "feito"
   for (const c of terminados) {
-    await chat(`<i class="fa-solid fa-hourglass-end"></i> <b>${esc(c.nome)}</b> ${T("Contadores.terminou")}`, c.aviso === "todos" ? [] : idsGM());
+    // aviso: "todos" no chat, "mestre" só para os mestres, "nenhum" sem mensagem (o histórico registra sempre)
+    if (c.aviso !== "nenhum") await chat(`<i class="fa-solid fa-hourglass-end"></i> <b>${esc(c.nome)}</b> ${T("Contadores.terminou")}`, c.aviso === "todos" ? [] : idsGM());
     await registrar(`${T("Contadores.prazo_terminou_0", [c.nome])}`, { icone: "fa-hourglass-end", wt: c.fim });
   }
 }

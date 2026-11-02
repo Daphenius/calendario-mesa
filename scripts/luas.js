@@ -6,7 +6,7 @@
 
 import { diasNoMes, infoDia, tdDe, textoData } from "./datas.js";
 import { registrarVarios } from "./historico.js";
-import { CAL_ID, CFG, chat, esc, idsGM, mod, MOD, num, registrarCache, segDia, T } from "./nucleo.js";
+import { CAL_ID, CFG, chat, esc, idsGM, MOD, mod, noMundo, num, registrarCache, segDia, T } from "./nucleo.js";
 
 const FASES_PADRAO = ["Luas.lua_nova", "Luas.crescente", "Luas.quarto_crescente", "Luas.gibosa_crescente", "Luas.lua_cheia", "Luas.gibosa_minguante", "Luas.quarto_minguante", "Luas.minguante"]
   .map((nome) => ({ nome, peso: 1 }));
@@ -150,14 +150,22 @@ function proximosEventosLuas(desde, dias = 120, max = 8) {
   for (let td = desde; td <= desde + dias && r.length < max; td++) for (const e of eventosLuasDoDia(td)) if (r.length < max) r.push({ td, ...e });
   return r;
 }
+/** Avisa no chat (e no histórico) os eventos das luas dos dias "de" a "ate" do mundo. O céu é um só: os dias e as
+ *  luas são os do calendário principal, seja qual for o calendário que o mestre está vendo. */
 async function avisarEventosLuas(de, ate) {
   const quem = game.settings.get(MOD, "luasAviso");
   if (quem === "nenhum" || ate - de > 60) return;
-  for (let td = de; td <= ate; td++) {
-    const ev = eventosLuasDoDia(td);
-    if (!ev.length) continue;
-    await chat(`<i class="fa-solid fa-moon"></i> <b>${T("Comum.no_ceu")}</b> · <small>${esc(textoData(infoDia(td), { semana: false }))}</small><ul>${ev.map((e) => `<li><i class="fa-solid ${e.icone}" style="color:${e.cor}"></i> ${esc(textoEventoLua(e))}</li>`).join("")}</ul>`, quem === "mestre" ? idsGM() : []);
-    await registrarVarios(ev.map((e) => ({ texto: textoEventoLua(e), icone: e.icone, wt: td * segDia() })));
+  const dias = noMundo(() => {
+    const r = [];
+    for (let td = de; td <= ate; td++) {
+      const ev = eventosLuasDoDia(td);
+      if (ev.length) r.push({ data: textoData(infoDia(td), { semana: false }), wt: td * segDia(), ev: ev.map((e) => ({ ...e, texto: textoEventoLua(e) })) });
+    }
+    return r;
+  });
+  for (const { data, wt, ev } of dias) {
+    await chat(`<i class="fa-solid fa-moon"></i> <b>${T("Comum.no_ceu")}</b> · <small>${esc(data)}</small><ul>${ev.map((e) => `<li><i class="fa-solid ${e.icone}" style="color:${e.cor}"></i> ${esc(e.texto)}</li>`).join("")}</ul>`, quem === "mestre" ? idsGM() : []);
+    await registrarVarios(ev.map((e) => ({ texto: e.texto, icone: e.icone, wt })));
   }
 }
 

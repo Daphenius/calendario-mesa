@@ -113,7 +113,7 @@ export class CentralConfig extends HandlebarsApplicationMixin(ApplicationV2) {
       alterado: this.pendentes.has(item.chave),
       desligado: !editavel || (dep && !dep.ok),
       depende: dep && !dep.ok ? dep.texto : "",
-      integracao: integ ? { ok: integ.ok, texto: integ.ok ? T("Central.nome_ativo", { nome: integ.rotulo }) : T("Central.nome_nao_esta_ativo_neste_mundo", { nome: integ.rotulo }) } : null,
+      integracao: integ ? { ok: integ.ok, texto: integ.ok ? T("Central.nome_ativo", { nome: T(integ.rotulo) }) : T("Central.nome_nao_esta_ativo_neste_mundo", { nome: T(integ.rotulo) }) } : null,
       recarrega: !!def.requiresReload
     };
   }

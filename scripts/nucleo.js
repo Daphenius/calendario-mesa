@@ -518,7 +518,7 @@ function limparCache() { CACHE = new Map(); for (const c of registrarCache.lista
 /* ---------------- avisos, Journal e escuridão ---------------- */
 
 async function chat(content, whisper = []) {
-  return ChatMessage.create({ content: `<div class="cm-chat">${content}</div>`, speaker: { alias: "Comum.calendario" }, whisper });
+  return ChatMessage.create({ content: `<div class="cm-chat">${content}</div>`, speaker: { alias: T("Comum.calendario") }, whisper });
 }
 
 /* ---------------- tema ---------------- */

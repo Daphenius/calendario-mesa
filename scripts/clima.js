@@ -6,20 +6,29 @@
 
 import { aplicarClimaNasCenas, TIPO_CLIMA } from "./clima-cenas.js";
 import { corHex, normalizarEfeito } from "./clima-efeitos.js";
-import { agora, estacaoDe, infoDia } from "./datas.js";
+import { agora, estacaoDe, infoDia, textoData } from "./datas.js";
 import { registrar } from "./historico.js";
 import { eventosLuasDoDia } from "./luas.js";
-import { CFG, chat, esc, estacoesOrdenadas, idsGM, MOD, naFila, num, souGMPrincipal, T } from "./nucleo.js";
+import { CFG, chat, esc, estacoesOrdenadas, idsGM, MOD, naFila, noMundo, num, souGMPrincipal, T } from "./nucleo.js";
 
 /* ---------------- previsão do tempo ----------------
  * climaPrevisao = { dias: { td: { zona: { tipo, temp, min, max, onda? } } } }. O mestre vê e ajusta os
  * próximos dias; quando o dia chega, o clima sai da previsão em vez de ser rolado. */
+/* O clima é do mundo: o dia de hoje, a estação e as luas do sorteio são os do calendário principal, seja qual for o
+ * calendário que cada pessoa está vendo ("ver como" ou calendário da cena). Assim o clima gravado pelo mestre é o
+ * mesmo "hoje" para todos. */
+const hojeNoMundo = () => noMundo(() => agora().td);
+/** Primavera, verão, outono ou inverno de um dia do mundo (hoje, sem td). */
+const estacaoNoMundo = (td = null) => noMundo(() => { const d = td == null ? agora() : infoDia(td); return tipoEstacao(estacaoDe(d.mes, d.dia)); });
+/** Texto da data de um dia do mundo. */
+const dataNoMundo = (td, opcoes) => noMundo(() => textoData(infoDia(td), opcoes));
+
 const previsao = () => { const p = game.settings.get(MOD, "climaPrevisao"); return p && typeof p === "object" ? { dias: p.dias ?? {} } : { dias: {} }; };
 async function gerarPrevisao(zonas = zonasEmUso(), dias = num(game.settings.get(MOD, "previsaoDias"), 5), { refazer = false } = {}) {
   if (!game.user.isGM) return previsao();
   return naFila("previsao", async () => {
     const p = foundry.utils.deepClone(previsao());
-    const hoje = agora().td;
+    const hoje = hojeNoMundo();
     for (let td = hoje + 1; td <= hoje + dias; td++) {
       p.dias[td] ??= {};
       for (const z of zonas) if (refazer || !p.dias[td][z]) p.dias[td][z] = rolarClima(z, td);
@@ -353,8 +362,7 @@ const ONDA_TERMICA = 0.07;  // chance de uma onda de calor ou de frio (±6 a 10 
 /** Rola o clima de uma zona para o dia de hoje: tipo, temperatura e mínima/máxima. */
 function rolarClima(zona, td = null) {
   const Z = ZONAS[zona] ?? ZONAS.temperada;
-  const dia = td == null ? agora() : infoDia(td);
-  const est = tipoEstacao(estacaoDe(dia.mes, dia.dia));
+  const est = estacaoNoMundo(td);
   const an = anomaliaDe(zona);
   let tipo;
   if (an && CLIMAS[ANOMALIAS[an.tipo]?.clima]) tipo = ANOMALIAS[an.tipo].clima;
@@ -371,8 +379,7 @@ function rolarClima(zona, td = null) {
  *  Usada pelo sorteio do dia e pelo botão de dado da temperatura na janela do clima. */
 function rolarTemperatura(zona, tipo, td = null) {
   const Z = ZONAS[zona] ?? ZONAS.temperada;
-  const dia = td == null ? agora() : infoDia(td);
-  const est = tipoEstacao(estacaoDe(dia.mes, dia.dia));
+  const est = estacaoNoMundo(td);
   const an = anomaliaDe(zona);
   let mult = 1;
   try { mult = MULT_VARIACAO[game.settings.get(MOD, "climaVariacao")] ?? 1; } catch { /* sem o setting: normal */ }
@@ -398,7 +405,7 @@ function rolarTemperatura(zona, tipo, td = null) {
   return { temp, min, max, ...(onda ? { onda } : {}) };
 }
 
-const climaHoje = () => { const c = game.settings.get(MOD, "climaAtual"); return c?.td === agora().td ? c : { td: agora().td, zonas: {} }; };
+const climaHoje = () => { const c = game.settings.get(MOD, "climaAtual"), hoje = hojeNoMundo(); return c?.td === hoje ? c : { td: hoje, zonas: {} }; };
 const climaDe = (zona) => climaHoje().zonas?.[zona] ?? null;
 
 /** Zonas em uso: a padrão, a de cada cena que escolheu uma e as das Regiões de clima desenhadas nos mapas. */
@@ -427,7 +434,7 @@ async function atualizarClimaAgora({ forcar = false, avisar = true } = {}) {
     hoje.zonas[zona] = !forcar && dePrev[zona] && CLIMAS[dePrev[zona].tipo] ? foundry.utils.deepClone(dePrev[zona]) : rolarClima(zona);
     novas.push(zona);
   }
-  if (eventosLuasDoDia(hoje.td).some((e) => e.tipo === "eclipseSolar") && game.settings.get(MOD, "eclipseMudaClima") && CLIMAS.eclipse) {
+  if (noMundo(() => eventosLuasDoDia(hoje.td)).some((e) => e.tipo === "eclipseSolar") && game.settings.get(MOD, "eclipseMudaClima") && CLIMAS.eclipse) {
     for (const zona of zonasEmUso()) if (hoje.zonas[zona] && !forcar) { hoje.zonas[zona] = { ...hoje.zonas[zona], tipo: "eclipse" }; if (!novas.includes(zona)) novas.push(zona); }
   }
   if (!novas.length) return;
@@ -476,11 +483,14 @@ export {
   climaHoje,
   CLIMAS,
   CLIMAS_PADRAO,
+  dataNoMundo,
   definirPrevisao,
   ehDeFabrica,
   ESCOLHAS_ZONAS,
+  estacaoNoMundo,
   ESTACOES_CLIMA,
   gerarPrevisao,
+  hojeNoMundo,
   GRUPOS_CLIMA,
   idClimaAnomalia,
   ligarRegiaoDaAnomalia,
@@ -493,7 +503,6 @@ export {
   salvarTipoDeClima,
   temperaturaTexto,
   tempoComAnomalia,
-  tipoEstacao,
   zonaDaCena,
   zonaPadraoValida,
   ZONAS,

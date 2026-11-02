@@ -4,7 +4,7 @@
  * ========================================================= */
 
 import { faseDe, luasNoCeu } from "./luas.js";
-import { CFG, diaTotalDe, mod, MOD, noMundo, num, relatarErro, segHora, segundoDoDia, souGMPrincipal } from "./nucleo.js";
+import { CFG, diaTotalDe, mod, MOD, noMundo, num, relatarErro, segHora, segundoDoDia, souGMPrincipal, T } from "./nucleo.js";
 
 /* ---------------- luz do mapa (escuridão nativa da cena) ----------------
  * A luz vale para o mundo todo: as contas usam sempre o calendário principal (noMundo), mesmo que o mestre esteja
@@ -89,10 +89,10 @@ async function atualizarCenas(updates, opcoes = {}, onde = "Erros.atualizar_cena
   try {
     await Cena.updateDocuments(updates, opcoes);
   } catch (err) {
-    console.warn(`${MOD} | ${onde}: lote recusado, tentando uma cena por vez`, err);
+    console.warn(`${MOD} | ${T(onde)}: lote recusado, tentando uma cena por vez`, err);
     const r = await Promise.allSettled(updates.map(({ _id, ...upd }) => game.scenes.get(_id)?.update(upd, opcoes)));
     const falhas = r.map((x, i) => (x.status === "rejected" ? game.scenes.get(updates[i]._id)?.name ?? updates[i]._id : null)).filter(Boolean);
-    if (falhas.length) relatarErro(`${onde} (${falhas.join(", ")})`, r.find((x) => x.status === "rejected").reason);
+    if (falhas.length) relatarErro(`${T(onde)} (${falhas.join(", ")})`, r.find((x) => x.status === "rejected").reason);
   }
 }
 

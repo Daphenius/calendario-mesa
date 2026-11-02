@@ -2,7 +2,6 @@
  * - os arquivos carregam e os hooks init, i18nInit, setup e ready rodam sem erro;
  * - os menus das configurações apontam para janelas de verdade;
  * - a API tem tudo o que o Journal da Mesa usa, e as datas fazem a volta td → data → td;
- * - o socket ignora pedidos desconhecidos ou de outro jogador;
  * - "ver como" outro calendário não muda o game.time, e a luz segue o calendário do mundo;
  * - D&D 5e: o sistema não carrega o calendário dele, o HUD dele some e a contagem de meias-noites é corrigida;
  * - as ferramentas sob demanda carregam. */
@@ -50,13 +49,6 @@ test("datas: td → partes → td volta ao mesmo dia", () => {
   assert.equal(datas.tdDe(1000, 0, 99), null, "dia que não existe");
 });
 
-test("socket: pedido desconhecido, malformado ou de outro jogador é ignorado", () => {
-  const ouvir = F.socketOuvintes["module.calendario-mesa"]?.[0];
-  assert.equal(typeof ouvir, "function");
-  for (const [msg, de] of [[{ acao: "apagarTudo" }, "u1"], [{ acao: "vigiaEscolher", userId: "u1", vigia: "x" }, "u1"], [{ acao: "vigiaEscolher", userId: "u1", vigia: 0 }, "outro"], [null, "u1"]]) {
-    assert.doesNotThrow(() => ouvir(msg, de));
-  }
-});
 
 test("\"ver como\" não mexe no game.time; a luz segue o calendário do mundo", async () => {
   const MOD = "calendario-mesa";

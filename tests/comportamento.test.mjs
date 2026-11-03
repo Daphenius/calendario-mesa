@@ -6,7 +6,8 @@
  * - contador com aviso "nenhum" não manda mensagem (mas entra no histórico);
  * - as mensagens saem com o nome do remetente traduzido;
  * - efeitos vencidos expiram num avanço de segundos (fora do relógio em tempo real);
- * - o socket só atende pedidos válidos, e o jogador só pede por si mesmo. */
+ * - o socket só atende pedidos válidos, e o jogador só pede por si mesmo;
+ * - o painel de anos da janela do calendário navega de 12 em 12 anos e leva ao ano escolhido ou digitado. */
 
 import { test } from "node:test";
 import assert from "node:assert/strict";
@@ -161,4 +162,29 @@ test("socket: só pedidos válidos, e o jogador só pede por si mesmo", async ()
   ouvir({ acao: "vigiaEscolher", userId: "u2", vigia: 0 }, "u1"); await espera();   // o mestre pode pedir por ela
   assert.deepEqual(escolhas(), { u2: 0 });
   await set("viagem", {});
+});
+
+test("painel de anos: abre, navega de 12 em 12 e leva ao ano escolhido ou digitado", async () => {
+  await limpar();
+  const { JanelaCalendario } = await import(url("scripts/janela.js"));
+  const app = new JanelaCalendario();
+  const A = JanelaCalendario.DEFAULT_OPTIONS.actions;
+  const anoAntes = app.ano, mesAntes = app.mes;
+  A.anos.call(app);
+  assert.equal(app.anosInicio, anoAntes - 5, "abre com o ano atual no meio");
+  const html = await app._renderHTML();
+  assert.equal((html.match(/data-action="escolherAno"/g) ?? []).length, 12, "12 anos no painel");
+  A.paginaAnos.call(app, null, { dataset: { q: "1" } });
+  assert.equal(app.anosInicio, anoAntes + 7, "» avança 12 anos");
+  A.paginaAnos.call(app, null, { dataset: { q: "-1" } });
+  A.paginaAnos.call(app, null, { dataset: { q: "-1" } });
+  assert.equal(app.anosInicio, anoAntes - 17, "« volta 12 anos");
+  A.escolherAno.call(app, null, { dataset: { ano: String(anoAntes - 10) } });
+  assert.deepEqual([app.ano, app.mes, app.anosInicio], [anoAntes - 10, mesAntes, null], "vai para o ano, mantém o mês e fecha o painel");
+  // digitado: o número exibido do mundo (com o primeiro ano do calendário)
+  A.anos.call(app);
+  app.element = { querySelector: () => ({ value: String(game.modules.get(MOD).api.config().anoInicial + 42) }) };
+  A.irAno.call(app);
+  assert.equal(app.ano, 42);
+  assert.ok(Number.isFinite(app.sel), "um dia do ano escolhido fica selecionado");
 });

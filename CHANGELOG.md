@@ -1,5 +1,10 @@
 # Histórico de versões — Calendário da Mesa
 
+## 4.9.0
+
+- **Testada e aprovada pelo autor no Foundry VTT 14 e no D&D 5e** antes da publicação.
+- **Escolher o ano na janela do calendário.** Clicar no ano, ao lado do nome do mês, abre um painel com 12 anos; « e » voltam ou avançam 12 anos de cada vez. Um clique num ano leva até ele, no mesmo mês (ou no mais próximo que existir naquele ano), e o painel fecha. Também dá para digitar o ano em "Ir para o ano" e apertar Enter (Esc fecha). O ano atual do jogo fica marcado, e as eras aparecem como no resto do calendário. O painel só muda o que a janela mostra: a data do jogo continua mudando por "Tornar este o dia atual".
+
 ## 4.8.2
 
 - **Testada e aprovada pelo autor no Foundry VTT 14 e no D&D 5e** antes da publicação.

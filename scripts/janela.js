@@ -326,6 +326,8 @@ async function escolherCalendarioDaCena() {
   else await cena.unsetFlag(MOD, "calendario");
 }
 
+const ANOS_POR_PAGINA = 12;   // anos no painel de escolher o ano (clique no ano do cabeçalho)
+
 class JanelaCalendario extends ApplicationV2 {
   static DEFAULT_OPTIONS = {
     id: "cm-calendario",
@@ -337,6 +339,11 @@ class JanelaCalendario extends ApplicationV2 {
       mes(ev, t) { this.mudarMes(num(t.dataset.q)); },
       ano(ev, t) { this.mudarMes(num(t.dataset.q) * CFG.meses.length); },
       hoje() { this.irParaHoje(true); },
+      // escolher o ano: clicar no ano abre (ou fecha) o painel com 12 anos
+      anos() { this.anosInicio = this.anosInicio == null ? this.ano - 5 : null; this.render(); },
+      paginaAnos(ev, t) { this.anosInicio += num(t.dataset.q) * ANOS_POR_PAGINA; this.render(); },
+      escolherAno(ev, t) { this.irParaAno(num(t.dataset.ano)); },
+      irAno() { this.irParaAnoDigitado(); },
       dia(ev, t) {
         this.sel = num(t.dataset.td);
         const i = infoDia(this.sel);
@@ -379,6 +386,43 @@ class JanelaCalendario extends ApplicationV2 {
     super(opts);
     const a = agora();
     this.ano = a.ano; this.mes = a.mes; this.sel = a.td;
+  }
+
+  /** Mostra o ano (interno) pedido, no mesmo mês (ou no mais próximo que existir nele), e fecha o painel de anos. */
+  irParaAno(ano) {
+    if (!Number.isFinite(ano)) return;
+    this.ano = Math.trunc(ano);
+    this.anosInicio = null;
+    this.mudarMes(0);
+  }
+
+  /** Ano digitado no painel: o número exibido do mundo (com o primeiro ano do calendário, ex.: 1023). */
+  irParaAnoDigitado() {
+    const v = String(this.element?.querySelector(".cm-anos-campo")?.value ?? "").trim();
+    if (v === "" || !Number.isFinite(Number(v))) return ui.notifications.warn(T("Tempo.digite_um_ano"));
+    this.irParaAno(Math.trunc(Number(v)) - CFG.anoInicial);
+  }
+
+  /** Painel para escolher o ano: 12 anos por página, setas para voltar e avançar 12 anos e um campo para digitar. */
+  painelAnos(hojeAno) {
+    if (this.anosInicio == null) return "";
+    const ini = this.anosInicio, fim = ini + ANOS_POR_PAGINA - 1;
+    const anos = Array.from({ length: ANOS_POR_PAGINA }, (_, i) => ini + i).map((y) => {
+      const classes = [y === this.ano ? "cm-ano-visto" : "", y === hojeAno ? "cm-ano-hoje" : ""].join(" ").trim();
+      return `<button type="button" class="${classes}" data-action="escolherAno" data-ano="${y}" data-tooltip="${y === hojeAno ? T("Tempo.ano_atual_do_jogo") : ""}">${esc(textoAno(y))}</button>`;
+    }).join("");
+    return `<div class="cm-anos">
+            <div class="cm-anos-topo">
+              <a data-action="paginaAnos" data-q="-1" data-tooltip="${T("Tempo.0_anos_antes", [ANOS_POR_PAGINA])}"><i class="fa-solid fa-angles-left"></i></a>
+              <span>${esc(textoAno(ini))} – ${esc(textoAno(fim))}</span>
+              <a data-action="paginaAnos" data-q="1" data-tooltip="${T("Tempo.0_anos_depois", [ANOS_POR_PAGINA])}"><i class="fa-solid fa-angles-right"></i></a>
+            </div>
+            <div class="cm-anos-grade">${anos}</div>
+            <div class="cm-anos-ir">
+              <label>${T("Tempo.ir_para_o_ano")} <input type="number" class="cm-anos-campo" step="1" value="${this.ano + CFG.anoInicial}"></label>
+              <button type="button" data-action="irAno"><i class="fa-solid fa-arrow-right"></i> ${T("Tempo.ir")}</button>
+            </div>
+          </div>`;
   }
 
   irParaHoje(mover) {
@@ -470,12 +514,13 @@ class JanelaCalendario extends ApplicationV2 {
           <header class="cm-cab">
             <a data-action="ano" data-q="-1" data-tooltip="${T("Tempo.ano_anterior")}"><i class="fa-solid fa-angles-left"></i></a>
             <a data-action="mes" data-q="-1" data-tooltip="${T("Tempo.mes_anterior")}"><i class="fa-solid fa-angle-left"></i></a>
-            <h2>${esc(CFG.meses[this.mes].nome)} <small ${eraDoAno(this.ano) ? `data-tooltip="${esc(eraDoAno(this.ano).nome)}"` : ""}>${esc(textoAno(this.ano))}</small></h2>
+            <h2>${esc(CFG.meses[this.mes].nome)} <a class="cm-ano-link ${this.anosInicio != null ? "ativo" : ""}" data-action="anos" data-tooltip="${eraDoAno(this.ano) ? `${esc(eraDoAno(this.ano).nome)} · ` : ""}${T("Tempo.clique_para_escolher_o_ano")}">${esc(textoAno(this.ano))} <i class="fa-solid fa-caret-down"></i></a></h2>
             <a data-action="mes" data-q="1" data-tooltip="${T("Tempo.proximo_mes")}"><i class="fa-solid fa-angle-right"></i></a>
             <a data-action="ano" data-q="1" data-tooltip="${T("Tempo.proximo_ano")}"><i class="fa-solid fa-angles-right"></i></a>
             <button type="button" data-action="hoje"><i class="fa-solid fa-location-crosshairs"></i> ${T("Tempo.hoje")}</button>
             ${gm ? `<a data-action="editor" data-tooltip="${T("Tempo.editar_o_calendario")}"><i class="fa-solid fa-gear"></i></a>` : ""}
           </header>
+          ${this.painelAnos(a.ano)}
           ${seletorCalendarios()}
           <div class="cm-grade" style="--w:${W}">${semanaHTML}${cel}</div>
           ${gm ? `<p class="cm-dica">${T("Tempo.arraste_um_diario_da_barra_lateral")}</p>` : ""}
@@ -527,6 +572,12 @@ class JanelaCalendario extends ApplicationV2 {
 
   _replaceHTML(html, content) {
     content.innerHTML = html;
+    // painel de anos: Enter vai para o ano digitado, Esc fecha
+    const campoAno = content.querySelector(".cm-anos-campo");
+    campoAno?.addEventListener("keydown", (ev) => {
+      if (ev.key === "Enter") { ev.preventDefault(); this.irParaAnoDigitado(); }
+      else if (ev.key === "Escape") { ev.preventDefault(); ev.stopPropagation(); this.anosInicio = null; this.render(); }
+    });
     content.querySelector("select.cm-ver-como")?.addEventListener("change", async (ev) => {
       await game.settings.set(MOD, "calendarioVisto", ev.target.value);
       this.irParaHoje(true);

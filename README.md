@@ -10,7 +10,7 @@ Se encontrar bugs ou tiver sugestões, abra uma [issue](https://github.com/Daphe
 
 ---
 
-**Versão 4.8.2** · Foundry VTT 14 · D&D 5e 6 · Português e English · Licença MIT · ✅ Testado no Foundry VTT e no D&D 5e
+**Versão 4.9.0** · Foundry VTT 14 · D&D 5e 6 · Português e English · Licença MIT · ✅ Testado no Foundry VTT e no D&D 5e
 
 ![Calendário da Mesa no Foundry VTT: janela do calendário](docs/screenshot.png)
 
@@ -106,6 +106,11 @@ Encontrou um problema ou tem uma ideia? Abra uma [Issue no GitHub](https://githu
 As opções do módulo ficam na **Central de Configurações** (Configurações → Calendário da Mesa → Abrir Central de Configurações, ou pelo HUD), organizadas em abas: Geral, Tempo, Clima, Anomalias, Astronomia e luz, Eventos e diários e Ferramentas.
 
 ## O calendário
+
+### Janela do calendário
+
+- **‹ ›** mudam o mês e **« »** mudam o ano. **Hoje** volta para o dia atual do jogo.
+- **Clique no ano** (ao lado do nome do mês) para abrir o painel de anos: 12 anos de cada vez, com « » para ir 12 anos para trás ou para frente. Clique num ano para ir até ele (no mesmo mês), ou digite o ano em **Ir para o ano** e aperte Enter. O ano atual do jogo fica marcado. O painel só muda o que a janela mostra; para mudar a data do jogo, escolha um dia e use **Tornar este o dia atual**.
 
 ### Editor
 

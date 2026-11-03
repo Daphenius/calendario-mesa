@@ -222,7 +222,14 @@
       "voce_nao_pode_mudar_esse_diario": "Você não pode mudar esse Diário.",
       "arquivo": "Arquivo",
       "o_tempo_passa": "O tempo passa...",
-      "o_tempo_volta": "O tempo volta..."
+      "o_tempo_volta": "O tempo volta...",
+      "clique_para_escolher_o_ano": "Clique para escolher o ano",
+      "ir_para_o_ano": "Ir para o ano",
+      "ir": "Ir",
+      "0_anos_antes": "{0} anos antes",
+      "0_anos_depois": "{0} anos depois",
+      "ano_atual_do_jogo": "Ano atual do jogo",
+      "digite_um_ano": "Digite um ano (só números)."
     },
     "Luas": {
       "madrugada": "Madrugada",

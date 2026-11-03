@@ -222,7 +222,14 @@
       "voce_nao_pode_mudar_esse_diario": "You cannot change that Journal.",
       "arquivo": "Archive",
       "o_tempo_passa": "Time passes...",
-      "o_tempo_volta": "Time rewinds..."
+      "o_tempo_volta": "Time rewinds...",
+      "clique_para_escolher_o_ano": "Click to pick the year",
+      "ir_para_o_ano": "Go to year",
+      "ir": "Go",
+      "0_anos_antes": "{0} years back",
+      "0_anos_depois": "{0} years ahead",
+      "ano_atual_do_jogo": "Current game year",
+      "digite_um_ano": "Type a year (numbers only)."
     },
     "Luas": {
       "madrugada": "Before dawn",

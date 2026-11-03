@@ -626,3 +626,21 @@
 .cm-acoes-nota .cm-com-botao input { flex: 1; }
 .cm-acoes-nota .cm-com-botao button { width: 32px; flex: 0 0 32px; }
 .cm-clima-raiz .cm-clima-avancado label.cm-check { flex-direction: row; align-items: center; gap: 8px; color: var(--cm-texto); }
+
+/* escolher o ano (clique no ano do cabeçalho do calendário) */
+.cm-cab h2 .cm-ano-link { color: var(--cm-suave); font-weight: 500; font-size: 14px; margin-left: 4px; padding: 1px 6px; border-radius: 6px; cursor: pointer; }
+.cm-cab h2 .cm-ano-link i { font-size: 10px; opacity: .7; }
+.cm-cab h2 .cm-ano-link:hover, .cm-cab h2 .cm-ano-link.ativo { background: var(--cm-fundo2); color: var(--cm-texto); }
+.cm-anos { margin: -2px 0 10px; padding: 8px; background: var(--cm-fundo2); border: 1px solid var(--cm-borda); border-radius: 8px; }
+.cm-anos-topo { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; font-weight: 600; }
+.cm-anos-topo a { padding: 2px 8px; border-radius: 6px; }
+.cm-anos-topo a:hover { background: var(--cm-fundo3); }
+.cm-anos-grade { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
+.cm-anos-grade button { height: 28px; line-height: 1; font-size: 12px; background: var(--cm-fundo); color: var(--cm-texto); border: 1px solid var(--cm-borda); border-radius: 5px; cursor: pointer; }
+.cm-anos-grade button:hover { border-color: var(--cm-acento); }
+.cm-anos-grade button.cm-ano-hoje { box-shadow: inset 0 0 0 1px var(--cm-acento); background: var(--cm-hoje); }
+.cm-anos-grade button.cm-ano-visto { background: var(--cm-acento); color: var(--cm-acento-txt); border-color: var(--cm-acento); }
+.cm-anos-ir { display: flex; align-items: center; justify-content: flex-end; gap: 6px; margin-top: 8px; font-size: 12px; }
+.cm-anos-ir label { display: flex; align-items: center; gap: 6px; }
+.cm-anos-ir input { width: 90px; height: 26px; background: var(--cm-fundo); color: var(--cm-texto); border: 1px solid var(--cm-borda); border-radius: 5px; }
+.cm-anos-ir button { width: auto; height: 26px; line-height: 1; padding: 0 10px; }

@@ -14,11 +14,42 @@ const REPETIR = { nao: "Notas.nao_repete", dias: "Comum.dias_2", semanas: "Notas
 const ANTIGOS = { anual: ["anos", 1], mensal: ["meses", 1], semanal: ["semanas", 1], ndias: ["dias", null] };
 const MODOS_MES = { dia: "dia", semana: "semana", ultima: "ultima" };
 const FIM = { nunca: "Notas.nunca", data: "Notas.numa_data", vezes: "Notas.depois_de_n_vezes" };
-const ICONES = {
-  "fa-star": "Comum.estrela", "fa-flag": "Notas.bandeira", "fa-crown": "Notas.coroa", "fa-skull": "Comum.caveira", "fa-gift": "Notas.festa",
-  "fa-hands-praying": "Notas.religioso", "fa-scroll": "Notas.missao", "fa-coins": "Notas.comercio", "fa-moon": "Comum.lua", "fa-fire": "Comum.fogo",
-  "fa-droplet": "Comum.agua", "fa-mountain": "Notas.terra", "fa-wind": "Comum.ar", "fa-bell": "Notas.lembrete", "fa-cake-candles": "Notas.aniversario"
-};
+/* Ícones das notas, em grupos: os mesmos do Journal da Mesa (4.10). Os valores são chaves de idioma,
+ * trocadas pelo texto no i18nInit (traduzirConstantes). */
+const ICONES_GRUPOS = [
+  ["Icones.grupo_elementos_do_mundo", [
+    ["fa-droplet", "Comum.agua"], ["fa-mountain", "Notas.terra"], ["fa-fire", "Comum.fogo"], ["fa-wind", "Comum.ar"], ["fa-sun", "Icones.luz"],
+    ["fa-cloud-moon", "Icones.trevas"], ["fa-wand-magic-sparkles", "Icones.magia_eter"]]],
+  ["Icones.grupo_ceu_e_natureza", [
+    ["fa-moon", "Comum.lua"], ["fa-star", "Comum.estrela"], ["fa-cloud-sun", "Icones.ceu"], ["fa-cloud-rain", "Icones.chuva"], ["fa-bolt", "Icones.tempestade"],
+    ["fa-snowflake", "Icones.inverno"], ["fa-seedling", "Icones.primavera"], ["fa-leaf", "Icones.outono"], ["fa-wheat-awn", "Icones.colheita"], ["fa-tree", "Icones.floresta"],
+    ["fa-water", "Icones.mar"], ["fa-volcano", "Icones.vulcao"], ["fa-rainbow", "Icones.arco_iris"], ["fa-mountain-sun", "Icones.montanha"], ["fa-smog", "Icones.nevoa"],
+    ["fa-tornado", "Icones.tornado"], ["fa-meteor", "Icones.meteoro"], ["fa-icicles", "Icones.gelo"], ["fa-temperature-high", "Icones.calor"], ["fa-clover", "Icones.sorte"],
+    ["fa-paw", "Icones.animais"], ["fa-crow", "Icones.corvo"], ["fa-dove", "Icones.paz"], ["fa-fish", "Icones.pesca"], ["fa-spider", "Icones.aranha"]]],
+  ["Icones.grupo_fe_e_misterio", [
+    ["fa-hands-praying", "Notas.religioso"], ["fa-church", "Icones.templo"], ["fa-ankh", "Icones.sagrado"], ["fa-fire-flame-curved", "Icones.ritual"], ["fa-eye", "Icones.profecia"],
+    ["fa-ghost", "Icones.espiritos"], ["fa-skull", "Comum.caveira"], ["fa-book-skull", "Icones.proibido"], ["fa-hat-wizard", "Icones.arcano"], ["fa-flask", "Icones.alquimia"],
+    ["fa-dragon", "Icones.dragao"], ["fa-gem", "Icones.tesouro"], ["fa-hand-sparkles", "Icones.bencao"], ["fa-wand-sparkles", "Icones.encantamento"], ["fa-hamsa", "Icones.protecao"],
+    ["fa-yin-yang", "Icones.equilibrio"], ["fa-dice-d20", "Icones.destino"], ["fa-infinity", "Icones.eternidade"], ["fa-ring", "Icones.pacto"], ["fa-key", "Icones.segredo"],
+    ["fa-dungeon", "Icones.masmorra"], ["fa-mask", "Icones.disfarce"]]],
+  ["Icones.grupo_povo_e_historia", [
+    ["fa-book-open", "Icones.historia"], ["fa-feather", "Icones.cronica"], ["fa-crown", "Notas.coroa"], ["fa-flag", "Notas.bandeira"], ["fa-landmark", "Icones.cidade"],
+    ["fa-scale-balanced", "Icones.justica"], ["fa-coins", "Notas.comercio"], ["fa-ship", "Icones.navegacao"], ["fa-scroll", "Notas.missao"], ["fa-gift", "Notas.festa"],
+    ["fa-champagne-glasses", "Icones.banquete"], ["fa-music", "Icones.musica"], ["fa-masks-theater", "Icones.teatro"], ["fa-heart", "Icones.casamento"], ["fa-baby", "Icones.nascimento"],
+    ["fa-cake-candles", "Notas.aniversario"], ["fa-handshake", "Icones.tratado"], ["fa-users", "Icones.assembleia"], ["fa-graduation-cap", "Icones.formatura"], ["fa-hammer", "Icones.oficio"],
+    ["fa-store", "Icones.feira"], ["fa-beer-mug-empty", "Icones.taverna"], ["fa-dice", "Icones.jogos"], ["fa-trophy", "Icones.vitoria"], ["fa-anchor", "Icones.porto"],
+    ["fa-route", "Icones.viagem"], ["fa-compass", "Icones.exploracao"], ["fa-map", "Icones.mapa"], ["fa-chess-rook", "Icones.fortaleza"], ["fa-monument", "Icones.memorial"],
+    ["fa-book", "Icones.biblioteca"], ["fa-envelope", "Icones.mensagem"]]],
+  ["Icones.grupo_guerra_e_perigo", [
+    ["fa-shield-halved", "Icones.guerra"], ["fa-horse", "Icones.torneio"], ["fa-crosshairs", "Icones.cacada"], ["fa-skull-crossbones", "Icones.praga"], ["fa-virus", "Icones.doenca"],
+    ["fa-bell", "Notas.lembrete"], ["fa-hourglass-half", "Icones.prazo"], ["fa-chess-knight", "Icones.batalha"], ["fa-bomb", "Icones.ataque"], ["fa-explosion", "Icones.explosao"],
+    ["fa-burst", "Icones.desastre"], ["fa-house-crack", "Icones.terremoto"], ["fa-house-flood-water", "Icones.enchente"], ["fa-biohazard", "Icones.contagio"], ["fa-triangle-exclamation", "Icones.perigo"],
+    ["fa-gavel", "Icones.julgamento"], ["fa-handcuffs", "Icones.prisao"], ["fa-user-secret", "Icones.conspiracao"], ["fa-eye-slash", "Icones.desaparecimento"], ["fa-sack-dollar", "Icones.tributo"],
+    ["fa-flag-checkered", "Icones.corrida"]]]
+];
+const ICONES = Object.fromEntries(ICONES_GRUPOS.flatMap(([, l]) => l));
+/** Qualquer ícone do Font Awesome com nome válido é aceito (ícones novos do Journal continuam aparecendo); o resto vira estrela. */
+const iconeValido = (i) => /^fa-[a-z0-9-]+$/.test(String(i ?? ""));
 const AVISOS = { nenhum: "Notas.sem_aviso", mestre: "Comum.avisar_so_o_mestre", todos: "Notas.avisar_todos_no_chat" };
 
 /** Lê (e corrige) os dados de uma nota. Aceita também objetos crus e o formato antigo (anual, mensal...). */
@@ -41,7 +72,7 @@ function normalizarNota(n) {
     fim: { tipo: fimTipo, td: Math.trunc(num(n.fim?.td, td)), vezes: Math.max(1, Math.trunc(num(n.fim?.vezes, 1))) },
     excecoes: [...new Set((Array.isArray(n.excecoes) ? n.excecoes : []).map((x) => Math.trunc(Number(x))).filter(Number.isFinite))],
     cor: /^#[0-9a-f]{6}$/i.test(n.cor) ? n.cor : "#c9a227",
-    icone: ICONES[n.icone] ? n.icone : "fa-star",
+    icone: iconeValido(n.icone) ? n.icone : "fa-star",
     aviso: AVISOS[n.aviso] ? n.aviso : "nenhum"
   };
 }
@@ -429,6 +460,8 @@ export {
   executarAcoes,
   FIM,
   ICONES,
+  ICONES_GRUPOS,
+  iconeValido,
   inicioQueCobre,
   integrarJournal,
   linhaDoJournal,

@@ -1,5 +1,13 @@
 # Histórico de versões — Calendário da Mesa
 
+## 4.10.0
+
+### Ícones das notas iguais aos do Journal da Mesa
+- **107 ícones em grupos.** As notas do calendário passam a ter os mesmos ícones do Journal da Mesa: Elementos do mundo, Céu e natureza, Fé e mistério, Povo e história, Guerra e perigo. Antes eram só 15.
+- **Nada vira estrela à toa.** Um ícone escolhido no Journal da Mesa que não estava na lista curta do calendário (Céu, Chuva, Vulcão, Templo...) aparecia como estrela na janela do calendário. Agora qualquer ícone do Font Awesome com nome válido é mostrado como foi escolhido, inclusive os que o Journal ganhar no futuro.
+- **Diálogo da nota** (quando o calendário cria as notas): a escolha de ícone vem em grupos e com uma prévia do ícone, na cor da nota, ao lado.
+- Notas antigas continuam iguais. Textos dos ícones em português e inglês.
+
 ## 4.9.0
 
 - **Testada e aprovada pelo autor no Foundry VTT 14 e no D&D 5e** antes da publicação.

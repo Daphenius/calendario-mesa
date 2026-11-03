@@ -5,13 +5,16 @@
 
 import { agora, infoDia, textoData } from "../datas.js";
 import { JanelaCalendario } from "../janela.js";
-import { acoesDaNota, AVISOS, caminhoPasta, dadosNota, descreverRepeticao, executarAcoes, ICONES, MODOS_CENA, normalizarNota, notaNova, paginaDeEvento, pastaParaNota } from "../notas.js";
+import { acoesDaNota, AVISOS, caminhoPasta, dadosNota, descreverRepeticao, executarAcoes, ICONES, ICONES_GRUPOS, iconeValido, MODOS_CENA, normalizarNota, notaNova, paginaDeEvento, pastaParaNota } from "../notas.js";
 import { Dialogo, esc, MOD, num, T } from "../nucleo.js";
 
 async function dialogoNota(td, j = null) {
   const n = j ? dadosNota(j) : normalizarNota({ td, hora: "", repetir: "nao", cada: 1, cor: "#c9a227", icone: "fa-star", aviso: "nenhum" });
   const gm = game.user.isGM;
   const verAtual = j ? (j.ownership.default >= 2 ? "todos" : j.ownership.default >= 1 ? "titulo" : "mestre") : (gm ? "mestre" : "todos");
+  /* ícones em grupos, os mesmos do Journal da Mesa; um ícone fora da lista (gravado por outro módulo) continua escolhido */
+  const opcoesIcone = (sel) => (sel && !ICONES[sel] ? `<option value="${esc(sel)}" selected>${esc(sel)}</option>` : "")
+    + ICONES_GRUPOS.map(([g, l]) => `<optgroup label="${esc(T(g))}">${l.map(([k]) => `<option value="${k}" ${k === sel ? "selected" : ""}>${esc(ICONES[k])}</option>`).join("")}</optgroup>`).join("");
   const opts = (obj, sel) => Object.entries(obj).map(([k, v]) => `<option value="${k}" ${k === sel ? "selected" : ""}>${esc(v)}</option>`).join("");
   const ver = gm
     ? { mestre: T("Comum.so_o_mestre"), titulo: T("Importar.jogadores_veem_so_o_titulo"), todos: T("Importar.jogadores_veem_tudo") }
@@ -39,7 +42,7 @@ async function dialogoNota(td, j = null) {
         <label>${T("Comum.dura_quantos_dias")}<input type="number" name="duracao" min="1" value="${n.duracao}"></label>
       </div>
       <div class="cm-form-2">
-        <label>${T("Comum.icone")}<select name="icone">${opts(ICONES, n.icone)}</select></label>
+        <label>${T("Comum.icone")}<span class="cm-icone-escolha"><i class="fa-solid ${esc(n.icone)}" style="color:${n.cor}"></i><select name="icone">${opcoesIcone(n.icone)}</select></span></label>
       </div>
       <div class="cm-form-2">
         <label>${T("Comum.quem_ve")}<select name="ver">${opts(ver, verAtual)}</select></label>
@@ -56,6 +59,15 @@ async function dialogoNota(td, j = null) {
     window: { title: j ? T("Importar.editar_nota") : T("Comum.nova_nota"), icon: "fa-solid fa-calendar-plus" },
     position: { width: 500 },
     content,
+    /* prévia do ícone ao lado da escolha (troca junto com o ícone e a cor) */
+    render: (ev, dlg) => {
+      const el = dlg?.element ?? dlg;
+      const sel = el?.querySelector?.('select[name="icone"]'), cor = el?.querySelector?.('input[name="cor"]');
+      const ico = el?.querySelector?.(".cm-icone-escolha i");
+      if (!sel || !ico) return;
+      sel.addEventListener("change", () => { ico.className = `fa-solid ${iconeValido(sel.value) ? sel.value : "fa-star"}`; });
+      cor?.addEventListener("input", () => { ico.style.color = cor.value; });
+    },
     buttons: [
       { action: "ok", label: T("Comum.salvar"), icon: "fa-solid fa-check", default: true, callback: (ev, btn) => Object.fromEntries(new FormData(btn.form)) },
       { action: "cancelar", label: T("Comum.cancelar"), icon: "fa-solid fa-xmark" }
@@ -71,7 +83,7 @@ async function dialogoNota(td, j = null) {
     hora: /^\d{1,2}:\d{2}$/.test(String(dados.hora ?? "").trim()) ? String(dados.hora).trim() : "",
     duracao: Math.max(1, Math.trunc(num(dados.duracao, 1))),
     cor: dados.cor || "#c9a227",
-    icone: ICONES[dados.icone] ? dados.icone : "fa-star",
+    icone: iconeValido(dados.icone) ? dados.icone : "fa-star",
     aviso: gm ? (AVISOS[dados.aviso] ? dados.aviso : "nenhum") : (n.aviso ?? "nenhum")
   };
   const nivel = { mestre: 0, titulo: 1, todos: 2 }[dados.ver] ?? 0;

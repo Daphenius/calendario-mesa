@@ -644,3 +644,8 @@
 .cm-anos-ir label { display: flex; align-items: center; gap: 6px; }
 .cm-anos-ir input { width: 90px; height: 26px; background: var(--cm-fundo); color: var(--cm-texto); border: 1px solid var(--cm-borda); border-radius: 5px; }
 .cm-anos-ir button { width: auto; height: 26px; line-height: 1; padding: 0 10px; }
+
+/* 4.10: escolha de ícone das notas com prévia */
+.cm-icone-escolha { display: flex; align-items: center; gap: 8px; }
+.cm-icone-escolha > i { flex: 0 0 22px; font-size: 18px; text-align: center; }
+.cm-icone-escolha > select { flex: 1; min-width: 0; }

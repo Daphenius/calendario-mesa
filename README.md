@@ -10,7 +10,7 @@ Se encontrar bugs ou tiver sugestões, abra uma [issue](https://github.com/Daphe
 
 ---
 
-**Versão 4.9.0** · Foundry VTT 14 · D&D 5e 6 · Português e English · Licença MIT · ✅ Testado no Foundry VTT e no D&D 5e
+**Versão 4.10.0** · Foundry VTT 14 · D&D 5e 6 · Português e English · Licença MIT · ✅ Testado no Foundry VTT e no D&D 5e
 
 ![Calendário da Mesa no Foundry VTT: janela do calendário](docs/screenshot.png)
 
@@ -186,7 +186,7 @@ Central › Astronomia e luz → **Luz por hora**. Usa a escuridão nativa da ce
 ## Notas e eventos
 
 - Cada nota é um **Diário nativo** do Foundry, numa pasta (padrão **Calendário**, ou a que você escolher; opção de subpastas por ano). Clique num dia → **Nova nota**.
-- **Quem cria e edita as notas** (configuração): **Journal da Mesa (quando ativo)**, o padrão — "Nova nota" cria a página do evento naquele dia e abre no Journal da Mesa, que cuida de data, hora, repetição, ícone, cor, aviso e texto; ou **Calendário** — o diálogo do próprio calendário (hora, duração em dias, ícone, cor, quem vê, aviso e pasta). Sem o Journal da Mesa ativo, o calendário sempre usa o próprio diálogo.
+- **Quem cria e edita as notas** (configuração): **Journal da Mesa (quando ativo)**, o padrão — "Nova nota" cria a página do evento naquele dia e abre no Journal da Mesa, que cuida de data, hora, repetição, ícone, cor, aviso e texto; ou **Calendário** — o diálogo do próprio calendário (hora, duração em dias, ícone — os mesmos 107 do Journal da Mesa, em grupos e com prévia —, cor, quem vê, aviso e pasta). Sem o Journal da Mesa ativo, o calendário sempre usa o próprio diálogo.
 - **Repetição**: criada no Journal da Mesa (a cada N dias, semanas, meses ou anos; até uma data ou depois de N vezes; com dias pulados). O calendário mostra o evento em todos os dias em que acontece (grade, painel do dia, próximos 30 dias e avisos).
 - **Quando chegar o dia**: aviso só para o mestre ou para todos no chat. **Ações** da nota na hora marcada: rodar uma macro, tocar um som ou ativar uma cena.
 - **Arraste qualquer Diário** para um dia e ele vira uma nota daquele dia; arraste uma nota para outro dia para mudar a data. 📅 **Tirar do calendário** mantém o Diário; 🗑 apaga.

@@ -101,7 +101,9 @@ export const ABAS_CENTRAL = [
       ] },
       { id: "luz", titulo: "Central.luz_e_nevoa_de_guerra", icone: "fa-sun", campos: [
         { chave: "visaoDiaNoite" },
-        { chave: "visaoLimite", depende: { chave: "visaoDiaNoite", quando: (v) => v === true, texto: "Central.precisa_de_nevoa_de_guerra_com" } }
+        { chave: "visaoLimite", depende: { chave: "visaoDiaNoite", quando: (v) => v === true, texto: "Central.precisa_de_nevoa_de_guerra_com" } },
+        { chave: "visaoLigarTokens", depende: { chave: "visaoDiaNoite", quando: (v) => v === true, texto: "Central.precisa_de_nevoa_de_guerra_com" } },
+        { chave: "visaoDiaAberto", depende: { chave: "visaoDiaNoite", quando: (v) => v === true, texto: "Central.precisa_de_nevoa_de_guerra_com" } }
       ] }
     ],
     botoes: [

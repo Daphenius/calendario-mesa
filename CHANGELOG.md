@@ -1,5 +1,17 @@
 # Histórico de versões — Calendário da Mesa
 
+## 4.11.0
+
+### Névoa de guerra com o dia e a noite, corrigida
+- **De dia ficava tudo preto e a visão no escuro não funcionava à noite.** A opção ligava a "visão dos tokens" da cena, mas um token sem **Visão ativada** não enxerga nada com ela ligada: nem o mapa de dia, nem com visão no escuro à noite (o D&D 5e põe o alcance da visão no escuro no token, mas não liga a visão dele). Agora o calendário **liga a visão dos tokens de personagens de jogadores** nas cenas de dia/noite, nos que já estão no mapa e nos que entrarem. Nova opção "Ligar a visão dos tokens dos jogadores" (ligada por padrão). Tokens de NPC não são tocados.
+- **O que foi visto de dia continua lembrado à noite.** O calendário liga a névoa explorada nessas cenas (se estava desligada): à noite cada jogador vê onde há luz, o alcance da visão no escuro do personagem e, escurecido, o que já explorou. Uma névoa compartilhada escolhida pelo mestre é mantida.
+- **Nova opção "De dia, mapa aberto para todos"** (desligada por padrão): de dia a visão dos tokens fica desligada e todos veem o mapa inteiro, até quem não tem token na cena (mapa-múndi); à noite ela volta.
+- **Escuridão travada da cena era ignorada.** No Foundry 14 o campo chama `darknessLevelLock`; o calendário conferia o nome antigo e mudava a luz de cenas travadas. Agora respeita a trava, e a visão segue a escuridão que estiver na cena.
+- A luz global passa a começar sempre da escuridão 0 (um mínimo maior que zero deixava o meio-dia sem luz global).
+- As três opções ficam em Central › Astronomia e luz › Luz e névoa de guerra. Textos em português e inglês.
+- 8 testes novos (`tests/visao.test.mjs`); 6 deles falhavam na 4.10.0.
+- Feito sobre a documentação da API do Foundry 14 e o código do D&D 5e 6.0.6, com testes num Foundry simulado; falta o teste na mesa.
+
 ## 4.10.0
 
 ### Ícones das notas iguais aos do Journal da Mesa

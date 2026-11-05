@@ -98,30 +98,71 @@ async function atualizarCenas(updates, opcoes = {}, onde = "Erros.atualizar_cena
 
 const visaoDiaNoite = () => { try { return game.settings.get(MOD, "visaoDiaNoite") === true; } catch { return false; } };
 const limiteVisao = () => { try { return Math.max(0, Math.min(1, num(game.settings.get(MOD, "visaoLimite"), 0.6))); } catch { return 0.6; } };
+const opcaoVisao = (chave, padrao) => { try { return game.settings.get(MOD, chave) === true; } catch { return padrao; } };
+
+/** A escuridão da cena está travada pelo mestre? (o campo chama darknessLevelLock no Foundry 14; darknessLock no 13) */
+const escuridaoTravada = (env) => (env?.darknessLevelLock ?? env?.darknessLock) === true;
+
+/** O que a névoa de guerra com dia e noite pede de uma cena, para uma certa escuridão.
+ *  - luz global ligada, valendo só até o limite: de dia o mapa aparece inteiro, de noite não;
+ *  - visão dos tokens ligada (de dia pode ficar desligada, se o mestre quiser o mapa aberto até para quem não tem token);
+ *  - névoa explorada ligada: o que foi visto de dia continua lembrado (escurecido) à noite. */
+function visaoDaCena(s, escuridao) {
+  const upd = {};
+  const env = s.environment ?? {};
+  const lim = limiteVisao();
+  if (env.globalLight?.enabled !== true) upd["environment.globalLight.enabled"] = true;
+  if (Math.abs(num(env.globalLight?.darkness?.max, -1) - lim) > 0.001) upd["environment.globalLight.darkness.max"] = lim;
+  if (num(env.globalLight?.darkness?.min, 0) > 0) upd["environment.globalLight.darkness.min"] = 0;
+  const dia = escuridao <= lim;
+  const querVisao = !(dia && opcaoVisao("visaoDiaAberto", false));
+  if (s.tokenVision !== querVisao) upd.tokenVision = querVisao;
+  const fog = s.fog ?? {};
+  if ("mode" in fog) { if (fog.mode === (CONST.FOG_EXPLORATION_MODES?.DISABLED ?? 0)) upd["fog.mode"] = CONST.FOG_EXPLORATION_MODES?.INDIVIDUAL ?? 1; }
+  else if (fog.exploration === false) upd["fog.exploration"] = true;
+  return upd;
+}
+
+/** Liga a visão dos tokens dos personagens dos jogadores nas cenas de dia/noite. Sem "Visão ativada" no token,
+ *  o jogador não enxerga nada com a visão dos tokens ligada: nem o mapa de dia, nem com visão no escuro à noite
+ *  (o D&D 5e põe o alcance da visão no escuro no token, mas não liga a visão dele). */
+async function ligarVisaoDosTokens(cenas = cenasDiaNoite()) {
+  if (!souGMPrincipal() || !visaoDiaNoite() || !opcaoVisao("visaoLigarTokens", true)) return 0;
+  let n = 0;
+  for (const s of cenas) {
+    const updates = [];
+    for (const t of s.tokens ?? []) {
+      const ligada = (t._source?.sight ?? t.sight)?.enabled === true;
+      if (!ligada && t.actor?.hasPlayerOwner) updates.push({ _id: t.id, "sight.enabled": true });
+    }
+    if (!updates.length) continue;
+    try { await s.updateEmbeddedDocuments("Token", updates); n += updates.length; }
+    catch (err) { relatarErro(`${T("Erros.luz_das_cenas")} (${s.name})`, err); }
+  }
+  return n;
+}
 
 async function aplicarLuz(estado, ms = 2000, cenas = cenasDiaNoite(), limiar = 0.004) {
   if (!souGMPrincipal()) return;
   const updates = [];
+  const comVisao = visaoDiaNoite();
   for (const s of cenas) {
     const env = s.environment ?? {};
-    if (env.darknessLock) continue;   // escuridão travada pelo mestre na configuração da cena
     const upd = {};
-    if (Math.abs(num(env.darknessLevel, -1) - estado.escuridao) >= limiar) upd["environment.darknessLevel"] = estado.escuridao;
-    if (Math.abs(num(env.dark?.hue, -1) - estado.hue) > 0.004) upd["environment.dark.hue"] = estado.hue;
-    if (Math.abs(num(env.dark?.intensity, -1) - estado.intensidade) >= 0.01) upd["environment.dark.intensity"] = estado.intensidade;
-    if (env.cycle === false) upd["environment.cycle"] = true;
-    // visão pelo dia e noite: a luz global (o mapa todo visível) só vale até um nível de escuridão;
-    // de noite ficam só a visão dos tokens e as luzes, e a névoa de guerra volta a esconder o mapa
-    if (visaoDiaNoite()) {
-      const lim = limiteVisao();
-      if (env.globalLight?.enabled !== true) upd["environment.globalLight.enabled"] = true;
-      if (Math.abs(num(env.globalLight?.darkness?.max, -1) - lim) > 0.001) upd["environment.globalLight.darkness.max"] = lim;
-      if (s.tokenVision === false) upd.tokenVision = true;
+    // escuridão travada pelo mestre na configuração da cena: a luz não muda, mas a visão segue a escuridão que está lá
+    const travada = escuridaoTravada(env);
+    if (!travada) {
+      if (Math.abs(num(env.darknessLevel, -1) - estado.escuridao) >= limiar) upd["environment.darknessLevel"] = estado.escuridao;
+      if (Math.abs(num(env.dark?.hue, -1) - estado.hue) > 0.004) upd["environment.dark.hue"] = estado.hue;
+      if (Math.abs(num(env.dark?.intensity, -1) - estado.intensidade) >= 0.01) upd["environment.dark.intensity"] = estado.intensidade;
+      if (env.cycle === false) upd["environment.cycle"] = true;
     }
+    if (comVisao) Object.assign(upd, visaoDaCena(s, travada ? num(env.darknessLevel, 0) : estado.escuridao));
     if (Object.keys(upd).length) updates.push({ _id: s.id, ...upd });
   }
   // as cenas são independentes e recebem a mesma animação: um só lote
   await atualizarCenas(updates, { animateDarkness: ms }, "Erros.luz_das_cenas");
+  if (comVisao) await ligarVisaoDosTokens(cenas);
   return updates.length;
 }
 
@@ -175,6 +216,7 @@ export {
   atualizarLuz,
   cenasDiaNoite,
   estadoLuz,
+  ligarVisaoDosTokens,
   luzCfg,
   luzDoSol,
   luzPadrao,

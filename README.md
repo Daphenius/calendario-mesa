@@ -10,7 +10,7 @@ Se encontrar bugs ou tiver sugestões, abra uma [issue](https://github.com/Daphe
 
 ---
 
-**Versão 4.10.0** · Foundry VTT 14 · D&D 5e 6 · Português e English · Licença MIT · ✅ Testado no Foundry VTT e no D&D 5e
+**Versão 4.11.0** · Foundry VTT 14 · D&D 5e 6 · Português e English · Licença MIT · ✅ Testado no Foundry VTT e no D&D 5e
 
 ![Calendário da Mesa no Foundry VTT: janela do calendário](docs/screenshot.png)
 
@@ -180,7 +180,10 @@ Central › Astronomia e luz → **Luz por hora**. Usa a escuridão nativa da ce
 - **Luz da lua cheia**: quanto a lua mais clara no céu ilumina a noite. Sem lua no céu, ou com lua nova, a noite fica totalmente escura.
 - **Cor da noite**: branco-azulado por padrão. Uma lua de cor forte (como a Lua Rubra) tinge a noite com a cor dela.
 - **Saltos de tempo**: em pulos de até 6 horas, a luz passa hora a hora até chegar no horário; em pulos maiores, a escuridão vai direto (com uma transição suave) para a luz final, numa gravação só.
-- **Névoa de guerra com o dia e a noite** (opção): de dia o mapa todo visível; à noite, só a visão dos tokens e as luzes.
+- **Névoa de guerra com o dia e a noite** (opção, em Central › Astronomia e luz): nas cenas com dia/noite, de dia o mapa fica claro e visível; quando escurece além do limite escolhido, cada jogador só vê onde há luz (tochas, lampiões, magias), o alcance da **visão no escuro** do personagem e, escurecido, o que já explorou. Para isso o calendário liga, nessas cenas, a luz global (até o limite), a visão dos tokens e a névoa explorada.
+  - **Ligar a visão dos tokens dos jogadores** (ligada por padrão): um token sem "Visão ativada" deixa o jogador vendo tudo preto, de dia e de noite, mesmo com visão no escuro na ficha. O calendário ativa a visão dos tokens de personagens de jogadores nessas cenas. No D&D 5e o alcance vem dos sentidos da ficha (opção do sistema "sincronizar sentidos com a visão do token", ligada por padrão); em outros sistemas, do próprio token.
+  - **De dia, mapa aberto para todos** (desligada por padrão): de dia a visão dos tokens fica desligada e todos veem o mapa inteiro, até quem não tem token na cena (mapa-múndi). As paredes não escondem nada e nada é explorado de dia; à noite a visão dos tokens volta.
+  - Cena com a escuridão travada na configuração: a luz não muda, e a visão segue a escuridão que estiver lá.
 - Para não pesar no servidor, os passos pequenos (relógio em tempo real, +10 min) só mexem nas cenas que alguém está vendo e só quando a luz muda o bastante; com o relógio em tempo real, no máximo uma gravação a cada 30 s.
 
 ## Notas e eventos
@@ -384,7 +387,7 @@ Hooks.on("calendarioMesa.novaSemana", (dia, semanas) => { /* quantas semanas com
 | `templates/` | modelos Handlebars (Central e Contadores) |
 | `styles/` | visual |
 | `lang/` | português e inglês, chaves legíveis por área (`CALMESA.Luz.…`, `CALMESA.Clima.…`) |
-| `tools/`, `tests/` | script da migração das chaves de tradução e testes (`node --test`: traduções, divisão em arquivos e carga num Foundry simulado); ficam no repositório, não vão no ZIP |
+| `tools/`, `tests/` | script da migração das chaves de tradução e testes (`node --test`: traduções, divisão em arquivos, carga num Foundry simulado e névoa de guerra com dia e noite); ficam no repositório, não vão no ZIP |
 | `CHANGELOG.md` | o que mudou em cada versão, em linguagem simples |
 | `LICENSE` | licença MIT |
 | `docs/` | imagens deste README |

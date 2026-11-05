@@ -32,7 +32,7 @@ import { JanelaLuz, JanelaTabelas } from "./ferramentas/configuracoes.js";
 import { registrarSessao } from "./historico.js";
 import { HUD, JanelaCalendario, rerenderJanelas } from "./janela.js";
 import { FASES_PADRAO, UNIDADE_SING, UNIDADES } from "./luas.js";
-import { aplicarLuz, estadoLuz, visaoDiaNoite } from "./luz.js";
+import { aplicarLuz, estadoLuz, ligarVisaoDosTokens, visaoDiaNoite } from "./luz.js";
 import { AVISOS, FIM, ICONES, MODOS_CENA, REPETIR } from "./notas.js";
 import { aplicarCalendario, CACHE_CAL, CAL_ID, guardarCalendarioAnterior, idAtivo, limparCache, MOD, num, PRESET_ELEMENTOS, relatarErro, souGMPrincipal, T } from "./nucleo.js";
 import { aoMudarTempo, iniciarRelogio, marcarTempo } from "./relogio.js";
@@ -167,6 +167,9 @@ Hooks.once("init", () => {
     choices: ESCOLHAS_ZONAS, default: "temperada", onChange: () => HUD.render() });
   S("visaoDiaNoite", { name: "CALMESA.Config.nevoa_de_guerra_com_o_dia", hint: "CALMESA.Config.nas_cenas_com_dia_noite_do", scope: "world", config: true, type: Boolean, default: false, onChange: () => { if (game.ready) aplicarLuz(estadoLuz(game.time.worldTime), 800).catch((err) => relatarErro("Erros.luz_das_cenas", err)); } });
   S("visaoLimite", { name: "CALMESA.Config.escuridao_em_que_a_noite_esconde", hint: "CALMESA.Config.0_qualquer_escuridao_ja_esconde_1", scope: "world", config: true, type: Number, range: { min: 0, max: 1, step: 0.05 }, default: 0.6, onChange: () => { if (game.ready && visaoDiaNoite()) aplicarLuz(estadoLuz(game.time.worldTime), 800).catch((err) => relatarErro("Erros.luz_das_cenas", err)); } });
+  const reaplicarVisao = () => { if (game.ready && visaoDiaNoite()) aplicarLuz(estadoLuz(game.time.worldTime), 800).catch((err) => relatarErro("Erros.luz_das_cenas", err)); };
+  S("visaoLigarTokens", { name: "CALMESA.Config.ligar_a_visao_dos_tokens_dos", hint: "CALMESA.Config.sem_visao_ativada_no_token_o", scope: "world", config: true, type: Boolean, default: true, onChange: reaplicarVisao });
+  S("visaoDiaAberto", { name: "CALMESA.Config.de_dia_mapa_aberto_para_todos", hint: "CALMESA.Config.de_dia_a_visao_dos_tokens", scope: "world", config: true, type: Boolean, default: false, onChange: reaplicarVisao });
   S("tabelasEncontro", { scope: "world", config: false, type: Object, default: { ids: [] } });
   game.settings.registerMenu(MOD, "menuTabelas", {
     name: "CALMESA.Comum.tabelas_de_encontro_da_viagem", label: "CALMESA.Config.escolher_tabelas", hint: "CALMESA.Config.quais_tabelas_aparecem_em_tabela_de",
@@ -246,6 +249,12 @@ Hooks.on("canvasReady", () => {
   HUD.render();
   PainelVigia.render();
   aplicarLuz(estadoLuz(game.time.worldTime), 0).catch((err) => relatarErro("Erros.luz_das_cenas", err));
+});
+// token novo de um personagem de jogador numa cena de dia/noite: já entra com a visão ligada
+Hooks.on("createToken", (token) => {
+  const cena = token?.parent;
+  if (!cena?.getFlag?.(MOD, "diaNoite")) return;
+  ligarVisaoDosTokens([cena]).catch((err) => relatarErro("Erros.luz_das_cenas", err));
 });
 Hooks.on("updateScene", (cena, mudou) => {
   // região da cena ou "mostrar o clima" mudou por fora da janela do clima: o mestre reaplica

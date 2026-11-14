@@ -1,5 +1,10 @@
 # Histórico de versões — Calendário da Mesa
 
+## 4.11.1
+
+- Atualizado para o Foundry VTT 14.370 e o D&D 5e 6.1.0 (versões mais recentes).
+- Conferido com a mudança da 14.370 que passou a guardar o tempo do mundo como número inteiro: o calendário já avançava o tempo em segundos inteiros, então nada muda no uso.
+
 ## 4.11.0
 
 ### Névoa de guerra com o dia e a noite, corrigida

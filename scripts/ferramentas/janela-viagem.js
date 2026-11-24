@@ -14,33 +14,39 @@ const { ApplicationV2 } = foundry.applications.api;
 
 const RITMOS = { lento: { nome: T("Tabelas.lento_furtivo"), km: 3.2, mi: 2 }, normal: { nome: T("Comum.normal"), km: 4.8, mi: 3 }, rapido: { nome: T("Tabelas.rapido_5_em_percepcao_passiva"), km: 6.4, mi: 4 } };
 
-async function dialogoViagem() {
+/** Diálogo para começar uma viagem. `padroes` (opcional) preenche os campos: { destino, dist, un ("km" | "mi" | "lg"),
+ *  ritmo ("lento" | "normal" | "rapido"), hd, chance, tabela (id), separado, saida ("08:00"), acamp ("20:00"), origem }.
+ *  `origem` (texto livre de outro módulo, ex.: "navegacao-mesa") volta nos hooks da viagem. */
+async function dialogoViagem(padroes = {}) {
   if (!game.user.isGM) return;
   if (viagemAtual()) return new JanelaViagem().render({ force: true });
   const tabelas = tabelasDeEncontro();
+  const p = padroes && typeof padroes === "object" ? padroes : {};
+  const val = (k, d) => esc(String(p[k] ?? d));
+  const sel = (k, v, d) => ((p[k] ?? d) === v ? "selected" : "");
   const r = await Dialogo().wait({
     window: { title: "CALMESA.Comum.viajar", icon: "fa-solid fa-route" },
     position: { width: 480 },
     content: `<div class="cm-form">
-      <label>${T("Tabelas.destino_opcional")}<input type="text" name="destino" placeholder="${T("Tabelas.porto_de_tir_wara")}"></label>
+      <label>${T("Tabelas.destino_opcional")}<input type="text" name="destino" value="${val("destino", "")}" placeholder="${T("Tabelas.porto_de_tir_wara")}"></label>
       <div class="cm-form-2">
-        <label>${T("Tabelas.distancia")}<input type="number" name="dist" min="0" step="0.5" value="30"></label>
-        <label>${T("Comum.unidade")}<select name="un"><option value="km">${T("Tabelas.km")}</option><option value="mi">${T("Tabelas.milhas")}</option><option value="lg">${T("Tabelas.leguas_3_mi")}</option></select></label>
+        <label>${T("Tabelas.distancia")}<input type="number" name="dist" min="0" step="0.1" value="${val("dist", 30)}"></label>
+        <label>${T("Comum.unidade")}<select name="un"><option value="km" ${sel("un", "km", "km")}>${T("Tabelas.km")}</option><option value="mi" ${sel("un", "mi", "km")}>${T("Tabelas.milhas")}</option><option value="lg" ${sel("un", "lg", "km")}>${T("Tabelas.leguas_3_mi")}</option></select></label>
       </div>
       <div class="cm-form-2">
-        <label>${T("Tabelas.ritmo")}<select name="ritmo">${opcoes(RITMOS, "normal", (v) => v.nome)}</select></label>
-        <label>${T("Tabelas.horas_de_viagem_por_dia")}<input type="number" name="hd" min="1" max="${CFG.horasDia}" value="8"></label>
+        <label>${T("Tabelas.ritmo")}<select name="ritmo">${opcoes(RITMOS, RITMOS[p.ritmo] ? p.ritmo : "normal", (v) => v.nome)}</select></label>
+        <label>${T("Tabelas.horas_de_viagem_por_dia")}<input type="number" name="hd" min="1" max="${CFG.horasDia}" value="${val("hd", 8)}"></label>
       </div>
       <div class="cm-form-2">
-        <label>${T("Tabelas.chance_de_encontro_por_dia")}<input type="number" name="chance" min="0" max="100" value="0"></label>
-        <label>${T("Tabelas.tabela_de_encontros")}<select name="tabela"><option value="">${T("Comum.nenhuma")}</option>${tabelas.map((t) => `<option value="${t.id}">${esc(t.name)}</option>`).join("")}</select>
+        <label>${T("Tabelas.chance_de_encontro_por_dia")}<input type="number" name="chance" min="0" max="100" value="${val("chance", 0)}"></label>
+        <label>${T("Tabelas.tabela_de_encontros")}<select name="tabela"><option value="">${T("Comum.nenhuma")}</option>${tabelas.map((t) => `<option value="${t.id}" ${t.id === p.tabela ? "selected" : ""}>${esc(t.name)}</option>`).join("")}</select>
           <small class="cm-dica-campo">${T("Tabelas.quais_aparecem_aqui_configuracoes_calendario_da")}</small></label>
       </div>
       <fieldset class="cm-rep"><legend><i class="fa-solid fa-campground"></i> ${T("Tabelas.dia_a_dia")}</legend>
-        <label class="cm-chip"><input type="checkbox" name="separado"> ${T("Tabelas.passar_os_dias_separadamente_narracao_de")}</label>
+        <label class="cm-chip"><input type="checkbox" name="separado" ${p.separado ? "checked" : ""}> ${T("Tabelas.passar_os_dias_separadamente_narracao_de")}</label>
         <div class="cm-form-2">
-          <label>${T("Tabelas.partida_de_cada_dia_hh_mm")}<input type="text" name="saida" value="08:00" placeholder="08:00"></label>
-          <label>${T("Tabelas.vigias_liberadas_a_partir_de_hh")}<input type="text" name="acamp" value="20:00" placeholder="20:00"></label>
+          <label>${T("Tabelas.partida_de_cada_dia_hh_mm")}<input type="text" name="saida" value="${val("saida", "08:00")}" placeholder="08:00"></label>
+          <label>${T("Tabelas.vigias_liberadas_a_partir_de_hh")}<input type="text" name="acamp" value="${val("acamp", "20:00")}" placeholder="20:00"></label>
         </div>
         <p class="cm-dica">${T("Tabelas.cada_dia_e_avancado_pelo_mestre")}</p>
       </fieldset>
@@ -57,10 +63,11 @@ async function dialogoViagem() {
   const un = { km: "km", mi: T("Tabelas.milhas"), lg: T("Tabelas.leguas") }[r.un] ?? "km";
   const destino = String(r.destino ?? "").trim();
   const chance = Math.min(100, Math.max(0, num(r.chance, 0)));
+  const origem = typeof p.origem === "string" ? p.origem : "";
   if (r.separado) {
     return iniciarViagemSeparada({
       destino, dist: num(r.dist), un, ritmo: ritmo.nome.split(" ")[0], vel, horas, hd, chance, tabela: r.tabela || "",
-      saida: horaParaDec(r.saida, 8), acampamento: horaParaDec(r.acamp, 20)
+      saida: horaParaDec(r.saida, 8), acampamento: horaParaDec(r.acamp, 20), origem
     });
   }
   const dias = Math.floor(horas / hd);
@@ -76,7 +83,10 @@ async function dialogoViagem() {
   const tabela = r.tabela ? game.tables.get(r.tabela) : null;
   if (tabela) for (const _ of encontros) await tabela.draw({ rollMode: "gmroll" });
   await registrar(`${T("Tabelas.viagem_0_1_2_3_4", [destino ? ` ${T("Tabelas.ate_0", [destino])}` : "", num(r.dist), un, tempo, encontros.length ? T("Comum.0_encontro_s", [encontros.length]) : ""])}`, { icone: "fa-route" });
+  // Outros módulos (ex.: Navegação da Mesa) ficam sabendo da viagem antes de o tempo andar.
+  Hooks.callAll("calendarioMesa.viagemIniciada", { destino, dist: num(r.dist), un, dias: Math.max(1, Math.ceil(horas / hd - 1e-9)), separado: false, origem, inicioWt: game.time.worldTime });
   if (seg > 0) await game.time.advance(seg);
+  Hooks.callAll("calendarioMesa.viagemTerminada", { destino, dias: Math.max(1, Math.ceil(horas / hd - 1e-9)), separado: false, origem, interrompida: false });
 }
 
 /* ---------- viagem dia a dia ---------- */
@@ -105,12 +115,13 @@ async function iniciarViagemSeparada(p) {
   const estado = {
     ativa: true, id: foundry.utils.randomID(), destino: p.destino, dist: p.dist, un: p.un, ritmo: p.ritmo,
     vel: p.vel, hd: p.hd, diasTotal, dia: 1, saida: p.saida, acampamento: p.acampamento,
-    chance: p.chance, tabela: p.tabela, encontros: [], inicioWt: wt,
+    chance: p.chance, tabela: p.tabela, encontros: [], inicioWt: wt, origem: p.origem ?? "",
     alvoAcampamento: proximoHorario(wt, p.acampamento), fase: "viajando", vigias: null, historicoVigias: []
   };
   await alterarViagem(() => estado);
   await chat(`<i class="fa-solid fa-route"></i> <b>${T("Viagem.o_grupo_parte_0", [p.destino ? T("Viagem.rumo_a_0", [esc(p.destino)]) : ""])}</b>${T("Viagem.0_1_em_ritmo_2_cerca", [p.dist, esc(p.un), esc(p.ritmo.toLowerCase()), diasTotal, diasTotal > 1 ? "s" : ""])}`);
   await registrar(`${T("Viagem.partida_0_1_2_cerca_de", [p.destino ? T("Viagem.para_0", [p.destino]) : "", p.dist, p.un, diasTotal])}`, { icone: "fa-route" });
+  Hooks.callAll("calendarioMesa.viagemIniciada", { id: estado.id, destino: p.destino, dist: p.dist, un: p.un, dias: diasTotal, separado: true, origem: estado.origem, inicioWt: wt });
   await rolarEncontroDoDia();
   return new JanelaViagem().render({ force: true });
 }
@@ -202,12 +213,14 @@ async function acaoViagem(acao, dado = null) {
       await avancarPara(alvo);
       const nv = viagemAtual();
       await chat(`<i class="fa-solid fa-sun"></i> <b>${T("Viagem.dia_0_de_viagem", [nv.dia])}</b>${T("Viagem.0_o_grupo_levanta_acampamento", [nv.destino ? T("Viagem.rumo_a_0", [esc(nv.destino)]) : ""])}`);
+      Hooks.callAll("calendarioMesa.viagemNovoDia", { id: nv.id, destino: nv.destino, dia: nv.dia, dias: nv.diasTotal, separado: true, origem: nv.origem ?? "" });
       return rolarEncontroDoDia();
     }
     case "chegar": {
       await alterarViagem(() => ({ ativa: false }));
       await chat(`<i class="fa-solid fa-flag-checkered"></i> <b>${T("Viagem.o_grupo_chega_0", [v.destino ? T("Viagem.a_0", [esc(v.destino)]) : T("Viagem.ao_destino")])}</b> ${T("Viagem.depois_de_0_dia_1_de", [v.dia, v.dia > 1 ? "s" : ""])}`);
       await registrar(`${T("Viagem.chegada_0_1_dia_s_de", [v.destino ? T("Viagem.a_0", [v.destino]) : "", v.dia, v.encontros?.length ? T("Comum.0_encontro_s", [v.encontros.length]) : ""])}`, { icone: "fa-route" });
+      Hooks.callAll("calendarioMesa.viagemTerminada", { id: v.id, destino: v.destino, dias: v.dia, separado: true, origem: v.origem ?? "", interrompida: false });
       foundry.applications.instances.get("cm-viagem")?.close();
       return;
     }
@@ -216,6 +229,7 @@ async function acaoViagem(acao, dado = null) {
       if (!ok) return;
       await alterarViagem(() => ({ ativa: false }));
       await registrar(`${T("Viagem.viagem_interrompida_no_dia_0_1", [v.dia, v.destino ? T("Viagem.destino_0", [v.destino]) : ""])}`, { icone: "fa-route" });
+      Hooks.callAll("calendarioMesa.viagemTerminada", { id: v.id, destino: v.destino, dias: v.dia, separado: true, origem: v.origem ?? "", interrompida: true });
       foundry.applications.instances.get("cm-viagem")?.close();
       return;
     }

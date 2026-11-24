@@ -227,6 +227,7 @@ Botão ⏳ no HUD: "O ritual se completa daqui a 3 dias", "Efeito da poção: 8 
 - **Passar os dias separadamente**: a viagem é conduzida um dia de cada vez, com horário de partida e das vigias, +30 min, +1 hora e "Até as 20:00", e uma caixa de **Narração** que vai para o chat e o histórico.
 - **Vigias da noite**: o mestre escolhe quantas vigias (2 horas cada) e quais jogadores; cada jogador escolhe a sua no painel **Vigias**, na tela de todos (o mestre escolhe pelos jogadores offline). **Próxima vigia** avança 2 horas; o registro vai para o histórico.
 - **Tabelas de encontro**: escolha nas configurações quais tabelas aparecem na janela de viagem.
+- **Navegação da Mesa** (addon opcional): rotas medidas com a régua no mapa, escala em km por cena e encontros de 1d100 rolados pelos jogadores condutores. Abre esta mesma viagem já preenchida.
 
 ## Histórico da campanha
 
@@ -262,7 +263,7 @@ const cal = game.modules.get("calendario-mesa").api;   // pronta depois do "read
 | `abrir()` | abre a janela do calendário |
 | `editor()` | abre o editor do calendário (mestre) |
 | `central()` | abre a Central de Configurações |
-| `viajar()` | abre a janela da viagem (ou o diálogo para começar uma) |
+| `viajar(padroes?)` | abre a janela da viagem (ou o diálogo para começar uma); `padroes` preenche o diálogo: `{ destino, dist, un: "km"\|"mi"\|"lg", ritmo: "lento"\|"normal"\|"rapido", hd, chance, tabela, separado, saida: "08:00", acamp: "20:00", origem }` |
 | `diaSagrado()` | abre o diálogo "Dia sagrado" |
 
 ### Tempo e datas
@@ -364,6 +365,9 @@ Cada nota é um Diário com os dados em `flags["calendario-mesa"].nota`:
 ```js
 Hooks.on("calendarioMesa.novoDia", (dia, quantos) => { /* dia = { td, ano, mes, dia, sem, doy } */ });
 Hooks.on("calendarioMesa.novaSemana", (dia, semanas) => { /* quantas semanas começaram */ });
+Hooks.on("calendarioMesa.viagemIniciada", (info) => { /* { id?, destino, dist, un, dias, separado, origem, inicioWt } */ });
+Hooks.on("calendarioMesa.viagemNovoDia", (info) => { /* viagem dia a dia: { id, destino, dia, dias, separado, origem } */ });
+Hooks.on("calendarioMesa.viagemTerminada", (info) => { /* { id?, destino, dias, separado, origem, interrompida } */ });
 ```
 
 ---

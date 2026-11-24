@@ -37,8 +37,10 @@ function montarApi() {
     editor: () => abrirFerramenta("EditorCalendario"),
     /** Abre a Central de Configurações. */
     central: () => abrirCentral(),
-    /** Abre a janela da viagem (ou o diálogo para começar uma, se não houver viagem). */
-    viajar: () => (viagemAtual() ? abrirFerramenta("JanelaViagem") : ferr("dialogoViagem")),
+    /** Abre a janela da viagem (ou o diálogo para começar uma, se não houver viagem).
+     *  padroes (opcional) preenche o diálogo: { destino, dist, un, ritmo, hd, chance, tabela, separado, saida, acamp, origem }.
+     *  Hooks da viagem: calendarioMesa.viagemIniciada, calendarioMesa.viagemNovoDia, calendarioMesa.viagemTerminada. */
+    viajar: (padroes) => (viagemAtual() ? abrirFerramenta("JanelaViagem") : ferr("dialogoViagem", padroes)),
     /** Abre o diálogo "Dia sagrado" (cria a nota de festa de uma divindade do Journal). */
     diaSagrado: () => ferr("dialogoDiaSagrado"),
 

@@ -1,5 +1,12 @@
 # Histórico de versões — Calendário da Mesa
 
+## 4.12.0
+
+### Viagem aberta para outros módulos (Navegação da Mesa)
+- **`api.viajar(padroes)`**: outro módulo ou macro pode abrir o diálogo de viagem já preenchido (destino, distância, unidade, ritmo, horas por dia, chance e tabela de encontro, dia a dia, horários). O mestre ainda confere e clica em Partir; sem parâmetros, nada muda.
+- **Hooks novos**: `calendarioMesa.viagemIniciada`, `calendarioMesa.viagemNovoDia` (a cada amanhecer da viagem dia a dia) e `calendarioMesa.viagemTerminada` (chegada ou viagem encerrada). Cada um recebe destino, dias e o campo `origem` de quem abriu a viagem.
+- Usado pelo novo módulo **Navegação da Mesa** (rotas pela régua no mapa e encontros de 1d100 rolados pelos jogadores).
+
 ## 4.11.1
 
 - Atualizado para o Foundry VTT 14.370 e o D&D 5e 6.1.0 (versões mais recentes).

@@ -263,7 +263,7 @@ const cal = game.modules.get("calendario-mesa").api;   // pronta depois do "read
 | `abrir()` | abre a janela do calendário |
 | `editor()` | abre o editor do calendário (mestre) |
 | `central()` | abre a Central de Configurações |
-| `viajar(padroes?)` | abre a janela da viagem (ou o diálogo para começar uma); `padroes` preenche o diálogo: `{ destino, dist, un: "km"\|"mi"\|"lg", ritmo: "lento"\|"normal"\|"rapido", hd, chance, tabela, separado, saida: "08:00", acamp: "20:00", origem }` |
+| `viajar(padroes?)` | abre a janela da viagem (ou o diálogo para começar uma); `padroes` preenche o diálogo: `{ destino, dist, un: "km"\|"mi"\|"lg", ritmo: "lento"\|"normal"\|"rapido", hd, chance, tabela, separado, saida: "08:00", acamp: "20:00", origem }`; com `direto: true` e `dist` maior que zero, começa a viagem sem mostrar o diálogo |
 | `diaSagrado()` | abre o diálogo "Dia sagrado" |
 
 ### Tempo e datas
@@ -365,7 +365,7 @@ Cada nota é um Diário com os dados em `flags["calendario-mesa"].nota`:
 ```js
 Hooks.on("calendarioMesa.novoDia", (dia, quantos) => { /* dia = { td, ano, mes, dia, sem, doy } */ });
 Hooks.on("calendarioMesa.novaSemana", (dia, semanas) => { /* quantas semanas começaram */ });
-Hooks.on("calendarioMesa.viagemIniciada", (info) => { /* { id?, destino, dist, un, dias, separado, origem, inicioWt } */ });
+Hooks.on("calendarioMesa.viagemIniciada", (info) => { /* { id?, destino, dist, un, dias, separado, origem, inicioWt, vel, hd } */ });
 Hooks.on("calendarioMesa.viagemNovoDia", (info) => { /* viagem dia a dia: { id, destino, dia, dias, separado, origem } */ });
 Hooks.on("calendarioMesa.viagemTerminada", (info) => { /* { id?, destino, dias, separado, origem, interrompida } */ });
 ```

@@ -16,7 +16,8 @@ const RITMOS = { lento: { nome: T("Tabelas.lento_furtivo"), km: 3.2, mi: 2 }, no
 
 /** Diálogo para começar uma viagem. `padroes` (opcional) preenche os campos: { destino, dist, un ("km" | "mi" | "lg"),
  *  ritmo ("lento" | "normal" | "rapido"), hd, chance, tabela (id), separado, saida ("08:00"), acamp ("20:00"), origem }.
- *  `origem` (texto livre de outro módulo, ex.: "navegacao-mesa") volta nos hooks da viagem. */
+ *  `origem` (texto livre de outro módulo, ex.: "navegacao-mesa") volta nos hooks da viagem.
+ *  Com `direto: true` e `dist` maior que zero, a viagem começa com esses valores, sem mostrar o diálogo. */
 async function dialogoViagem(padroes = {}) {
   if (!game.user.isGM) return;
   if (viagemAtual()) return new JanelaViagem().render({ force: true });
@@ -24,7 +25,12 @@ async function dialogoViagem(padroes = {}) {
   const p = padroes && typeof padroes === "object" ? padroes : {};
   const val = (k, d) => esc(String(p[k] ?? d));
   const sel = (k, v, d) => ((p[k] ?? d) === v ? "selected" : "");
-  const r = await Dialogo().wait({
+  // direto: outro módulo já perguntou tudo ao mestre na janela dele; a viagem começa sem este diálogo.
+  const direto = p.direto === true && num(p.dist, 0) > 0;
+  const r = direto ? {
+    destino: p.destino ?? "", dist: p.dist, un: ["km", "mi", "lg"].includes(p.un) ? p.un : "km", ritmo: RITMOS[p.ritmo] ? p.ritmo : "normal",
+    hd: p.hd ?? 8, chance: p.chance ?? 0, tabela: p.tabela ?? "", separado: !!p.separado, saida: p.saida ?? "08:00", acamp: p.acamp ?? "20:00"
+  } : await Dialogo().wait({
     window: { title: "CALMESA.Comum.viajar", icon: "fa-solid fa-route" },
     position: { width: 480 },
     content: `<div class="cm-form">
@@ -84,7 +90,7 @@ async function dialogoViagem(padroes = {}) {
   if (tabela) for (const _ of encontros) await tabela.draw({ rollMode: "gmroll" });
   await registrar(`${T("Tabelas.viagem_0_1_2_3_4", [destino ? ` ${T("Tabelas.ate_0", [destino])}` : "", num(r.dist), un, tempo, encontros.length ? T("Comum.0_encontro_s", [encontros.length]) : ""])}`, { icone: "fa-route" });
   // Outros módulos (ex.: Navegação da Mesa) ficam sabendo da viagem antes de o tempo andar.
-  Hooks.callAll("calendarioMesa.viagemIniciada", { destino, dist: num(r.dist), un, dias: Math.max(1, Math.ceil(horas / hd - 1e-9)), separado: false, origem, inicioWt: game.time.worldTime });
+  Hooks.callAll("calendarioMesa.viagemIniciada", { destino, dist: num(r.dist), un, dias: Math.max(1, Math.ceil(horas / hd - 1e-9)), separado: false, origem, inicioWt: game.time.worldTime, vel, hd });
   if (seg > 0) await game.time.advance(seg);
   Hooks.callAll("calendarioMesa.viagemTerminada", { destino, dias: Math.max(1, Math.ceil(horas / hd - 1e-9)), separado: false, origem, interrompida: false });
 }
@@ -121,7 +127,7 @@ async function iniciarViagemSeparada(p) {
   await alterarViagem(() => estado);
   await chat(`<i class="fa-solid fa-route"></i> <b>${T("Viagem.o_grupo_parte_0", [p.destino ? T("Viagem.rumo_a_0", [esc(p.destino)]) : ""])}</b>${T("Viagem.0_1_em_ritmo_2_cerca", [p.dist, esc(p.un), esc(p.ritmo.toLowerCase()), diasTotal, diasTotal > 1 ? "s" : ""])}`);
   await registrar(`${T("Viagem.partida_0_1_2_cerca_de", [p.destino ? T("Viagem.para_0", [p.destino]) : "", p.dist, p.un, diasTotal])}`, { icone: "fa-route" });
-  Hooks.callAll("calendarioMesa.viagemIniciada", { id: estado.id, destino: p.destino, dist: p.dist, un: p.un, dias: diasTotal, separado: true, origem: estado.origem, inicioWt: wt });
+  Hooks.callAll("calendarioMesa.viagemIniciada", { id: estado.id, destino: p.destino, dist: p.dist, un: p.un, dias: diasTotal, separado: true, origem: estado.origem, inicioWt: wt, vel: p.vel, hd: p.hd });
   await rolarEncontroDoDia();
   return new JanelaViagem().render({ force: true });
 }

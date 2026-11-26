@@ -39,6 +39,7 @@ function montarApi() {
     central: () => abrirCentral(),
     /** Abre a janela da viagem (ou o diálogo para começar uma, se não houver viagem).
      *  padroes (opcional) preenche o diálogo: { destino, dist, un, ritmo, hd, chance, tabela, separado, saida, acamp, origem }.
+     *  Com { direto: true } e dist > 0, a viagem começa com esses valores sem mostrar o diálogo (4.12.1).
      *  Hooks da viagem: calendarioMesa.viagemIniciada, calendarioMesa.viagemNovoDia, calendarioMesa.viagemTerminada. */
     viajar: (padroes) => (viagemAtual() ? abrirFerramenta("JanelaViagem") : ferr("dialogoViagem", padroes)),
     /** Abre o diálogo "Dia sagrado" (cria a nota de festa de uma divindade do Journal). */

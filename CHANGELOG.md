@@ -1,5 +1,10 @@
 # Histórico de versões — Calendário da Mesa
 
+## 4.12.1
+
+- **`api.viajar({ ..., direto: true })`**: quando outro módulo já perguntou tudo ao mestre na janela dele (a janela de rota da Navegação da Mesa 0.2.0), a viagem começa direto, sem abrir o diálogo do calendário de novo. Sem `direto`, nada muda.
+- O hook `calendarioMesa.viagemIniciada` passa também `vel` (velocidade por hora) e `hd` (horas por dia).
+
 ## 4.12.0
 
 ### Viagem aberta para outros módulos (Navegação da Mesa)
